@@ -25,3 +25,4 @@ analytics-core/.settings
 output-*
 dependency-reduced-pom.xml
 analytics-job-driver/.settings
+**/target

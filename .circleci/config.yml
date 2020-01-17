@@ -1,0 +1,31 @@
+version: 2.1
+jobs:
+  analytics-build:
+    machine: true
+    steps:
+    - checkout
+    - restore_cache:
+        key: dp-dependency-cache-{{ checksum "pom.xml" }}
+    - run:
+        name: sunbird-analytics-core-build
+        command: mvn clean install -DskipTests && mvn scoverage:report
+    - save_cache:
+        key: dp-dependency-cache-{{ checksum "pom.xml" }}
+        paths: ~/.m2
+    - run: mkdir temp && cp analytics-job-driver/target/analytics-framework-2.0.jar temp/
+    - run: cp analytics-core/target/analytics-core-2.0.jar temp/
+    - run: cp analytics-job-driver/target/analytics-job-driver-2.0.jar temp/
+    - store_artifacts:
+        path: temp
+        destination: temp/
+
+    - run:
+        name: sonar
+        command: |
+          mvn -X sonar:sonar -Dsonar.projectKey=project-sunbird_sunbird-analytics-core -Dsonar.organization=project-sunbird -Dsonar.exclusions=analytics-core/src/main/scala/org/ekstep/analytics/streaming/** -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/project/target/scoverage.xml
+
+workflows:
+  version: 2.1
+  workflow:
+    jobs:
+    - analytics-core-build
