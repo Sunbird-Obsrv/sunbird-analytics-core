@@ -12,6 +12,11 @@ jobs:
     - save_cache:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
         paths: ~/.m2
+    - save_cache:
+        key: dp-core-libraries
+        paths:
+          - analytics-core/target/analytics-core-2.0.jar
+          - analytics-job-driver/target/analytics-job-driver-2.0.jar
     - run: mkdir temp && cp analytics-job-driver/target/analytics-framework-2.0.jar temp/
     - run: cp analytics-core/target/analytics-core-2.0.jar temp/
     - run: cp analytics-job-driver/target/analytics-job-driver-2.0.jar temp/
