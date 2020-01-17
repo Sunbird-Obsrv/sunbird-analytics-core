@@ -17,13 +17,6 @@ jobs:
         paths:
           - analytics-core/target/analytics-core-2.0.jar
           - analytics-job-driver/target/analytics-job-driver-2.0.jar
-    - run: mkdir temp && cp analytics-job-driver/target/analytics-framework-2.0.jar temp/
-    - run: cp analytics-core/target/analytics-core-2.0.jar temp/
-    - run: cp analytics-job-driver/target/analytics-job-driver-2.0.jar temp/
-    - store_artifacts:
-        path: temp
-        destination: temp/
-
     - run:
         name: sonar
         command: |
