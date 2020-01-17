@@ -17,10 +17,10 @@ jobs:
         paths:
           - analytics-core/target/analytics-core-2.0.jar
           - analytics-job-driver/target/analytics-job-driver-2.0.jar
-    - run:
-        name: sonar
-        command: |
-          mvn -X sonar:sonar -Dsonar.projectKey=project-sunbird_sunbird-analytics-core -Dsonar.organization=project-sunbird -Dsonar.exclusions=analytics-core/src/main/scala/org/ekstep/analytics/streaming/** -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/project/target/scoverage.xml
+#    - run:
+#        name: sonar
+#        command: |
+#          mvn -X sonar:sonar -Dsonar.projectKey=project-sunbird_sunbird-analytics-core -Dsonar.organization=project-sunbird -Dsonar.exclusions=analytics-core/src/main/scala/org/ekstep/analytics/streaming/** -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/project/target/scoverage.xml
 
 workflows:
   version: 2.1
