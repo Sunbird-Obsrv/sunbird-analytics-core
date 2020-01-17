@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Properties>
+		<Property name="baseDir">logs</Property>
+		<!-- <Property name="baseDir">/mnt/data/analytics/logs</Property> --> <!-- Production Config -->
+	</Properties>
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+		</Console>
+		<File name="File" fileName="${baseDir}/joblog.log">
+			<PatternLayout>
+				<pattern>%m%n</pattern>
+			</PatternLayout>
+		</File>
+		<!-- <RollingFile name="RollingFile" fileName="${baseDir}/joblog.log" filePattern="${baseDir}/joblog-%d{MM-dd-yyyy}-%i.log">
+			<PatternLayout>
+				<Pattern>%m%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="250 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingFile>  -->
+		<Async name="Async">
+			<AppenderRef ref="File" />
+		</Async>
+	</Appenders>
+	<Loggers>
+		<Logger name="org.ekstep.analytics" level="debug" additivity="false">
+			<!-- <AppenderRef ref="Console" /> -->
+			<AppenderRef ref="Async"/>
+		</Logger>
+		<Root level="error">
+			<AppenderRef ref="Console" />
+		</Root>
+	</Loggers>
+</Configuration>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>org.sunbird</groupId>
+	<artifactId>sunbird-analytics-core</artifactId>
+	<version>2.0</version>
+	<packaging>pom</packaging>
+	<name>Sunbird Analytics Framework</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
+		<scala.maj.version>2.11</scala.maj.version>
+		<scala.version>2.11.11</scala.version>
+		<spark.maj.version>2.0</spark.maj.version>
+		<spark.version>2.0.1</spark.version>
+	</properties>
+
+	<modules>
+		<module>analytics-core</module>
+		<module>analytics-job-driver</module>
+	</modules>
+
+	<dependencies>
+
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.3</version>
+					<configuration>
+						<descriptors>
+							<descriptor>src/assembly/bin.xml</descriptor>
+						</descriptors>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.scoverage</groupId>
+					<artifactId>scoverage-maven-plugin</artifactId>
+					<version>${scoverage.plugin.version}</version>
+					<configuration>
+						<scalaVersion>${scala.version}</scalaVersion>
+						<aggregate>true</aggregate>
+						<highlighting>true</highlighting>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+</project>
