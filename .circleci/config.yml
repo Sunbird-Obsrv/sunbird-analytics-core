@@ -8,7 +8,7 @@ jobs:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
     - run:
         name: sunbird-analytics-core-build
-        command: mvn clean install -DskipTests && mvn scoverage:report
+        command: mvn scoverage:report
     - save_cache:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
         paths: ~/.m2
