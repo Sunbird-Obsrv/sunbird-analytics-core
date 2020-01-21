@@ -32,7 +32,7 @@ node('build-slave') {
         }
         stage('Archive artifacts'){
             sh """
-                        mkdir lpa_artifacts
+                        mkdir lpa_core_artifacts
                         cp analytics-job-driver/target/analytics-framework-2.0.jar lpa_core_artifacts
                         zip -j lpa_core_artifacts.zip:${artifact_version} lpa_core_artifacts/*
                     """
