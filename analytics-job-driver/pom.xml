@@ -48,7 +48,7 @@
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-streaming-kafka_${scala.maj.version}</artifactId>
 			<!-- TODO: version hardcoded. Need to change. -->
-			<version>1.6.2</version>
+			<version>1.6.3</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.apache.kafka</groupId>
@@ -64,7 +64,7 @@
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.maj.version}</artifactId>
-			<version>2.2.4</version>
+			<version>3.1.0</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- <dependency>
