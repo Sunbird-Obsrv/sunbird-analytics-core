@@ -13,7 +13,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
 		<scala.maj.version>2.11</scala.maj.version>
-		<scala.version>2.11.12</scala.version>
+		<scala.version>2.11.11</scala.version>
 		<spark.maj.version>2.4</spark.maj.version>
 		<spark.version>2.4.4</spark.version>
 	</properties>
