@@ -32,6 +32,10 @@ class TestCommonUtil extends BaseSpec {
             CommonUtil.deleteDirectory(path)
             dir.isDirectory() should be(false);
             f.isFile() should be(false);
+            
+            val sc = CommonUtil.getSparkContext(1, "test", None, None);
+            (new HadoopFileUtil()).delete("delete-this/delete-this.txt", sc.hadoopConfiguration);
+            sc.stop();
 
             //deleteFile
             val filePath = "delete-this.txt";
@@ -277,5 +281,23 @@ class TestCommonUtil extends BaseSpec {
         connectionProperties.getProperty("user") should be("postgres")
         connectionProperties.getProperty("password") should be("postgres")
         connectionProperties.getProperty("driver") should be("org.postgresql.Driver")
+    }
+    
+    it should "test all the exception branches" in {
+      
+      noException should be thrownBy {
+        val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"));
+        sc.stop();
+      }
+      
+      noException should be thrownBy {
+        val sc = CommonUtil.getSparkSession(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), Option("Quorum"))
+        sc.stop();
+      }
+      
+      val event = "{\"eid\":\"OE_INTERACT\", \"channel\": \"in.ekstep\", \"ts\":\"2016-05-05T11:13:04.305+0530\",\"ets\":1462426984305,\"ver\":\"2.0\",\"gdata\":{\"id\":\"org.ekstep.story.en.haircut\",\"ver\":\"1\"},\"sid\":\"2b927be8-6a74-460b-aa20-0c991bcf57f6\",\"uid\":\"40550853-c88c-4f6b-8d33-88d0f47c32f4\",\"did\":\"d601e461a64b06f8828886e2f740e1688491a0a8\",\"edata\":{\"eks\":{\"score\":0,\"atmpts\":0,\"failedatmpts\":0,\"type\":\"LISTEN\",\"extype\":\"\",\"id\":\"splash:cover_sound\",\"stageid\":\"splash\",\"uri\":\"\",\"subtype\":\"PLAY\",\"pos\":[],\"values\":[],\"tid\":\"\",\"rating\":0.0}},\"tags\":[{\"genie\":[\"becb887fe82f24c644482eb30041da6d88bd8150\"]}],\"metadata\":{\"sync_timestamp\":\"2016-11-19T23:12:28+00:00\",\"public\":\"true\"},\"@timestamp\":\"2016-11-09T08:16:35.699Z\"}"
+      val v3Event = JSONUtils.deserialize[V3Event](event);
+      CommonUtil.getEventSyncTS(v3Event) should be (1478679395699l);
+      
     }
 }

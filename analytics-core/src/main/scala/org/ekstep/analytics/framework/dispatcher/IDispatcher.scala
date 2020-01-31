@@ -11,9 +11,6 @@ import org.ekstep.analytics.framework.FrameworkContext
 trait IDispatcher {
 
     @throws(classOf[DispatcherException])
-    def dispatch(events: Array[String], config: Map[String, AnyRef])(implicit fc: FrameworkContext) : Array[String];
-    
-    @throws(classOf[DispatcherException])
     def dispatch(config: Map[String, AnyRef], events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext);
     
 }

@@ -51,21 +51,6 @@ object OutputDispatcher {
         events.count;
     }
 
-    @throws(classOf[DispatcherException])
-    def dispatch[T](dispatcher: Dispatcher, events: Array[String])(implicit fc: FrameworkContext) = {
-
-        if (null == dispatcher) {
-            throw new DispatcherException("No output configurations found");
-        }
-        if (events.length != 0) {
-            JobLogger.log("Dispatching output", Option(dispatcher.to));
-            DispatcherFactory.getDispatcher(dispatcher).dispatch(events, dispatcher.params);
-        } else {
-            JobLogger.log("No events produced");
-            null;
-        }
-    }
-
     def stringify[T](events: RDD[T]): RDD[String] = {
         events.map { x =>
             if (x.isInstanceOf[String])

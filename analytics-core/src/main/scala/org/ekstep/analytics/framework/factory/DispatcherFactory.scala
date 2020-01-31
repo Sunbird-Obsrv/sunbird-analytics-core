@@ -14,8 +14,6 @@ object DispatcherFactory {
     @throws(classOf[DispatcherException])
     def getDispatcher(disp: Dispatcher): IDispatcher = {
         disp.to.toLowerCase() match {
-            case "s3file" =>
-                S3FileDispatcher;
             case "s3" =>
                 S3Dispatcher;
             case "kafka" =>
