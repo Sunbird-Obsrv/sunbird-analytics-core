@@ -3,26 +3,26 @@ package org.ekstep.analytics.framework.util
 import java.io._
 import java.net.URL
 import java.nio.file.Paths.get
-import java.nio.file.{Files, Paths, StandardCopyOption}
+import java.nio.file.{ Files, Paths, StandardCopyOption }
 import java.security.MessageDigest
 import java.sql.Timestamp
-import java.util.{Date, Properties}
+import java.util.{ Date, Properties }
 import java.util.zip.GZIPOutputStream
 
-import ing.wbaa.druid.definitions.{Granularity, GranularityType}
+import ing.wbaa.druid.definitions.{ Granularity, GranularityType }
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{ SparkConf, SparkContext }
 import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.Period._
-import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
+import org.ekstep.analytics.framework.{ DtRange, Event, JobConfig, _ }
 
 import scala.collection.mutable.ListBuffer
 //import org.ekstep.analytics.framework.conf.AppConf
-import java.util.zip.{ZipEntry, ZipOutputStream}
+import java.util.zip.{ ZipEntry, ZipOutputStream }
 
 import org.apache.commons.lang3.StringUtils
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
+import org.joda.time.format.{ DateTimeFormat, DateTimeFormatter }
+import org.joda.time.{ DateTime, DateTimeZone, Days, LocalDate, Weeks, Years }
 import org.sunbird.cloud.storage.conf.AppConf
 
 import scala.util.control.Breaks._
@@ -316,8 +316,8 @@ object CommonUtil {
   }
 
   def zip(out: String, files: Iterable[String]) = {
-    import java.io.{BufferedInputStream, FileInputStream, FileOutputStream}
-    import java.util.zip.{ZipEntry, ZipOutputStream}
+    import java.io.{ BufferedInputStream, FileInputStream, FileOutputStream }
+    import java.util.zip.{ ZipEntry, ZipOutputStream }
 
     val zip = new ZipOutputStream(new FileOutputStream(out))
 
@@ -751,4 +751,21 @@ object CommonUtil {
     connProperties.setProperty("password", pass)
     connProperties
   }
+
+  def getS3File(bucket: String, file: String): String = {
+    "s3n://" + bucket + "/" + file;
+  }
+  
+  def getS3FileWithoutPrefix(bucket: String, file: String): String = {
+    bucket + "/" + file;
+  }
+
+  def getAzureFile(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
+    "wasb://" + bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+  
+  def getAzureFileWithoutPrefix(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
+    bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+
 }

@@ -17,7 +17,7 @@ import org.apache.hadoop.conf.Configuration
  */
 trait HadoopDispatcher {
 
-    def dispatch(srcFile: String, destFile: String, conf: Configuration, events: RDD[String])(implicit fc: FrameworkContext) = {
+    def dispatchData(srcFile: String, destFile: String, conf: Configuration, events: RDD[String])(implicit fc: FrameworkContext) = {
 
         val fileUtil = fc.getHadoopFileUtil();
         fileUtil.delete(conf, srcFile, destFile);

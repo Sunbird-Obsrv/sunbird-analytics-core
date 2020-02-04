@@ -50,6 +50,17 @@ object OutputDispatcher {
         DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, eventArr);
         events.count;
     }
+    
+    @throws(classOf[DispatcherException])
+    def dispatch[T](config: StorageConfig, events: RDD[T])(implicit sc: SparkContext, fc: FrameworkContext): Long = {
+
+        if (null == config) {
+            throw new DispatcherException("No configuration found");
+        }
+        val eventArr = stringify(events);
+        DispatcherFactory.getDispatcher(config).dispatch(eventArr, config);
+        events.count;
+    }
 
     def stringify[T](events: RDD[T]): RDD[String] = {
         events.map { x =>

@@ -11,6 +11,7 @@ import org.scalatest.Matchers
 import org.sunbird.cloud.storage.BaseStorageService
 import org.ekstep.analytics.framework.dispatcher.S3Dispatcher
 import org.apache.hadoop.fs.azure.AzureException
+import org.ekstep.analytics.framework.dispatcher.ConsoleDispatcher
 
 /**
   * @author Santhosh
@@ -77,7 +78,15 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
     }
     
     a[DispatcherException] should be thrownBy {
-      OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("bucket" -> "test")), events);
+      OutputDispatcher.dispatch(StorageConfig("s3", null, null), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("file", "test", null), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      ConsoleDispatcher.dispatch(events.map(f => JSONUtils.serialize(f)), StorageConfig("file", "test", null));
     }
 
     // Invoke dispatch with null dispatcher
@@ -120,18 +129,32 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
     val f = new File("src/test/resources/test_output.log");
     f.exists() should be(true)
     CommonUtil.deleteFile("src/test/resources/test_output.log");
+    
+    OutputDispatcher.dispatch(StorageConfig("local", null, "src/test/resources/test_output.log"), events);
+    val f2 = new File("src/test/resources/test_output.log");
+    f2.exists() should be(true)
+    CommonUtil.deleteFile("src/test/resources/test_output.log");
   }
   
   it should "give DispatcherException if azure config is missing " in {
 
     implicit val fc = new FrameworkContext();
-
+    val eventArr = events.map(f => JSONUtils.serialize(f)).cache();
+    
     the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), events.map(f => JSONUtils.serialize(f)));
+      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), eventArr);
     } should have message "'bucket' & 'key' parameters are required to send output to azure"
     
     the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatch(Map[String, AnyRef]("bucket" -> "test-bucket", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), events.map(f => JSONUtils.serialize(f)));
+      AzureDispatcher.dispatch(Map[String, AnyRef]("bucket" -> "test-bucket", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), eventArr);
+    } should have message "'bucket' & 'key' parameters are required to send output to azure"
+    
+    the[DispatcherException] thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", "test-bucket", null), eventArr);
+    } should have message "'bucket' & 'key' parameters are required to send output to azure"
+    
+    the[DispatcherException] thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", null, "output/test-directory/"), eventArr);
     } should have message "'bucket' & 'key' parameters are required to send output to azure"
 
   }
@@ -143,6 +166,14 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
 
     a[AzureException] should be thrownBy {
       AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
+    }
+    
+    a[AzureException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key", Option("azure_storage_key")), events.map(f => JSONUtils.serialize(f)));
+    }
+    
+    a[AzureException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key"), events.map(f => JSONUtils.serialize(f)));
     }
     
     a[IllegalArgumentException] should be thrownBy {

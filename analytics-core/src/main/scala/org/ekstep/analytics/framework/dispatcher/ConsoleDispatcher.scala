@@ -19,7 +19,7 @@ object ConsoleDispatcher extends IDispatcher {
         events;
     }
     
-    def dispatch(config: Map[String, AnyRef], events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext) = {
+    def dispatch(config: Map[String, AnyRef], events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
         if (config.getOrElse("printEvent", true).asInstanceOf[Boolean]) {
             for (event <- events) {
                 println("Event", event);
