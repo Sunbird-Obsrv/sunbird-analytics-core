@@ -3,26 +3,26 @@ package org.ekstep.analytics.framework.util
 import java.io._
 import java.net.URL
 import java.nio.file.Paths.get
-import java.nio.file.{Files, Paths, StandardCopyOption}
+import java.nio.file.{ Files, Paths, StandardCopyOption }
 import java.security.MessageDigest
 import java.sql.Timestamp
-import java.util.{Date, Properties}
+import java.util.{ Date, Properties }
 import java.util.zip.GZIPOutputStream
 
-import ing.wbaa.druid.definitions.{Granularity, GranularityType}
+import ing.wbaa.druid.definitions.{ Granularity, GranularityType }
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{ SparkConf, SparkContext }
 import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.Period._
-import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
+import org.ekstep.analytics.framework.{ DtRange, Event, JobConfig, _ }
 
 import scala.collection.mutable.ListBuffer
 //import org.ekstep.analytics.framework.conf.AppConf
-import java.util.zip.{ZipEntry, ZipOutputStream}
+import java.util.zip.{ ZipEntry, ZipOutputStream }
 
 import org.apache.commons.lang3.StringUtils
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
+import org.joda.time.format.{ DateTimeFormat, DateTimeFormatter }
+import org.joda.time.{ DateTime, DateTimeZone, Days, LocalDate, Weeks, Years }
 import org.sunbird.cloud.storage.conf.AppConf
 
 import scala.util.control.Breaks._
@@ -67,6 +67,7 @@ object CommonUtil {
 
     if (!conf.contains("spark.cassandra.connection.host"))
       conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
+    // $COVERAGE-ON$
 
     if (sparkCassandraConnectionHost.nonEmpty) {
       conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
@@ -80,7 +81,6 @@ object CommonUtil {
       conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
     }
 
-    // $COVERAGE-ON$
     val sc = new SparkContext(conf)
     setS3Conf(sc)
     setAzureConf(sc)
@@ -104,8 +104,7 @@ object CommonUtil {
 
     if (!conf.contains("spark.cassandra.connection.host"))
       conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
-    if (embeddedCassandraMode)
-      conf.set("spark.cassandra.connection.port", AppConf.getConfig("cassandra.service.embedded.connection.port"))
+    // $COVERAGE-ON$
 
     if (sparkCassandraConnectionHost.nonEmpty) {
       conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
@@ -124,17 +123,11 @@ object CommonUtil {
 
     }
 
-    // $COVERAGE-ON$
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
     setS3Conf(sparkSession.sparkContext)
     setAzureConf(sparkSession.sparkContext)
     JobLogger.log("SparkSession initialized")
     sparkSession
-  }
-
-  private def embeddedCassandraMode(): Boolean = {
-    val isEmbedded = AppConf.getConfig("cassandra.service.embedded.enable");
-    StringUtils.isNotBlank(isEmbedded) && StringUtils.equalsIgnoreCase("true", isEmbedded);
   }
 
   def setS3Conf(sc: SparkContext) = {
@@ -280,14 +273,6 @@ object CommonUtil {
     if (event.gdata != null) event.gdata.ver else null;
   }
 
-  def getGameId(event: V3Event): String = {
-    if (event.`object`.isEmpty) null else event.`object`.get.id;
-  }
-
-  def getGameVersion(event: V3Event): String = {
-    if (event.`object`.isEmpty) null else event.`object`.get.ver.getOrElse(null);
-  }
-
   def getParallelization(config: Option[Map[String, String]]): Int = {
     getParallelization(config.getOrElse(Map[String, String]()));
   }
@@ -331,34 +316,14 @@ object CommonUtil {
   }
 
   def zip(out: String, files: Iterable[String]) = {
-    import java.io.{BufferedInputStream, FileInputStream, FileOutputStream}
-    import java.util.zip.{ZipEntry, ZipOutputStream}
+    import java.io.{ BufferedInputStream, FileInputStream, FileOutputStream }
+    import java.util.zip.{ ZipEntry, ZipOutputStream }
 
     val zip = new ZipOutputStream(new FileOutputStream(out))
 
     files.foreach { name =>
       zip.putNextEntry(new ZipEntry(name.split("/").last))
       val in = new BufferedInputStream(new FileInputStream(name))
-      var b = in.read()
-      while (b > -1) {
-        zip.write(b)
-        b = in.read()
-      }
-      in.close()
-      zip.closeEntry()
-    }
-    zip.close()
-  }
-
-  def zipFolder(outFile: String, dir: String) = {
-    import java.io.{BufferedInputStream, FileInputStream, FileOutputStream}
-    import java.util.zip.{ZipEntry, ZipOutputStream}
-
-    val zip = new ZipOutputStream(new FileOutputStream(outFile))
-    val files = new File(dir).listFiles();
-    files.foreach { file =>
-      zip.putNextEntry(new ZipEntry(file.getName.split("/").last))
-      val in = new BufferedInputStream(new FileInputStream(file))
       var b = in.read()
       while (b > -1) {
         zip.write(b)
@@ -786,4 +751,21 @@ object CommonUtil {
     connProperties.setProperty("password", pass)
     connProperties
   }
+
+  def getS3File(bucket: String, file: String): String = {
+    "s3n://" + bucket + "/" + file;
+  }
+  
+  def getS3FileWithoutPrefix(bucket: String, file: String): String = {
+    bucket + "/" + file;
+  }
+
+  def getAzureFile(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
+    "wasb://" + bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+  
+  def getAzureFileWithoutPrefix(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
+    bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+
 }

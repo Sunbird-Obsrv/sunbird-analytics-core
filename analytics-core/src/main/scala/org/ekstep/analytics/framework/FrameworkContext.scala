@@ -4,14 +4,16 @@ import ing.wbaa.druid.DruidConfig
 import ing.wbaa.druid.client.DruidClient
 import org.sunbird.cloud.storage.BaseStorageService
 import org.sunbird.cloud.storage.conf.AppConf
-import org.sunbird.cloud.storage.factory.{StorageConfig, StorageServiceFactory}
+import org.sunbird.cloud.storage.factory.{ StorageServiceFactory }
 
 import scala.collection.mutable.Map
+import org.ekstep.analytics.framework.util.HadoopFileUtil
 
 class FrameworkContext {
 
   var dc: DruidClient = null;
   var storageContainers: Map[String, BaseStorageService] = Map();
+  val fileUtil = new HadoopFileUtil();
 
   def initialize(storageServices: Option[Array[(String, String, String)]]) {
     dc = DruidConfig.DefaultConfig.client;
@@ -26,9 +28,13 @@ class FrameworkContext {
     getStorageService(storageType, storageType, storageType);
   }
 
+  def getHadoopFileUtil(): HadoopFileUtil = {
+    return fileUtil;
+  }
+
   def getStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
     if (!storageContainers.contains(storageType + "|" + storageKey)) {
-      storageContainers.put(storageType, StorageServiceFactory.getStorageService(StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
+      storageContainers.put(storageType, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
     }
     storageContainers.get(storageType).get
   }
