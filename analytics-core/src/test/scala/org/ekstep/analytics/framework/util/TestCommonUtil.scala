@@ -281,6 +281,18 @@ class TestCommonUtil extends BaseSpec {
         connectionProperties.getProperty("user") should be("postgres")
         connectionProperties.getProperty("password") should be("postgres")
         connectionProperties.getProperty("driver") should be("org.postgresql.Driver")
+
+        implicit val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"))
+        val defaultCaseConf = CommonUtil.setStorageConf("local", Option(""), Option(""))
+
+        val azureStorageConf = CommonUtil.setStorageConf("azure", Option("azure_storage_key"), Option("azure_storage_secret"))
+        azureStorageConf.get("fs.azure") should be ("org.apache.hadoop.fs.azure.NativeAzureFileSystem")
+        azureStorageConf.get("fs.azure.account.key.azure-test-key.blob.core.windows.net") should be ("azure-test-secret")
+
+        val s3StorageConf = CommonUtil.setStorageConf("s3", Option("aws_storage_key"), Option("aws_storage_secret"))
+        s3StorageConf.get("fs.s3n.awsAccessKeyId") should be ("aws-test-key")
+        s3StorageConf.get("fs.s3n.awsSecretAccessKey") should be ("aws-test-secret")
+        sc.stop()
     }
     
     it should "test all the exception branches" in {
