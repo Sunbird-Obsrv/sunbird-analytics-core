@@ -12,7 +12,7 @@ import scala.collection.mutable.ListBuffer
 import org.joda.time.format.DateTimeFormat
 import org.ekstep.analytics.framework.Period._
 
-class TestCommonUtil extends BaseSpec {
+class TestCommonUtil extends SparkSpec {
 
     it should "pass test case of all methods in CommonUtil" in {
         try {
