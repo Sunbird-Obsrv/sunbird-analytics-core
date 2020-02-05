@@ -283,6 +283,8 @@ class TestCommonUtil extends BaseSpec {
         connectionProperties.getProperty("driver") should be("org.postgresql.Driver")
 
         implicit val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"))
+        val defaultCaseConf = CommonUtil.setStorageConf("local", Option(""), Option(""))
+
         val azureStorageConf = CommonUtil.setStorageConf("azure", Option("azure_storage_key"), Option("azure_storage_secret"))
         azureStorageConf.get("fs.azure") should be ("org.apache.hadoop.fs.azure.NativeAzureFileSystem")
         azureStorageConf.get("fs.azure.account.key.azure-test-key.blob.core.windows.net") should be ("azure-test-secret")
