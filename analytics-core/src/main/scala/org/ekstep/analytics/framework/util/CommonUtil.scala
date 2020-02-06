@@ -3,18 +3,19 @@ package org.ekstep.analytics.framework.util
 import java.io._
 import java.net.URL
 import java.nio.file.Paths.get
-import java.nio.file.{ Files, Paths, StandardCopyOption }
+import java.nio.file.{Files, Paths, StandardCopyOption}
 import java.security.MessageDigest
 import java.sql.Timestamp
-import java.util.{ Date, Properties }
+import java.util.{Date, Properties}
 import java.util.zip.GZIPOutputStream
 
-import ing.wbaa.druid.definitions.{ Granularity, GranularityType }
+import ing.wbaa.druid.definitions.{Granularity, GranularityType}
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{ SparkConf, SparkContext }
+import org.apache.spark.{SparkConf, SparkContext}
 import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.Period._
-import org.ekstep.analytics.framework.{ DtRange, Event, JobConfig, _ }
+import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
 
 import scala.collection.mutable.ListBuffer
 //import org.ekstep.analytics.framework.conf.AppConf
@@ -701,6 +702,20 @@ object CommonUtil {
   
   def getAzureFileWithoutPrefix(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
     bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+
+  def setStorageConf(store: String, accountKey: Option[String], accountSecret: Option[String])(implicit sc: SparkContext): Configuration = {
+    store.toLowerCase() match {
+      case "s3" =>
+        sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")));
+        sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getConfig(accountSecret.getOrElse("aws_storage_secret")));
+      case "azure" =>
+        sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
+        sc.hadoopConfiguration.set("fs.azure.account.key." + AppConf.getConfig(accountKey.getOrElse("azure_storage_key")) + ".blob.core.windows.net", AppConf.getConfig(accountSecret.getOrElse("azure_storage_secret")))
+      case _ =>
+      // Do nothing
+    }
+    sc.hadoopConfiguration
   }
 
 }

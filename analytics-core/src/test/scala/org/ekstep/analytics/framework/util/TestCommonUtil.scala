@@ -156,9 +156,9 @@ class TestCommonUtil extends BaseSpec {
       CommonUtil.getMessageId("ME_TEST", "123", "MONTH", DtRange(1451650400000L, 1451650400000L)) should be("1D99B2F1C6637AE21081CD981AFFB56F");
       CommonUtil.getMessageId("ME_TEST", "123", "MONTH", DtRange(1451650400000L, 1451650400000L), "org.ekstep.aser.lite") should be("6D5DCB288B1A9BC3036D04C37FF08EDF");
 
-      CommonUtil.getMessageId("ME_TEST", "123", "MONTH", DtRange(1451650400000L, 1451650400000L), "content1", Option("app1"), Option("channel1"), "device1") should be ("4DE94D28FB211D935B70DADBEB8B45EA");
-      CommonUtil.getMessageId("ME_TEST", "123", "MONTH", DtRange(1451650400000L, 1451650400000L), "content1", None, None, "device1") should be ("B5D001443E9BEFF7884FFB1F9B2A5CAD");
-      
+      CommonUtil.getMessageId("ME_TEST", "123", "MONTH", DtRange(1451650400000L, 1451650400000L), "content1", Option("app1"), Option("channel1"), "device1") should be("4DE94D28FB211D935B70DADBEB8B45EA");
+      CommonUtil.getMessageId("ME_TEST", "123", "MONTH", DtRange(1451650400000L, 1451650400000L), "content1", None, None, "device1") should be("B5D001443E9BEFF7884FFB1F9B2A5CAD");
+
       CommonUtil.getMessageId("ME_TEST", "INFO", 1451650400000L, Option("sunbird.app"), None) should be("C0D5CA578D9F8889CDB2C09FF4899FAC");
       CommonUtil.getMessageId("ME_TEST", "INFO", 1451650400000L, None, Option("testchannel")) should be("6625F709DD90A7423F0332826DE0F386");
 
@@ -239,7 +239,7 @@ class TestCommonUtil extends BaseSpec {
     val event = "{\"eid\":\"OE_INTERACT\", \"channel\": \"sunbird\", \"ts\":\"2016-05-05T11:13:04.305+0530\",\"ets\":1462426984305,\"ver\":\"2.0\",\"gdata\":{\"id\":\"org.ekstep.story.en.haircut\",\"ver\":\"1\"},\"sid\":\"2b927be8-6a74-460b-aa20-0c991bcf57f6\",\"uid\":\"40550853-c88c-4f6b-8d33-88d0f47c32f4\",\"did\":\"d601e461a64b06f8828886e2f740e1688491a0a8\",\"edata\":{\"eks\":{\"score\":0,\"atmpts\":0,\"failedatmpts\":0,\"type\":\"LISTEN\",\"extype\":\"\",\"id\":\"splash:cover_sound\",\"stageid\":\"splash\",\"uri\":\"\",\"subtype\":\"PLAY\",\"pos\":[],\"values\":[],\"tid\":\"\",\"rating\":0.0}},\"tags\":[{\"genie\":[\"becb887fe82f24c644482eb30041da6d88bd8150\"]}],\"metadata\":{\"sync_timestamp\":\"2016-11-19T23:12:28+00:00\",\"public\":\"true\"},\"@timestamp\":\"2016-11-09T08:16:35.699Z\"}"
     val channelId = CommonUtil.getChannelId(JSONUtils.deserialize[Event](event))
     channelId should be("sunbird")
-    
+
     CommonUtil.getChannelId(JSONUtils.deserialize[Event]("{\"eid\":\"OE_INTERACT\", \"ts\":\"2016-05-05T11:13:04.305+0530\",\"ets\":1462426984305,\"ver\":\"2.0\",\"gdata\":{\"id\":\"org.ekstep.story.en.haircut\",\"ver\":\"1\"},\"sid\":\"2b927be8-6a74-460b-aa20-0c991bcf57f6\",\"uid\":\"40550853-c88c-4f6b-8d33-88d0f47c32f4\",\"did\":\"d601e461a64b06f8828886e2f740e1688491a0a8\",\"edata\":{\"eks\":{\"score\":0,\"atmpts\":0,\"failedatmpts\":0,\"type\":\"LISTEN\",\"extype\":\"\",\"id\":\"splash:cover_sound\",\"stageid\":\"splash\",\"uri\":\"\",\"subtype\":\"PLAY\",\"pos\":[],\"values\":[],\"tid\":\"\",\"rating\":0.0}},\"tags\":[{\"genie\":[\"becb887fe82f24c644482eb30041da6d88bd8150\"]}],\"metadata\":{\"sync_timestamp\":\"2016-11-19T23:12:28+00:00\",\"public\":\"true\"},\"@timestamp\":\"2016-11-09T08:16:35.699Z\"}")) should be("in.ekstep")
 
     val drivedEvent = "{\"eid\":\"ME_CE_SESSION_SUMMARY\",\"ets\":1495515314134,\"syncts\":1495456436116,\"ver\":\"1.0\",\"mid\":\"37E9E91997249D12F06C1D4869E286DE\",\"uid\":\"562\",\"content_id\":\"do_2122315986551685121193\",\"context\":{\"pdata\":{\"id\":\"AnalyticsDataPipeline\",\"model\":\"ContentEditorSessionSummary\",\"ver\":\"1.0\"},\"granularity\":\"SESSION\",\"date_range\":{\"from\":1495456435738,\"to\":1495456436116}},\"dimensions\":{\"sid\":\"5edg6dsos4bun8q8utp0k9gqa0\"},\"edata\":{\"eks\":{\"interact_events_per_min\":0.0,\"start_time\":1495456435738,\"plugin_summary\":{\"loaded_count\":0,\"plugins_added\":0,\"plugins_removed\":0,\"plugins_modified\":0,\"per_plugin_summary\":[]},\"menu_events_count\":0,\"interact_events_count\":0,\"end_time\":1495456436116,\"events_summary\":[{\"id\":\"CE_API_CALL\",\"count\":3}],\"sidebar_events_count\":0,\"time_diff\":0.38,\"api_calls_count\":3,\"stage_summary\":{\"stages_added\":0,\"stages_removed\":0,\"stages_modified\":0},\"load_time\":0.0,\"save_summary\":{\"total_count\":0,\"success_count\":0,\"failed_count\":0},\"time_spent\":0.38}}}"
@@ -249,20 +249,20 @@ class TestCommonUtil extends BaseSpec {
     val profileEvent = "{\"eid\":\"ME_SESSION_SUMMARY\",\"ets\":1453207660735,\"syncts\":1453207660735,\"ver\":\"1.0\",\"uid\":\"8b4f3775-6f65-4abf-9afa-b15b8f82a24b\",\"context\":{\"pdata\":{\"id\":\"AnalyticsDataPipeline\",\"model\":\"GenericSessionSummarizer\",\"ver\":\"1.1\"},\"granularity\":\"SESSION\",\"dt_range\":{\"from\":1450079174000,\"to\":1450079337000}},\"dimensions\":{\"gdata\":{\"id\":\"org.ekstep.aser\",\"ver\":\"5.6.1\"},\"loc\":\"22.6370684,77.5506687\"},\"edata\":{\"eks\":{\"startTime\":1450079174000,\"noOfLevelTransitions\":1,\"levels\":[{\"choices\":[],\"domain\":\"\",\"noOfAttempts\":1,\"level\":\"Can do subtraction\"},{\"choices\":[\"q_4_s_hindi\",\"q_sub_q1127\",\"q_sub_q1126\"],\"domain\":\"\",\"noOfAttempts\":1,\"level\":\"Can read story\"}],\"activitySummary\":{\"TOUCH\":{\"count\":21,\"timeSpent\":161.0}},\"noOfAttempts\":1,\"timeSpent\":6206.0,\"interactEventsPerMin\":0.2,\"endTime\":1450079337000,\"eventsSummary\":{\"OE_START\":1,\"OE_INTERACT\":21,\"OE_ASSESS\":3,\"OE_END\":1,\"OE_LEVEL_SET\":2},\"currentLevel\":{\"numeracy\":\"Can do subtraction\",\"literacy\":\"Can read story\"},\"noOfInteractEvents\":21,\"interruptTime\":0.0,\"itemResponses\":[{\"itemId\":\"q_4_s_hindi\",\"itype\":\"recognition\",\"ilevel\":\"MEDIUM\",\"timeSpent\":29.0,\"res\":[\"अत्चा\"],\"mc\":[],\"score\":1,\"timeStamp\":1450079266000,\"maxScore\":1,\"domain\":\"literacy\"},{\"itemId\":\"q_sub_q1127\",\"itype\":\"ftb\",\"ilevel\":\"MEDIUM\",\"timeSpent\":33.0,\"res\":[\"49\"],\"mc\":[],\"score\":1,\"timeStamp\":1450079299000,\"maxScore\":1,\"domain\":\"numeracy\"},{\"itemId\":\"q_sub_q1126\",\"itype\":\"ftb\",\"ilevel\":\"MEDIUM\",\"timeSpent\":27.0,\"res\":[\"17\"],\"mc\":[],\"score\":1,\"timeStamp\":1450079322000,\"maxScore\":1,\"domain\":\"numeracy\"}]}}}"
     val channelId2 = CommonUtil.getChannelId(JSONUtils.deserialize[ProfileEvent](profileEvent))
     channelId2 should be("in.ekstep")
-    
-    CommonUtil.getChannelId("") should be ("in.ekstep")
-    
-    CommonUtil.getChannelId(new V3Event(null, 0l, null, null, null, null, V3Context(null, Option(V3PData("sunbird.app", Option("2.0"))), null, None, None, None, None), None, null)) should be ("in.ekstep")
-    CommonUtil.getChannelId(new V3Event(null, 0l, null, null, null, null, V3Context("sunbird", Option(V3PData("sunbird.app", None)), null, None, None, None, None), None, null)) should be ("sunbird")
-    CommonUtil.getChannelId(DerivedEvent(null, 0l, 0l, null, null, null, "sunbird", None, None, null, Dimensions(None, None, None, None, None, None, Option(PData("sunbird.app", "1.0"))), null)) should be ("sunbird")
-    CommonUtil.getChannelId(DerivedEvent(null, 0l, 0l, null, null, null, "sunbird", None, None, null, Dimensions(None, None, None, None, None, None, Option(PData("sunbird.app", "1.0")), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, Option("sunbird")), null)) should be ("sunbird")
-    CommonUtil.getChannelId(new ProfileEvent(null, null, null, null, null, null, null, null, Option(new PData("sunbird.app", "2.0")), Option("sunbird"), null)) should be ("sunbird")
+
+    CommonUtil.getChannelId("") should be("in.ekstep")
+
+    CommonUtil.getChannelId(new V3Event(null, 0l, null, null, null, null, V3Context(null, Option(V3PData("sunbird.app", Option("2.0"))), null, None, None, None, None), None, null)) should be("in.ekstep")
+    CommonUtil.getChannelId(new V3Event(null, 0l, null, null, null, null, V3Context("sunbird", Option(V3PData("sunbird.app", None)), null, None, None, None, None), None, null)) should be("sunbird")
+    CommonUtil.getChannelId(DerivedEvent(null, 0l, 0l, null, null, null, "sunbird", None, None, null, Dimensions(None, None, None, None, None, None, Option(PData("sunbird.app", "1.0"))), null)) should be("sunbird")
+    CommonUtil.getChannelId(DerivedEvent(null, 0l, 0l, null, null, null, "sunbird", None, None, null, Dimensions(None, None, None, None, None, None, Option(PData("sunbird.app", "1.0")), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, Option("sunbird")), null)) should be("sunbird")
+    CommonUtil.getChannelId(new ProfileEvent(null, null, null, null, null, null, null, null, Option(new PData("sunbird.app", "2.0")), Option("sunbird"), null)) should be("sunbird")
 
     // getAppDetails
     val event1 = "{\"eid\":\"OE_INTERACT\", \"channel\": \"in.ekstep\", \"ts\":\"2016-05-05T11:13:04.305+0530\",\"ets\":1462426984305,\"ver\":\"2.0\",\"gdata\":{\"id\":\"org.ekstep.story.en.haircut\",\"ver\":\"1\"},\"sid\":\"2b927be8-6a74-460b-aa20-0c991bcf57f6\",\"uid\":\"40550853-c88c-4f6b-8d33-88d0f47c32f4\",\"did\":\"d601e461a64b06f8828886e2f740e1688491a0a8\",\"edata\":{\"eks\":{\"score\":0,\"atmpts\":0,\"failedatmpts\":0,\"type\":\"LISTEN\",\"extype\":\"\",\"id\":\"splash:cover_sound\",\"stageid\":\"splash\",\"uri\":\"\",\"subtype\":\"PLAY\",\"pos\":[],\"values\":[],\"tid\":\"\",\"rating\":0.0}},\"tags\":[{\"genie\":[\"becb887fe82f24c644482eb30041da6d88bd8150\"]}],\"metadata\":{\"sync_timestamp\":\"2016-11-19T23:12:28+00:00\",\"public\":\"true\"},\"@timestamp\":\"2016-11-09T08:16:35.699Z\"}"
     val appId = CommonUtil.getAppDetails(JSONUtils.deserialize[Event](event))
     appId.id should be("genie")
-    
+
     val event2 = "{\"eid\":\"OE_INTERACT\", \"channel\": \"in.ekstep\", \"ts\":\"2016-05-05T11:13:04.305+0530\",\"ets\":1462426984305,\"ver\":\"2.0\",\"pdata\":{\"id\":\"org.ekstep.story.en.haircut\",\"ver\":\"1\"},\"gdata\":{\"id\":\"org.ekstep.story.en.haircut\",\"ver\":\"1\"},\"sid\":\"2b927be8-6a74-460b-aa20-0c991bcf57f6\",\"uid\":\"40550853-c88c-4f6b-8d33-88d0f47c32f4\",\"did\":\"d601e461a64b06f8828886e2f740e1688491a0a8\",\"edata\":{\"eks\":{\"score\":0,\"atmpts\":0,\"failedatmpts\":0,\"type\":\"LISTEN\",\"extype\":\"\",\"id\":\"splash:cover_sound\",\"stageid\":\"splash\",\"uri\":\"\",\"subtype\":\"PLAY\",\"pos\":[],\"values\":[],\"tid\":\"\",\"rating\":0.0}},\"tags\":[{\"genie\":[\"becb887fe82f24c644482eb30041da6d88bd8150\"]}],\"metadata\":{\"sync_timestamp\":\"2016-11-19T23:12:28+00:00\",\"public\":\"true\"},\"@timestamp\":\"2016-11-09T08:16:35.699Z\"}"
     val appId3 = CommonUtil.getAppDetails(JSONUtils.deserialize[Event](event2))
     appId3.id should be("org.ekstep.story.en.haircut")
@@ -274,14 +274,14 @@ class TestCommonUtil extends BaseSpec {
     val profileEvent1 = "{\"eid\":\"ME_SESSION_SUMMARY\",\"ets\":1453207660735,\"syncts\":1453207660735,\"ver\":\"1.0\",\"uid\":\"8b4f3775-6f65-4abf-9afa-b15b8f82a24b\",\"context\":{\"pdata\":{\"id\":\"AnalyticsDataPipeline\",\"model\":\"GenericSessionSummarizer\",\"ver\":\"1.1\"},\"granularity\":\"SESSION\",\"dt_range\":{\"from\":1450079174000,\"to\":1450079337000}},\"dimensions\":{\"gdata\":{\"id\":\"org.ekstep.aser\",\"ver\":\"5.6.1\"},\"loc\":\"22.6370684,77.5506687\"},\"edata\":{\"eks\":{\"startTime\":1450079174000,\"noOfLevelTransitions\":1,\"levels\":[{\"choices\":[],\"domain\":\"\",\"noOfAttempts\":1,\"level\":\"Can do subtraction\"},{\"choices\":[\"q_4_s_hindi\",\"q_sub_q1127\",\"q_sub_q1126\"],\"domain\":\"\",\"noOfAttempts\":1,\"level\":\"Can read story\"}],\"activitySummary\":{\"TOUCH\":{\"count\":21,\"timeSpent\":161.0}},\"noOfAttempts\":1,\"timeSpent\":6206.0,\"interactEventsPerMin\":0.2,\"endTime\":1450079337000,\"eventsSummary\":{\"OE_START\":1,\"OE_INTERACT\":21,\"OE_ASSESS\":3,\"OE_END\":1,\"OE_LEVEL_SET\":2},\"currentLevel\":{\"numeracy\":\"Can do subtraction\",\"literacy\":\"Can read story\"},\"noOfInteractEvents\":21,\"interruptTime\":0.0,\"itemResponses\":[{\"itemId\":\"q_4_s_hindi\",\"itype\":\"recognition\",\"ilevel\":\"MEDIUM\",\"timeSpent\":29.0,\"res\":[\"अत्चा\"],\"mc\":[],\"score\":1,\"timeStamp\":1450079266000,\"maxScore\":1,\"domain\":\"literacy\"},{\"itemId\":\"q_sub_q1127\",\"itype\":\"ftb\",\"ilevel\":\"MEDIUM\",\"timeSpent\":33.0,\"res\":[\"49\"],\"mc\":[],\"score\":1,\"timeStamp\":1450079299000,\"maxScore\":1,\"domain\":\"numeracy\"},{\"itemId\":\"q_sub_q1126\",\"itype\":\"ftb\",\"ilevel\":\"MEDIUM\",\"timeSpent\":27.0,\"res\":[\"17\"],\"mc\":[],\"score\":1,\"timeStamp\":1450079322000,\"maxScore\":1,\"domain\":\"numeracy\"}]}}}"
     val appId2 = CommonUtil.getAppDetails(JSONUtils.deserialize[ProfileEvent](profileEvent1))
     appId2.id should be("genie")
-    
-    CommonUtil.getAppDetails(new V3Event(null, 0l, null, null, null, null, V3Context(null, Option(V3PData("sunbird.app", Option("2.0"))), null, None, None, None, None), None, null)).id should be ("sunbird.app")
-    CommonUtil.getAppDetails(new V3Event(null, 0l, null, null, null, null, V3Context(null, Option(V3PData("sunbird.app", None)), null, None, None, None, None), None, null)).id should be ("sunbird.app")
-    CommonUtil.getAppDetails(new V3Event(null, 0l, null, null, null, null, V3Context(null, None, null, None, None, None, None), None, null)).id should be ("genie")
-    
-    CommonUtil.getAppDetails(new ProfileEvent(null, null, null, null, null, null, null, null, Option(new PData("sunbird.app", "2.0")), None, null)).id should be ("sunbird.app")
-    CommonUtil.getAppDetails(DerivedEvent(null, 0l, 0l, null, null, null, null, None, None, null, Dimensions(None, None, None, None, None, None, Option(PData("sunbird.app", "1.0"))), null)).id should be ("sunbird.app")
-    CommonUtil.getAppDetails("").id should be ("genie");
+
+    CommonUtil.getAppDetails(new V3Event(null, 0l, null, null, null, null, V3Context(null, Option(V3PData("sunbird.app", Option("2.0"))), null, None, None, None, None), None, null)).id should be("sunbird.app")
+    CommonUtil.getAppDetails(new V3Event(null, 0l, null, null, null, null, V3Context(null, Option(V3PData("sunbird.app", None)), null, None, None, None, None), None, null)).id should be("sunbird.app")
+    CommonUtil.getAppDetails(new V3Event(null, 0l, null, null, null, null, V3Context(null, None, null, None, None, None, None), None, null)).id should be("genie")
+
+    CommonUtil.getAppDetails(new ProfileEvent(null, null, null, null, null, null, null, null, Option(new PData("sunbird.app", "2.0")), None, null)).id should be("sunbird.app")
+    CommonUtil.getAppDetails(DerivedEvent(null, 0l, 0l, null, null, null, null, None, None, null, Dimensions(None, None, None, None, None, None, Option(PData("sunbird.app", "1.0"))), null)).id should be("sunbird.app")
+    CommonUtil.getAppDetails("").id should be("genie");
 
     //getEndTimestampOfDay
     val time = CommonUtil.getEndTimestampOfDay("2016-01-02")
@@ -307,6 +307,18 @@ class TestCommonUtil extends BaseSpec {
     connectionProperties.getProperty("user") should be("postgres")
     connectionProperties.getProperty("password") should be("postgres")
     connectionProperties.getProperty("driver") should be("org.postgresql.Driver")
+
+    implicit val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"))
+    val defaultCaseConf = CommonUtil.setStorageConf("local", Option(""), Option(""))
+
+    val azureStorageConf = CommonUtil.setStorageConf("azure", Option("azure_storage_key"), Option("azure_storage_secret"))
+    azureStorageConf.get("fs.azure") should be("org.apache.hadoop.fs.azure.NativeAzureFileSystem")
+    azureStorageConf.get("fs.azure.account.key.azure-test-key.blob.core.windows.net") should be("azure-test-secret")
+
+    val s3StorageConf = CommonUtil.setStorageConf("s3", Option("aws_storage_key"), Option("aws_storage_secret"))
+    s3StorageConf.get("fs.s3n.awsAccessKeyId") should be("aws-test-key")
+    s3StorageConf.get("fs.s3n.awsSecretAccessKey") should be("aws-test-secret")
+    sc.stop()
   }
 
   it should "test all the exception branches" in {
@@ -320,7 +332,7 @@ class TestCommonUtil extends BaseSpec {
       val sc = CommonUtil.getSparkSession(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), Option("Quorum"))
       sc.stop();
     }
-    
+
     noException should be thrownBy {
       val sc = CommonUtil.getSparkSession(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), None)
       sc.stop();
@@ -367,6 +379,6 @@ class TestCommonUtil extends BaseSpec {
     val eventListener = new TestEventListener();
     EventBusUtil.register(eventListener)
     EventBusUtil.dipatchEvent("Test Event");
-    eventListener.event should be ("Test Event")
+    eventListener.event should be("Test Event")
   }
 }
