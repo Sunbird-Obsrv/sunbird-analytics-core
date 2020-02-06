@@ -133,16 +133,6 @@ object DataFilter {
                     val eventMap = CommonUtil.caseClassToMap(event)
                     CommonUtil.getTimestamp(eventMap.get("$attimestamp").get.asInstanceOf[String]).asInstanceOf[AnyRef];
                 }
-            case "gameId" =>
-                val gid = getBeanProperty(event, "edata.eks.gid");
-                if (null == gid)
-                    getBeanProperty(event, "gdata.id");
-                else
-                    gid;
-            case "genieTag" =>
-                val tags = if(event.isInstanceOf[Event]) CommonUtil.getETags(event.asInstanceOf[Event]).app else getBeanProperty(event, "etags").asInstanceOf[ETags].app;
-                if (tags.isDefined) tags.get else List()
-            case "gameVersion"      => getBeanProperty(event, "gdata.ver");
             case "userId"           => getBeanProperty(event, "uid");
             case "sessionId"        => getBeanProperty(event, "sid");
             case "telemetryVersion" => getBeanProperty(event, "ver");

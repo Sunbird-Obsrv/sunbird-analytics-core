@@ -24,7 +24,7 @@ object TestModel2 extends IBatchModel[MeasuredEvent, String] with Serializable {
 
 object TestModel3 extends IBatchModel[MeasuredEvent, String] with Serializable {
 
-    def execute(events: RDD[MeasuredEvent], jobParams: Option[Map[String, AnyRef]])(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
+      def execute(events: RDD[MeasuredEvent], jobParams: Option[Map[String, AnyRef]])(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
         val contents = events.map { x => x.content_id.getOrElse("") }
         contents;
     }
@@ -176,6 +176,7 @@ class TestJobDriver extends FlatSpec with Matchers with BeforeAndAfterAll {
             JobDriver.run[MeasuredEvent, String]("batch", JSONUtils.serialize(jobConfig), models, "TestMergeJobs");
             CommonUtil.closeSparkContext()(sc.get);
         }
+        
     }
 
     it should "run the stream job driver on multiple models" in {
@@ -199,3 +200,4 @@ class TestJobDriver extends FlatSpec with Matchers with BeforeAndAfterAll {
         }
     }
 }
+

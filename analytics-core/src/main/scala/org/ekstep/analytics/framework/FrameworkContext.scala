@@ -34,9 +34,9 @@ class FrameworkContext {
 
   def getStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
     if (!storageContainers.contains(storageType + "|" + storageKey)) {
-      storageContainers.put(storageType, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
+      storageContainers.put(storageType + "|" + storageKey, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
     }
-    storageContainers.get(storageType).get
+    storageContainers.get(storageType + "|" + storageKey).get
   }
 
   def setDruidClient(druidClient: DruidClient) {
@@ -55,7 +55,7 @@ class FrameworkContext {
   }
 
   def shutdownStorageService() = {
-    if (null != storageContainers) {
+    if (storageContainers.nonEmpty) {
       storageContainers.foreach(f => f._2.closeContext());
     }
   }

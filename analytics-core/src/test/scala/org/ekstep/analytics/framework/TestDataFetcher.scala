@@ -5,6 +5,8 @@ import org.ekstep.analytics.framework.util.JSONUtils
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.sunbird.cloud.storage.BaseStorageService
+import org.ekstep.analytics.framework.fetcher.S3DataFetcher
+import org.ekstep.analytics.framework.fetcher.AzureDataFetcher
 
 /**
  * @author Santhosh
@@ -42,6 +44,12 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
             Query(None, None, None, None, None, None, None, None, None, Option("src/test/resources/sample_telemetry.log"))
         )));
         val rdd1 = DataFetcher.fetchBatchData[TestDataFetcher](search1);
+        rdd1.count should be (0)
+        
+        val search2 = Fetcher("local", None, Option(Array(
+            Query(None, None, None, None, None, None, None, None, None, None)
+        )));
+        val rdd2 = DataFetcher.fetchBatchData[TestDataFetcher](search2);
         rdd1.count should be (0)
     }
     
@@ -103,5 +111,17 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
         fc.getStorageService("azure") should not be (null)
         val rdd = DataFetcher.fetchBatchData[Event](Fetcher("none", None, None));
         rdd.isEmpty() should be (true)
+    }
+    
+    it should "cover the missing branches in S3DataFetcher, AzureDataFetcher and DruidDataFetcher" in {
+      implicit val fc = new FrameworkContext();
+      var query = JSONUtils.deserialize[Query]("""{"bucket":"test-container","prefix":"test/","folder":"true","endDate":"2020-01-10"}""")
+      S3DataFetcher.getObjectKeys(Array(query)).head should be ("s3n://test-container/test/2020-01-10")
+      AzureDataFetcher.getObjectKeys(Array(query)).head should be ("wasb://test-container@.blob.core.windows.net/test/2020-01-10")
+      
+      query = JSONUtils.deserialize[Query]("""{"bucket":"test-container","prefix":"test/","folder":"true","endDate":"2020-01-10","excludePrefix":"test"}""")
+      S3DataFetcher.getObjectKeys(Array(query)).size should be (0)
+      AzureDataFetcher.getObjectKeys(Array(query)).size should be (0)
+      
     }
 }
