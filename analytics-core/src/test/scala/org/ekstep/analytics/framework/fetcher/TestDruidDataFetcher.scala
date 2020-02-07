@@ -69,6 +69,13 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val javascriptExprWithoutName = DruidDataFetcher.getAggregationByType(AggregationType.Javascript, None, "field",
             Option("function(current, edata_size) { return current + (edata_size == 0 ? 1 : 0); }"),
             Option("function(partialA, partialB) { return partialA + partialB; }"), Option("function () { return 0; }"))
+            
+        a[Exception] should be thrownBy {
+          DruidDataFetcher.getAggregationByType(AggregationType.Filtered, Option("Last"), "field", None, None, None)
+        }
+        
+        DruidDataFetcher.getAggregation(Option(List(Aggregation(Option("count"), "test", "field")))).head.getName should be ("count");
+                 
     }
 
     it should "check for getFilterTypes methods" in {
@@ -97,6 +104,41 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val greaterThanExpr = DruidDataFetcher.getFilterByType("greaterthan", "field", List(0.asInstanceOf[AnyRef]))
 
         val lessThanExpr = DruidDataFetcher.getFilterByType("lessthan", "field", List(1000.asInstanceOf[AnyRef]))
+        
+        a[Exception] should be thrownBy {
+          DruidDataFetcher.getFilterByType("test", "field", List(1000.asInstanceOf[AnyRef]))
+        }
+        
+        DruidDataFetcher.getFilter(None) should be (None)
+        
+        DruidDataFetcher.getFilter(Option(List(DruidFilter("in", "eid", None, None)))).get.asFilter.toString() should be ("AndFilter(List(InFilter(eid,List(),None)))")
+        DruidDataFetcher.getFilter(Option(List(DruidFilter("in", "eid", Option("START"), None)))).get.asFilter.toString() should be ("AndFilter(List(InFilter(eid,List(START),None)))")
+    }
+    
+    it should "check for getGroupByHaving methods" in {
+      
+       var filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])));
+       filteringExpr.get.asFilter.toString() should be ("BoundFilter(doubleSum,None,Some(20.0),None,Some(true),Some(Numeric),None)")
+       
+       filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("equalTo", "user_id", "user1")));
+       filteringExpr.get.asFilter.toString() should be ("SelectFilter(user_id,Some(user1),None)")
+       
+       filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("not", "user_id", "user1")));
+       filteringExpr.get.asFilter.toString() should be ("NotFilter(SelectFilter(user_id,Some(user1),None))")
+       
+       filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("greaterThan", "doubleSum", 20.asInstanceOf[AnyRef])));
+       filteringExpr.get.asFilter.toString() should be ("BoundFilter(doubleSum,Some(20.0),None,Some(true),None,Some(Numeric),None)")
+       
+       a[Exception] should be thrownBy {
+         DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("and", "doubleSum", 20.asInstanceOf[AnyRef])));
+       }
+       
+       a[Exception] should be thrownBy {
+         DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("in", "doubleSum", 20.asInstanceOf[AnyRef])));
+       }
+       
+       DruidDataFetcher.getGroupByHaving(None) should be (None);
+       
     }
 
     it should "check for getPostAggregation methods" in {
@@ -114,13 +156,50 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         divisionExpr.getName.toString should be ("Division")
 
         val javaScriptExpr = DruidDataFetcher.getPostAggregationByType(PostAggregationType.Javascript, "Percentage", PostAggregationFields("fieldA", "fieldB"), "function(a, b) { return (a / b) * 100; }")
+        
+        val additionExpr2 = DruidDataFetcher.getPostAggregationByType(PostAggregationType.Arithmetic, "Addition", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "+")
+        additionExpr2.getName.toString should be ("Addition")
+
+        val subtractionExpr2 = DruidDataFetcher.getPostAggregationByType(PostAggregationType.Arithmetic, "Subtraction", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "-")
+        subtractionExpr2.getName.toString should be ("Subtraction")
+
+        val multiplicationExpr2 = DruidDataFetcher.getPostAggregationByType(PostAggregationType.Arithmetic, "Product", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "*")
+        multiplicationExpr2.getName.toString should be ("Product")
+
+        val divisionExpr2 = DruidDataFetcher.getPostAggregationByType(PostAggregationType.Arithmetic, "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/")
+        divisionExpr2.getName.toString should be ("Division")
+        
+        a[Exception] should be thrownBy {
+          DruidDataFetcher.getPostAggregation(Option(List(PostAggregation("longLeast", "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/"))))
+        }
+        
+        a[Exception] should be thrownBy {
+          DruidDataFetcher.getPostAggregation(Option(List(PostAggregation("test", "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/"))))
+        }
+        
+        DruidDataFetcher.getPostAggregation(None) should be (None);
+
+    }
+    
+    it should "test the getDruidQuery method" in {
+      var query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), None, None, None)
+      var druidQuery = DruidDataFetcher.getDruidQuery(query)
+      druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),None,List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,None,None,List(),Map())");
+      
+      query = DruidQueryModel("topN", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), None, None, None)
+      druidQuery = DruidDataFetcher.getDruidQuery(query)
+      druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-11-01/2019-11-02),Day,None,List(),Map())");
+      
+      query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, None, None, None)
+      druidQuery = DruidDataFetcher.getDruidQuery(query)
+      druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),None,Day,false,List(),Map())");
     }
     
     it should "fetch the data from druid using groupBy query type" in {
 
-        val query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))))
+        val query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])), Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
-        druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,None,None,List(),Map())")
+        druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,Some(LessThanHaving(doubleSum,20.0)),None,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
         
         val json: String = """
           {
@@ -146,37 +225,68 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
     
     it should "fetch the data from druid using timeseries query type" in {
 
-        val query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))))
+        val query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), None, Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
         val druidQuery = DruidDataFetcher.getDruidQuery(query);
-        druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),Day,false,List(),Map())");
+        druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),Day,false,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())");
         
-        val json: String = """
+        var json: String = """
           {
               "total_scans" : 9007,
               "producer_id" : "dev.sunbird.learning.platform"
           }
         """
-        val doc: Json = parse(json).getOrElse(Json.Null);
-        val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        val druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
+        var doc: Json = parse(json).getOrElse(Json.Null);
+        var results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
+        var druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
 
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
         (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
-        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient);
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
-        val druidResult = DruidDataFetcher.getDruidData(query)
+        var druidResult = DruidDataFetcher.getDruidData(query)
         
         druidResult.size should be (1)
         druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+        
+        json = """
+          {
+              "total_scans" : null,
+              "producer_id" : "dev.sunbird.learning.platform"
+          }
+        """
+        doc = parse(json).getOrElse(Json.Null);
+        results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
+        druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
+        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+
+        druidResult = DruidDataFetcher.getDruidData(query)
+        
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"total_scans":"unknown","producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+        
+        json = """
+          {
+              "total_scans" : {},
+              "producer_id" : "dev.sunbird.learning.platform"
+          }
+        """
+        doc = parse(json).getOrElse(Json.Null);
+        results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
+        druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
+        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+
+        druidResult = DruidDataFetcher.getDruidData(query)
+        
+        druidResult.size should be (1)
     }
 
     it should "fetch the data from druid using topN query type" in {
 
-        val query = DruidQueryModel("topN", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))))
+        val query = DruidQueryModel("topN", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), None, Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
         val druidQuery = DruidDataFetcher.getDruidQuery(query);
-        druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-11-01/2019-11-02),Day,Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(),Map())")
+        druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-11-01/2019-11-02),Day,Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
 
         val json: String = """
           [
@@ -187,6 +297,14 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             {
               "count" : 1,
               "producer_id" : "local.sunbird.desktop"
+            },
+            {
+              "count" : null,
+              "producer_id" : "local.sunbird.app"
+            },
+            {
+              "count" : {},
+              "producer_id" : "local.sunbird.app"
             }
           ]
         """
@@ -198,12 +316,19 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
         (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
-        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient);
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
         val druidResult = DruidDataFetcher.getDruidData(query)
 
-        druidResult.size should be (2)
-        druidResult.head should be ("""{"date":"2019-11-28","count":5,"producer_id":"dev.sunbird.portal"}""")
-        druidResult.last should be ("""{"date":"2019-11-28","count":1,"producer_id":"local.sunbird.desktop"}""")
+        druidResult.size should be (4)
+        druidResult(0) should be ("""{"date":"2019-11-28","count":5,"producer_id":"dev.sunbird.portal"}""")
+        druidResult(1) should be ("""{"date":"2019-11-28","count":1,"producer_id":"local.sunbird.desktop"}""")
+        druidResult(2) should be ("""{"date":"2019-11-28","count":"unknown","producer_id":"local.sunbird.app"}""")
+        
+        val druidResponse2 = DruidResponse.apply(List(), QueryType.TopN)
+        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse2))
+        val druidResult2 = DruidDataFetcher.getDruidData(query)
+        druidResult2.size should be (0)
+
     }
 }

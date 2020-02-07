@@ -185,11 +185,6 @@ object CommonUtil {
     Files.createDirectories(path);
   }
 
-  def copyFile(from: InputStream, path: String, fileName: String) = {
-    createDirectory(path);
-    Files.copy(from, Paths.get(path + fileName), StandardCopyOption.REPLACE_EXISTING);
-  }
-
   def deleteFile(file: String) {
     JobLogger.log("Deleting file ", Option(file))
     val path = get(file);
@@ -559,32 +554,6 @@ object CommonUtil {
     x.toArray;
   }
 
-  def getValidTags(event: Any, registeredTags: Array[String]): Array[String] = {
-
-    val appTag = if (event.isInstanceOf[DerivedEvent]) {
-      event.asInstanceOf[DerivedEvent].etags.get.app
-    } else if (event.isInstanceOf[Event]) {
-      getETags(event.asInstanceOf[Event]).app
-    } else if (event.isInstanceOf[V3Event]) {
-      getETags(event.asInstanceOf[V3Event]).app
-    } else {
-      None
-    }
-    val dimTag = if (event.isInstanceOf[DerivedEvent]) {
-      event.asInstanceOf[DerivedEvent].etags.get.dims
-    } else if (event.isInstanceOf[Event]) {
-      getETags(event.asInstanceOf[Event]).dims
-    } else if (event.isInstanceOf[V3Event]) {
-      getETags(event.asInstanceOf[V3Event]).dims
-    } else {
-      None
-    }
-    val genieTagFilter = if (appTag.isDefined) appTag.get else List()
-    val dimTagFilter = if (dimTag.isDefined) dimTag.get else List()
-    val tagFilter = genieTagFilter ++ dimTagFilter
-    tagFilter.filter { x => registeredTags.contains(x) }.toArray;
-  }
-
   def getValidTagsForWorkflow(event: DerivedEvent, registeredTags: Array[String]): Array[String] = {
     val tagFilter = if (event.tags != null && !event.tags.isEmpty) { event.tags.get.asInstanceOf[List[String]] } else List()
     tagFilter.filter { x => registeredTags.contains(x) }.toArray;
@@ -630,46 +599,12 @@ object CommonUtil {
     if (event.isInstanceOf[Event]) {
       if (event.asInstanceOf[Event].channel.nonEmpty && StringUtils.isNotBlank(event.asInstanceOf[Event].channel.get)) event.asInstanceOf[Event].channel.get else defaultChannelId
     } else if (event.isInstanceOf[V3Event]) {
-      if (event.asInstanceOf[V3Event].context.channel.nonEmpty && StringUtils.isNotBlank(event.asInstanceOf[V3Event].context.channel)) event.asInstanceOf[V3Event].context.channel else defaultChannelId
+      if (StringUtils.isNotBlank(event.asInstanceOf[V3Event].context.channel)) event.asInstanceOf[V3Event].context.channel else defaultChannelId
     } else if (event.isInstanceOf[DerivedEvent]) {
       if (event.asInstanceOf[DerivedEvent].dimensions.channel.nonEmpty) event.asInstanceOf[DerivedEvent].dimensions.channel.get else if (StringUtils.isBlank(event.asInstanceOf[DerivedEvent].channel)) defaultChannelId else event.asInstanceOf[DerivedEvent].channel
     } else if (event.isInstanceOf[ProfileEvent]) {
       if (event.asInstanceOf[ProfileEvent].channel.nonEmpty && StringUtils.isNotBlank(event.asInstanceOf[ProfileEvent].channel.get)) event.asInstanceOf[ProfileEvent].channel.get else defaultChannelId
     } else defaultChannelId;
-  }
-
-  def getETags(event: Event): ETags = {
-    if (event.etags.isDefined) {
-      event.etags.get;
-    } else {
-      if (event.tags != null) {
-        val tags = event.tags.asInstanceOf[List[Map[String, List[String]]]]
-        val genieTags = tags.filter(f => f.contains("genie")).map { x => x.get("genie").get }.flatMap { x => x }
-        val partnerTags = tags.filter(f => f.contains("partner")).map { x => x.get("partner").get }.flatMap { x => x }
-        val dims = tags.filter(f => f.contains("dims")).map { x => x.get("dims").get }.flatMap { x => x }
-        ETags(Option(genieTags), Option(partnerTags), Option(dims))
-      } else {
-        ETags()
-      }
-
-    }
-  }
-
-  def getETags(event: V3Event): ETags = {
-    if (event.tags != null && !event.tags.isEmpty) {
-      val first = event.tags.apply(0)
-      if (first.isInstanceOf[String]) {
-        ETags(Option(event.tags.asInstanceOf[List[String]]))
-      } else {
-        val tags = event.tags.asInstanceOf[List[Map[String, List[String]]]]
-        val genieTags = tags.filter(f => f.contains("genie")).map { x => x.get("genie").get }.flatMap { x => x }
-        val partnerTags = tags.filter(f => f.contains("partner")).map { x => x.get("partner").get }.flatMap { x => x }
-        val dims = tags.filter(f => f.contains("dims")).map { x => x.get("dims").get }.flatMap { x => x }
-        ETags(Option(genieTags), Option(partnerTags), Option(dims))
-      }
-    } else {
-      ETags()
-    }
   }
 
   def dayPeriodToLong(period: Int): Long = {

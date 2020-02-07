@@ -21,11 +21,6 @@ object OutputDispatcher {
     implicit val className = "org.ekstep.analytics.framework.OutputDispatcher";
 
     @throws(classOf[DispatcherException])
-    private def _dispatch(dispatcher: Dispatcher, events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext) = {
-        DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, events);
-    }
-
-    @throws(classOf[DispatcherException])
     def dispatch[T](outputs: Option[Array[Dispatcher]], events: RDD[T])(implicit sc: SparkContext, fc: FrameworkContext): Long = {
 
         if (outputs.isEmpty) {

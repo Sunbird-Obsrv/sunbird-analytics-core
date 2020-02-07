@@ -39,7 +39,7 @@ class DatasetExt(df: Dataset[Row]) {
 
     val file = storageConfig.store.toLowerCase() match {
       case "s3" =>
-        CommonUtil.getS3File(storageConfig.container, storageConfig.fileName);
+        CommonUtil.getS3FileWithoutPrefix(storageConfig.container, storageConfig.fileName);
       case "azure" =>
         CommonUtil.getAzureFileWithoutPrefix(storageConfig.container, storageConfig.fileName, storageConfig.accountKey.getOrElse("azure_storage_key"))
       case _ =>
@@ -61,16 +61,16 @@ class DatasetExt(df: Dataset[Row]) {
     val dims = partitioningColumns.getOrElse(Seq());
 
     fileUtil.delete(conf, filePrefix + tempDir)
-    
+    val opts = options.getOrElse(Map());
     if(dims.nonEmpty) {
       val map = df.select(dims.map(f => col(f)):_*).distinct().collect().map(f => filePaths(dims, f, format, tempDir, finalDir)).toMap
-      df.write.format(format).options(options.getOrElse(Map())).partitionBy(dims: _*).save(filePrefix + tempDir);
+      df.write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + tempDir);
       map.foreach(f => {
         fileUtil.delete(conf, filePrefix + f._2)
         fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true);
       })
     } else {
-      df.write.format(format).options(options.getOrElse(Map())).save(filePrefix + tempDir);
+      df.write.format(format).options(opts).save(filePrefix + tempDir);
       fileUtil.delete(conf, filePrefix + finalDir + "." + format)
       fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);  
     }

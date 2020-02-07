@@ -33,12 +33,15 @@ object DataFetcher {
                 AzureDataFetcher.getObjectKeys(search.queries.get);
             case "local" =>
                 JobLogger.log("Fetching the batch data from Local file")
-                search.queries.get.map { x => x.file.getOrElse("") }.filterNot { x => x == null };
+                search.queries.get.map { x => x.file.getOrElse(null) }.filterNot { x => x == null };
             case "druid" =>
                 JobLogger.log("Fetching the batch data from Druid")
                 val data = DruidDataFetcher.getDruidData(search.druidQuery.get)
+                // $COVERAGE-OFF$ 
+                // Disabling scoverage as the below code cannot be covered as DruidDataFetcher is not mockable being an object and embedded druid is not available yet
                 val druidDataList = data.map(f => JSONUtils.deserialize[T](f))
                 return sc.parallelize(druidDataList);
+                // $COVERAGE-ON$
             case _ =>
                 throw new DataFetcherException("Unknown fetcher type found");
         }

@@ -78,11 +78,19 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
     }
     
     a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("bucket" -> "testBucket")), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(StorageConfig("s3", null, null), events);
     }
     
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(StorageConfig("file", "test", null), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(null.asInstanceOf[StorageConfig], events);
     }
     
     a[DispatcherException] should be thrownBy {

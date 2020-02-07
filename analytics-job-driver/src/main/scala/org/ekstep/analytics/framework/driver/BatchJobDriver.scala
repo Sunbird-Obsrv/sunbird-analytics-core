@@ -63,18 +63,24 @@ object BatchJobDriver {
         models.foreach { model =>
             JobContext.jobName = model.name
             // TODO: It is not necessary that the end date always exists. The below log statement might throw exceptions
+            // $COVERAGE-OFF$
             val endDate = config.search.queries.getOrElse(Array(Query())).last.endDate
+            // $COVERAGE-ON$
             JobLogger.start("Started processing of " + model.name, Option(Map("config" -> config, "model" -> model.name, "date" -> endDate)));
             try {
                 val result = _processModel(config, data, model);
 
                 // generate metric event and push it to kafka topic
+                // $COVERAGE-OFF$
                 val date = if (endDate.isEmpty) new DateTime().toString(CommonUtil.dateFormat) else endDate.get
+                // $COVERAGE-ON$
                 val metrics = List(V3MetricEdata("date", date.asInstanceOf[AnyRef]), V3MetricEdata("inputEvents", count.asInstanceOf[AnyRef]),
                     V3MetricEdata("outputEvents", result._2.asInstanceOf[AnyRef]), V3MetricEdata("timeTakenSecs", Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
                 val metricEvent = CommonUtil.getMetricEvent(Map("system" -> "DataProduct", "subsystem" -> model.name, "metrics" -> metrics), AppConf.getConfig("metric.producer.id"), AppConf.getConfig("metric.producer.pid"))
+                // $COVERAGE-OFF$
                 if (AppConf.getConfig("push.metrics.kafka").toBoolean)
                     KafkaDispatcher.dispatch(Array(JSONUtils.serialize(metricEvent)), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
+                // $COVERAGE-ON$
 
                 JobLogger.end(model.name + " processing complete", "SUCCESS", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> count, "outputEvents" -> result._2, "timeTaken" -> Double.box(result._1 / 1000))));
             } catch {
