@@ -73,7 +73,7 @@ class DatasetExt(df: Dataset[Row]) {
       fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);
     }
     fileUtil.delete(conf, filePrefix + tempDir)
-    file
+    file // Returning the file path (For Assessment data product is using the url path)
   }
 
 }
