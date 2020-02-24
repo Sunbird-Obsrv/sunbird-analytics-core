@@ -33,6 +33,9 @@ class FrameworkContext {
   }
 
   def getStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
+    if("local".equals(storageType)) {
+      return null;
+    }
     if (!storageContainers.contains(storageType + "|" + storageKey)) {
       storageContainers.put(storageType + "|" + storageKey, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
     }
