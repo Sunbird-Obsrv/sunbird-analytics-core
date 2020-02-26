@@ -1,35 +1,33 @@
 package org.ekstep.analytics.framework.util
 
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.ekstep.analytics.framework.dispatcher.S3Dispatcher
-import org.ekstep.analytics.framework.StorageConfig
-import org.ekstep.analytics.framework.exception.DispatcherException
-import org.apache.spark.sql.functions.col
 import java.nio.file.Paths
+
+import org.apache.spark.sql.{Dataset, Row}
+import org.apache.spark.sql.functions.col
+import org.ekstep.analytics.framework.StorageConfig
 
 class DatasetExt(df: Dataset[Row]) {
 
   private val fileUtil = new HadoopFileUtil();
-  
+
   private def getTempDir(filePrefix: String, reportId: String): String = {
     Paths.get(filePrefix, reportId, "/_tmp/").toString()
   }
-  
+
   private def getFinalDir(filePrefix: String, reportId: String): String = {
     Paths.get(filePrefix, reportId).toString();
   }
-  
+
   private def filePaths(dims: Seq[String], row: Row, format: String, tempDir: String, finalDir: String): (String, String) = {
-    
+
     val dimPaths = for(dim <- dims) yield {
       dim + "=" + row.get(row.fieldIndex(dim))
     }
-    
+
     val paths = for(dim <- dims) yield {
       row.get(row.fieldIndex(dim))
     }
-    
+
     (Paths.get(tempDir, dimPaths.mkString("/")).toString(), Paths.get(finalDir, paths.mkString("/")) + "." + format)
   }
 
@@ -45,7 +43,7 @@ class DatasetExt(df: Dataset[Row]) {
       case _ =>
         storageConfig.fileName
     }
-    
+
     val filePrefix = storageConfig.store.toLowerCase() match {
       case "s3" =>
         "s3n://"
@@ -54,7 +52,7 @@ class DatasetExt(df: Dataset[Row]) {
       case _ =>
         ""
     }
-    
+
     val tempDir = getTempDir(file, reportId);
     val finalDir = getFinalDir(file, reportId);
 
@@ -64,23 +62,22 @@ class DatasetExt(df: Dataset[Row]) {
     val opts = options.getOrElse(Map());
     if(dims.nonEmpty) {
       val map = df.select(dims.map(f => col(f)):_*).distinct().collect().map(f => filePaths(dims, f, format, tempDir, finalDir)).toMap
-      df.write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + tempDir);
+      df.coalesce(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + tempDir);
       map.foreach(f => {
         fileUtil.delete(conf, filePrefix + f._2)
         fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true);
       })
     } else {
-      df.write.format(format).options(opts).save(filePrefix + tempDir);
+      df.coalesce(1).write.format(format).options(opts).save(filePrefix + tempDir);
       fileUtil.delete(conf, filePrefix + finalDir + "." + format)
-      fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);  
+      fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);
     }
     fileUtil.delete(conf, filePrefix + tempDir)
-    
   }
-  
+
 }
 
 object DatasetUtil {
   implicit def extensions(df: Dataset[Row]) = new DatasetExt(df);
-  
+
 }
