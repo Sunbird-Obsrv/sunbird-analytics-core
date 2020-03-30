@@ -64,6 +64,7 @@ class DatasetExt(df: Dataset[Row]) {
       val map = df.select(dims.map(f => col(f)):_*).distinct().collect().map(f => filePaths(dims, f, format, tempDir, finalDir)).toMap
       df.coalesce(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + tempDir);
       map.foreach(f => {
+        println("DatasetUtil: " + f)
         fileUtil.delete(conf, filePrefix + f._2)
         fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true);
       })
