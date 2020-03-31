@@ -3,20 +3,17 @@ package org.ekstep.analytics.framework.fetcher
 import java.time.format.DateTimeFormatter
 
 import ing.wbaa.druid._
-import ing.wbaa.druid.client.DruidHttpClient
 import ing.wbaa.druid.definitions._
 import ing.wbaa.druid.dql.DSL._
 import ing.wbaa.druid.dql.Dim
-import ing.wbaa.druid.dql.expressions.{ AggregationExpression, FilteringExpression, PostAggregationExpression }
+import ing.wbaa.druid.dql.expressions.{AggregationExpression, FilteringExpression, PostAggregationExpression}
 import io.circe.Json
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.util.{ CommonUtil, JSONUtils }
-import org.ekstep.analytics.framework.{ DruidQueryModel, FrameworkContext, PostAggregationFields }
+import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils}
+import org.ekstep.analytics.framework._
 
 import scala.concurrent.Await
-import org.ekstep.analytics.framework.DruidHavingFilter
-import org.ekstep.analytics.framework.DruidFilter
 
 object DruidDataFetcher {
 
@@ -79,7 +76,9 @@ object DruidDataFetcher {
       query.queryType.toLowerCase match {
         case "timeseries" | "groupby" =>
           val series = result.results.map { f =>
+            println("result.results.map { f => " + f)
             f.result.asObject.get.+:("date", Json.fromString(f.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
+              println("processResult: " + f)
               if (f._2.isNull)
                 (f._1 -> "unknown")
               else if ("String".equalsIgnoreCase(f._2.name))

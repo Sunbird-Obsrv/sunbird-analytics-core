@@ -75,6 +75,7 @@ class DatasetExt(df: Dataset[Row]) {
       List(finalDir + "." + format)
     }
     fileUtil.delete(conf, filePrefix + tempDir)
+    println("files: " + file)
     files
   }
 
