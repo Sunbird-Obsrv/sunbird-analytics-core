@@ -52,7 +52,7 @@ class TestJobDriver extends FlatSpec with Matchers with BeforeAndAfterAll {
             Option(Array[Filter](Filter("eventId", "IN", Option(Array("OE_ASSESS", "OE_START", "OE_END", "OE_LEVEL_SET"))))),
             None,
             "org.ekstep.analytics.framework.TestModel",
-            Option(Map()),
+            Option(Map("modelName" -> "TestModelJob")),
             Option(Array(Dispatcher("console", Map("printEvent" -> false.asInstanceOf[AnyRef])))),
             Option(8),
             None,
