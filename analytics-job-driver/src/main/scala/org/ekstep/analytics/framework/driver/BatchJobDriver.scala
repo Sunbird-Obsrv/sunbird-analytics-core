@@ -61,12 +61,15 @@ object BatchJobDriver {
         val count = rdd.count;
         val data = DataFilter.filterAndSort[T](rdd, config.filters, config.sort);
         models.foreach { model =>
-            JobContext.jobName = model.name
             // TODO: It is not necessary that the end date always exists. The below log statement might throw exceptions
             // $COVERAGE-OFF$
             val endDate = config.search.queries.getOrElse(Array(Query())).last.endDate
             // $COVERAGE-ON$
-            JobLogger.start("Started processing of " + model.name, Option(Map("config" -> config, "model" -> model.name, "date" -> endDate)));
+            val modelName = if(config.modelParams.nonEmpty && config.modelParams.get.get("modelName").nonEmpty)
+                config.modelParams.get.get("modelName").get.asInstanceOf[String]
+            else model.name
+            JobContext.jobName = modelName
+            JobLogger.start("Started processing of " + modelName, Option(Map("config" -> config, "model" -> model.name, "date" -> endDate)));
             try {
                 val result = _processModel(config, data, model);
 
@@ -82,11 +85,11 @@ object BatchJobDriver {
                     KafkaDispatcher.dispatch(Array(JSONUtils.serialize(metricEvent)), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
                 // $COVERAGE-ON$
 
-                JobLogger.end(model.name + " processing complete", "SUCCESS", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> count, "outputEvents" -> result._2, "timeTaken" -> Double.box(result._1 / 1000))));
+                JobLogger.end(modelName + " processing complete", "SUCCESS", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> count, "outputEvents" -> result._2, "timeTaken" -> Double.box(result._1 / 1000))));
             } catch {
                 case ex: Exception =>
                     JobLogger.log(ex.getMessage, None, ERROR);
-                    JobLogger.end(model.name + " processing failed", "FAILED", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> count, "statusMsg" -> ex.getMessage)));
+                    JobLogger.end(modelName + " processing failed", "FAILED", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> count, "statusMsg" -> ex.getMessage)));
                     ex.printStackTrace();
             } finally {
                 rdd.unpersist()
