@@ -31,8 +31,7 @@ class DatasetExt(df: Dataset[Row]) {
     (Paths.get(tempDir, dimPaths.mkString("/")).toString(), Paths.get(finalDir, paths.mkString("/")) + "." + format)
   }
 
-  def saveToBlobStore(storageConfig: StorageConfig, format: String, reportId: String,
-                      options: Option[Map[String, String]], partitioningColumns: Option[Seq[String]]): List[String] = {
+  def saveToBlobStore(storageConfig: StorageConfig, format: String, reportId: String, options: Option[Map[String, String]], partitioningColumns: Option[Seq[String]]): List[String] = {
 
     val conf = df.sparkSession.sparkContext.hadoopConfiguration;
 
