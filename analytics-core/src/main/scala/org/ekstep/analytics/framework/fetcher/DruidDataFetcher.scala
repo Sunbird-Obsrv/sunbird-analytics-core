@@ -8,10 +8,10 @@ import ing.wbaa.druid.dql.DSL._
 import ing.wbaa.druid.dql.Dim
 import ing.wbaa.druid.dql.expressions.{AggregationExpression, FilteringExpression, PostAggregationExpression}
 import io.circe.Json
+import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils}
-import org.ekstep.analytics.framework._
 
 import scala.concurrent.Await
 
@@ -33,7 +33,7 @@ object DruidDataFetcher {
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
           .interval(CommonUtil.getIntervalRange(query.intervals))
           .agg(getAggregation(query.aggregations): _*)
-          .groupBy(query.dimensions.get.map(f => Dim(f.fieldName, f.aliasName)): _*)
+          .groupBy(getDimensionByType(query.dimensions): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         if (query.having.nonEmpty) DQLQuery.having(getGroupByHaving(query.having).get)
@@ -76,9 +76,7 @@ object DruidDataFetcher {
       query.queryType.toLowerCase match {
         case "timeseries" | "groupby" =>
           val series = result.results.map { f =>
-            println("result.results.map { f => " + f)
             f.result.asObject.get.+:("date", Json.fromString(f.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
-              println("processResult: " + f)
               if (f._2.isNull)
                 (f._1 -> "unknown")
               else if ("String".equalsIgnoreCase(f._2.name))
@@ -210,6 +208,21 @@ object DruidDataFetcher {
       case HavingType.GreaterThan => Dim(field) > value.asInstanceOf[Number].doubleValue()
       case HavingType.LessThan    => Dim(field) < value.asInstanceOf[Number].doubleValue()
       case _                      => throw new Exception("Unsupported group by having type")
+    }
+  }
+
+  def getDimensionByType(dimensions: Option[List[DruidDimension]]): List[Dim] = {
+    dimensions.get.map{f =>
+      f.`type`.get.toLowerCase match {
+        case "default" => Dim(f.fieldName, f.aliasName)
+        case "extraction" =>  Dim(f.fieldName,f.aliasName,f.outputType).extract(getExtractionFn(f.extractionFn.get))
+      }
+    }
+  }
+
+  def getExtractionFn(extractionFunc: ExtractFn): ExtractionFn = {
+    extractionFunc.`type`.toLowerCase match {
+      case "javascript" => JavascriptExtractionFn(extractionFunc.fn).asInstanceOf[ExtractionFn]
     }
   }
 }
