@@ -355,4 +355,14 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
     druidResult.size should be (1)
     druidResult.head should be ("""{"total_scans":7257.0,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}""")
   }
+
+  it should "fetch data for groupBy dimension with HLLAggregator" in {
+    implicit val fc = new FrameworkContext
+
+    val districtMonthly = DruidQueryModel("groupBy", "summary-distinct-counts", "LastMonth", Option("all"), Option(List(Aggregation(Option("total_unique_devices"),"hLLSketchMerge", "unique_devices",None,None,None,Option(12),Option("HLL_4")))),Option(List(DruidDimension("derived_loc_state", Option("state")), DruidDimension("derived_loc_district", Option("district")))), Option(List(DruidFilter("in", "dimensions_pdata_id",None, Option(List("prod.diksha.app", "prod.diksha.portal"))), DruidFilter("equals", "derived_loc_state", Option("Andhra Pradesh")), DruidFilter("isnotnull", "derived_loc_district", None))))
+    val result = DruidDataFetcher.getDruidData(districtMonthly)
+
+    println("result: " + result)
+
+  }
 }

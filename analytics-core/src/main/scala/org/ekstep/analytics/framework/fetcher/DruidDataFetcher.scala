@@ -110,11 +110,11 @@ object DruidDataFetcher {
   def getAggregation(aggregations: Option[List[org.ekstep.analytics.framework.Aggregation]]): List[AggregationExpression] = {
     aggregations.getOrElse(List(org.ekstep.analytics.framework.Aggregation(None, "count", "count"))).map { f =>
       val aggType = AggregationType.decode(f.`type`).right.getOrElse(AggregationType.Count)
-      getAggregationByType(aggType, f.name, f.fieldName, f.fnAggregate, f.fnCombine, f.fnReset)
+      getAggregationByType(aggType, f.name, f.fieldName, f.fnAggregate, f.fnCombine, f.fnReset, f.lgK, f.tgtHllType)
     }
   }
 
-  def getAggregationByType(aggType: AggregationType, name: Option[String], fieldName: String, fnAggregate: Option[String], fnCombine: Option[String], fnReset: Option[String]): AggregationExpression = {
+  def getAggregationByType(aggType: AggregationType, name: Option[String], fieldName: String, fnAggregate: Option[String], fnCombine: Option[String], fnReset: Option[String], lgk: Option[Int] = None, tgtHllType: Option[String] = None): AggregationExpression = {
     aggType match {
       case AggregationType.Count       => count as name.getOrElse(s"${AggregationType.Count.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.HyperUnique => dim(fieldName).hyperUnique as name.getOrElse(s"${AggregationType.HyperUnique.toString.toLowerCase()}_${fieldName.toLowerCase()}")
@@ -131,6 +131,7 @@ object DruidDataFetcher {
       case AggregationType.LongLast    => longLast(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongLast.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.LongFirst   => longFirst(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongFirst.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.Javascript  => ing.wbaa.druid.dql.AggregationOps.javascript(name.getOrElse(""), Iterable(fieldName), fnAggregate.get, fnCombine.get, fnReset.get)
+      case AggregationType.HLLSketchMerge => ing.wbaa.druid.dql.AggregationOps.hllAggregator(name.getOrElse(""), fieldName, lgk.get, tgtHllType.get)
       case _                           => throw new Exception("Unsupported aggregation type")
     }
   }
