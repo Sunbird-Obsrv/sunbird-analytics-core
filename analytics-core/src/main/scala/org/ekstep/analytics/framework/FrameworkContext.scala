@@ -1,17 +1,18 @@
 package org.ekstep.analytics.framework
 
-import ing.wbaa.druid.DruidConfig
 import ing.wbaa.druid.client.DruidClient
+import ing.wbaa.druid.{DruidConfig, QueryHost}
+import org.ekstep.analytics.framework.util.HadoopFileUtil
 import org.sunbird.cloud.storage.BaseStorageService
 import org.sunbird.cloud.storage.conf.AppConf
-import org.sunbird.cloud.storage.factory.{ StorageServiceFactory }
+import org.sunbird.cloud.storage.factory.StorageServiceFactory
 
 import scala.collection.mutable.Map
-import org.ekstep.analytics.framework.util.HadoopFileUtil
 
 class FrameworkContext {
 
   var dc: DruidClient = null;
+  var drc: DruidClient = null;
   var storageContainers: Map[String, BaseStorageService] = Map();
   val fileUtil = new HadoopFileUtil();
 
@@ -53,8 +54,22 @@ class FrameworkContext {
     return dc;
   }
 
+  def getDruidRollUpClient(): DruidClient = {
+    if (null == drc) {
+      val conf = DruidConfig.DefaultConfig
+      drc = DruidConfig.apply(
+        Seq(QueryHost(AppConf.getConfig("druid.rollup.host"), AppConf.getConfig("druid.rollup.port").toInt)),
+        conf.secure,
+        conf.url,conf.healthEndpoint,conf.datasource,conf.responseParsingTimeout,conf.clientBackend,conf.clientConfig,conf.system).client
+    }
+    return drc;
+  }
+
   def shutdownDruidClient() = {
     if (dc != null) dc.actorSystem.terminate()
+  }
+  def shutdownDruidRollUpClien() = {
+    if (drc != null) drc.actorSystem.terminate()
   }
 
   def shutdownStorageService() = {
@@ -65,6 +80,7 @@ class FrameworkContext {
 
   def closeContext() = {
     shutdownDruidClient();
+    shutdownDruidRollUpClien()
     shutdownStorageService();
   }
 
