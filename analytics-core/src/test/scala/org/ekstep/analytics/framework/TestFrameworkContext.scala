@@ -38,13 +38,13 @@ class TestFrameworkContext extends BaseSpec with BeforeAndAfterAll {
       fc.storageContainers.clear();
       fc.getStorageService("azure") should not be (null)
       
-      fc.setDruidClient(null);
+      fc.setDruidClient(null, null);
       noException should be thrownBy {
         fc.shutdownDruidClient();
       }
       
       fc.getDruidClient() should not be (null);
-      fc.setDruidClient(fc.getDruidClient())
+      fc.setDruidClient(fc.getDruidClient(), fc.getDruidRollUpClient())
       
       
       fc.closeContext();
