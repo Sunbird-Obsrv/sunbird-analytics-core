@@ -57,11 +57,14 @@ object BatchJobDriver {
 
     private def _process[T, R](config: JobConfig, models: List[IBatchModel[T, R]])(implicit mf: Manifest[T], mfr: Manifest[R], sc: SparkContext, fc: FrameworkContext) {
         
-        val rdd = DataFetcher.fetchBatchData[T](config.search).cache();
+        fc.inputEventsCount = sc.longAccumulator("InputEventsCount");
+        fc.outputEventsCount = sc.longAccumulator("OutputEventsCount");
+        val rdd = DataFetcher.fetchBatchData[T](config.search);
         val data = DataFilter.filterAndSort[T](rdd, config.filters, config.sort);
         models.foreach { model =>
             // TODO: It is not necessary that the end date always exists. The below log statement might throw exceptions
             // $COVERAGE-OFF$
+            fc.outputEventsCount.reset();
             val endDate = config.search.queries.getOrElse(Array(Query())).last.endDate
             // $COVERAGE-ON$
             val modelName = if(config.modelParams.nonEmpty && config.modelParams.get.get("modelName").nonEmpty)
@@ -76,34 +79,30 @@ object BatchJobDriver {
                 // $COVERAGE-OFF$
                 val date = if (endDate.isEmpty) new DateTime().toString(CommonUtil.dateFormat) else endDate.get
                 // $COVERAGE-ON$
-                val metrics = List(V3MetricEdata("date", date.asInstanceOf[AnyRef]), V3MetricEdata("inputEvents", result._2._1.asInstanceOf[AnyRef]),
-                    V3MetricEdata("outputEvents", result._2._2.asInstanceOf[AnyRef]), V3MetricEdata("timeTakenSecs", Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
+                val metrics = List(V3MetricEdata("date", date.asInstanceOf[AnyRef]), V3MetricEdata("inputEvents", fc.inputEventsCount.value.asInstanceOf[AnyRef]),
+                    V3MetricEdata("outputEvents", result._2.asInstanceOf[AnyRef]), V3MetricEdata("timeTakenSecs", Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
                 val metricEvent = CommonUtil.getMetricEvent(Map("system" -> "DataProduct", "subsystem" -> model.name, "metrics" -> metrics), AppConf.getConfig("metric.producer.id"), AppConf.getConfig("metric.producer.pid"))
                 // $COVERAGE-OFF$
                 if (AppConf.getConfig("push.metrics.kafka").toBoolean)
                     KafkaDispatcher.dispatch(Array(JSONUtils.serialize(metricEvent)), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
                 // $COVERAGE-ON$
 
-                JobLogger.end(modelName + " processing complete", "SUCCESS", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> result._2._1, "outputEvents" -> result._2._2, "timeTaken" -> Double.box(result._1 / 1000))));
+                JobLogger.end(modelName + " processing complete", "SUCCESS", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> fc.inputEventsCount.value, "outputEvents" -> result._2, "timeTaken" -> Double.box(result._1 / 1000))));
             } catch {
                 case ex: Exception =>
                     JobLogger.log(ex.getMessage, None, ERROR);
                     JobLogger.end(modelName + " processing failed", "FAILED", Option(Map("model" -> model.name, "date" -> endDate, "statusMsg" -> ex.getMessage)));
                     ex.printStackTrace();
-            } finally {
-                rdd.unpersist()
             }
         }
     }
 
-    private def _processModel[T, R](config: JobConfig, data: RDD[T], model: IBatchModel[T, R])(implicit mf: Manifest[T], mfr: Manifest[R], sc: SparkContext, fc: FrameworkContext): (Long, (Long, Long)) = {
+    private def _processModel[T, R](config: JobConfig, data: RDD[T], model: IBatchModel[T, R])(implicit mf: Manifest[T], mfr: Manifest[R], sc: SparkContext, fc: FrameworkContext): (Long, Long) = {
 
         CommonUtil.time({
-            fc.outputEventsCount = sc.longAccumulator("OutputEventsCount");
-            fc.inputEventsCount = sc.longAccumulator("InputEventsCount");
             val output = model.execute(data, config.modelParams);
             val count = OutputDispatcher.dispatch(config.output, output);
-            (fc.inputEventsCount.value, fc.outputEventsCount.value);
+            fc.outputEventsCount.value
         })
 
     }
