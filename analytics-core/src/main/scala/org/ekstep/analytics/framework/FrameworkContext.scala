@@ -8,6 +8,7 @@ import org.sunbird.cloud.storage.factory.{ StorageServiceFactory }
 
 import scala.collection.mutable.Map
 import org.ekstep.analytics.framework.util.HadoopFileUtil
+import org.apache.spark.util.LongAccumulator
 
 class FrameworkContext {
 
@@ -15,6 +16,9 @@ class FrameworkContext {
   var drc: DruidClient = null;
   var storageContainers: Map[String, BaseStorageService] = Map();
   val fileUtil = new HadoopFileUtil();
+  
+  var inputEventsCount: LongAccumulator = _
+  var outputEventsCount: LongAccumulator = _
 
   def initialize(storageServices: Option[Array[(String, String, String)]]) {
     dc = DruidConfig.DefaultConfig.client;
