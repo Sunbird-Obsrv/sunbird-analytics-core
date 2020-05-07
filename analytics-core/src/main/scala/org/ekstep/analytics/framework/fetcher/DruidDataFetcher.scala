@@ -67,7 +67,6 @@ object DruidDataFetcher {
 
   def executeDruidQuery(query: DruidQuery)(implicit fc: FrameworkContext): DruidResponse = {
     val res = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQuery(query) else fc.getDruidClient().doQuery(query)
-    val response = fc.getDruidClient().doQuery(query);
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(res, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
@@ -132,7 +131,6 @@ object DruidDataFetcher {
       case AggregationType.LongLast    => longLast(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongLast.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.LongFirst   => longFirst(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongFirst.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.Javascript  => ing.wbaa.druid.dql.AggregationOps.javascript(name.getOrElse(""), Iterable(fieldName), fnAggregate.get, fnCombine.get, fnReset.get)
-      case AggregationType.HLLSketchMerge => ing.wbaa.druid.dql.AggregationOps.HllAggregator(name.getOrElse(""), fieldName, lgk.get, tgtHllType.get)
       case _                           => throw new Exception("Unsupported aggregation type")
     }
   }
@@ -228,4 +226,3 @@ object DruidDataFetcher {
     }
   }
 }
-
