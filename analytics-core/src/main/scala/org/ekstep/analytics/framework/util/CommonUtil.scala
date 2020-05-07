@@ -640,21 +640,21 @@ object CommonUtil {
 
   def getDayRange(count: Int): String = {
     val endDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = endDate.minusDays(count).toString("yyyy-MM-dd");
-    startDate + "/" + endDate.toString("yyyy-MM-dd")
+    val startDate = endDate.minusDays(count).toString("yyyy-MM-dd'T'05:30:00ZZ");
+    startDate + "/" + endDate.toString("yyyy-MM-dd'T'05:30:00ZZ")
   }
 
   def getMonthRange(count: Int): String = {
     val currentDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd");
-    val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd");
+    val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'05:30:00ZZ");
+    val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'05:30:00ZZ");
     startDate + "/" + endDate
   }
 
   def getWeekRange(count: Int): String = {
     val currentDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd")
-    val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd");
+    val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'05:30:00ZZ")
+    val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'05:30:00ZZ");
     startDate + "/" + endDate
   }
 
