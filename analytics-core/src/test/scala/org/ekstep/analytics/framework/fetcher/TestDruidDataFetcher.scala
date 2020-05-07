@@ -351,7 +351,6 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
     val mockDruidClient = mock[DruidClient]
     (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
     (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-    (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
     val druidResult = DruidDataFetcher.getDruidData(qrScans)
 
