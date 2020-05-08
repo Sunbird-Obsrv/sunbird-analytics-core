@@ -79,9 +79,11 @@ case class JobConfig(search: Fetcher, filters: Option[Array[Filter]], sort: Opti
 @scala.beans.BeanInfo
 case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"))
 @scala.beans.BeanInfo
-case class DruidDimension(fieldName: String, aliasName: Option[String])
+case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[ExtractFn] = None)
 @scala.beans.BeanInfo
-case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None)
+case class ExtractFn(`type`: String, fn: String)
+@scala.beans.BeanInfo
+case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"))
 @scala.beans.BeanInfo
 case class PostAggregation(`type`: String, name: String, fields: PostAggregationFields, fn: String, ordering: Option[String] = None)
 // only right field can have type as FieldAccess or Constant. Only if it Constant, need to specify "rightFieldType"
