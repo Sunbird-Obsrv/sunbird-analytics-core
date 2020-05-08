@@ -78,7 +78,8 @@ object KafkaDispatcher extends IDispatcher {
 
     private def _getKafkaProducerConfig(brokerList: String): HashMap[String, Object] = {
         val props = new HashMap[String, Object]()
-        props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 3000L.asInstanceOf[Long])
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 100.asInstanceOf[Integer]);
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 60000.asInstanceOf[Integer]);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList)
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")

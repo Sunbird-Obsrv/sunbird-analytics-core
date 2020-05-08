@@ -67,7 +67,8 @@ object DruidDataFetcher {
   //Dim(query.dimensions.get.head.fieldName, query.dimensions.get.head.aliasName)
 
   def executeDruidQuery(query: DruidQuery)(implicit fc: FrameworkContext): DruidResponse = {
-    val response = fc.getDruidClient().doQuery(query)
+    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQuery(query)
+                else fc.getDruidClient().doQuery(query)
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(response, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
