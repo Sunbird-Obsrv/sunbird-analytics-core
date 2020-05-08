@@ -40,6 +40,7 @@ object CommonUtil {
   @transient val dayPeriod: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.forOffsetHoursMinutes(5, 30));
   @transient val monthPeriod: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMM").withZone(DateTimeZone.forOffsetHoursMinutes(5, 30));
   @transient val dayPeriodFormat: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZoneUTC();
+  val offset: Long = DateTimeZone.forID("Asia/Kolkata").getOffset(DateTime.now())
 
   def getParallelization(config: JobConfig): Int = {
 
@@ -639,14 +640,12 @@ object CommonUtil {
   }
 
   def getDayRange(count: Int): String = {
-    val offset: Long = DateTimeZone.forID("Asia/Kolkata").getOffset(DateTime.now())
     val endDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset)
     val startDate = endDate.minusDays(count).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate.toString("yyyy-MM-dd'T'HH:mm:ssZZ")
   }
 
   def getMonthRange(count: Int): String = {
-    val offset: Long = DateTimeZone.forID("Asia/Kolkata").getOffset(DateTime.now())
     val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
     val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
@@ -654,7 +653,6 @@ object CommonUtil {
   }
 
   def getWeekRange(count: Int): String = {
-    val offset: Long = DateTimeZone.forID("Asia/Kolkata").getOffset(DateTime.now());
     val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
     val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ")
     val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
