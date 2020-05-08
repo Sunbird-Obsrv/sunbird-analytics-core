@@ -213,7 +213,7 @@ object DruidDataFetcher {
 
   def getDimensionByType(dimensions: Option[List[DruidDimension]]): List[Dim] = {
     dimensions.get.map{f =>
-      f.`type`.get.toLowerCase match {
+      f.`type`.getOrElse("default").toLowerCase match {
         case "default" => Dim(f.fieldName, f.aliasName)
         case "extraction" =>  Dim(f.fieldName,f.aliasName,f.outputType).extract(getExtractionFn(f.extractionFn.get))
       }
