@@ -25,7 +25,7 @@ object DruidDataFetcher {
   }
 
   def getDruidQuery(query: DruidQueryModel): DruidQuery = {
-
+    val dims = query.dimensions.getOrElse(List())
     query.queryType.toLowerCase() match {
       case "groupby" => {
         val DQLQuery = DQL
@@ -33,7 +33,7 @@ object DruidDataFetcher {
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
           .interval(CommonUtil.getIntervalRange(query.intervals))
           .agg(getAggregation(query.aggregations): _*)
-          .groupBy(getDimensionByType(query.dimensions): _*)
+          .groupBy(dims.map(f => getDimensionByType(f.`type`, f.fieldName, f.aliasName, f.outputType, f.extractionFn)): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         if (query.having.nonEmpty) DQLQuery.having(getGroupByHaving(query.having).get)
@@ -44,7 +44,7 @@ object DruidDataFetcher {
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
           .interval(CommonUtil.getIntervalRange(query.intervals))
-          .topN(Dim(query.dimensions.get.head.fieldName, query.dimensions.get.head.aliasName), query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
+          .topN(getDimensionByType(dims.head.`type`, dims.head.fieldName, dims.head.aliasName, dims.head.outputType, dims.head.extractionFn), query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
           .agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
@@ -64,6 +64,7 @@ object DruidDataFetcher {
         throw new DataFetcherException("Unknown druid query type found");
     }
   }
+  //Dim(query.dimensions.get.head.fieldName, query.dimensions.get.head.aliasName)
 
   def executeDruidQuery(query: DruidQuery)(implicit fc: FrameworkContext): DruidResponse = {
     val response = fc.getDruidClient().doQuery(query)
@@ -211,12 +212,10 @@ object DruidDataFetcher {
     }
   }
 
-  def getDimensionByType(dimensions: Option[List[DruidDimension]]): List[Dim] = {
-    dimensions.get.map{f =>
-      f.`type`.getOrElse("default").toLowerCase match {
-        case "default" => Dim(f.fieldName, f.aliasName)
-        case "extraction" =>  Dim(f.fieldName,f.aliasName,f.outputType).extract(getExtractionFn(f.extractionFn.get))
-      }
+  def getDimensionByType(`type`: Option[String], fieldName: String, aliasName: Option[String], outputType: Option[String] = None, extractionFn: Option[ExtractFn] = None): Dim = {
+    `type`.getOrElse("default").toLowerCase match {
+      case "default" => Dim(fieldName, aliasName)
+      case "extraction" =>  Dim(fieldName,aliasName,outputType).extract(getExtractionFn(extractionFn.get))
     }
   }
 
