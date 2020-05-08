@@ -31,8 +31,7 @@ object OutputDispatcher {
             JobLogger.log("Dispatching output", Option(dispatcher.to));
             DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, eventArr);
         }
-        events.count;
-
+        0
     }
 
     @throws(classOf[DispatcherException])
