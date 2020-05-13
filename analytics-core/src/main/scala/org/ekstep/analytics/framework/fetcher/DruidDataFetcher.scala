@@ -223,6 +223,7 @@ object DruidDataFetcher {
   def getExtractionFn(extractionFunc: ExtractFn): ExtractionFn = {
     extractionFunc.`type`.toLowerCase match {
       case "javascript" => JavascriptExtractionFn(extractionFunc.fn).asInstanceOf[ExtractionFn]
+      case "registeredlookup" => RegisteredLookupExtractionFn(extractionFunc.fn).asInstanceOf[ExtractionFn]
     }
   }
 }
