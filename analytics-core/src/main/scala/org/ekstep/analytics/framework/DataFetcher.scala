@@ -50,8 +50,10 @@ object DataFetcher {
         }
         JobLogger.log("Deserializing Input Data", None, INFO);
         val isString = mf.runtimeClass.getName.equals("java.lang.String");
+        val inputEventsCount = fc.inputEventsCount;
         sc.textFile(keys.mkString(","), JobContext.parallelization).map { line => {
             try {
+                inputEventsCount.add(1);
                 if (isString) line.asInstanceOf[T] else JSONUtils.deserialize[T](line);
             } catch {
                 case ex: Exception =>

@@ -2,12 +2,12 @@ package org.ekstep.analytics.framework.util
 
 import java.io._
 import java.net.URL
+import java.nio.file.Files
 import java.nio.file.Paths.get
-import java.nio.file.{Files, Paths, StandardCopyOption}
 import java.security.MessageDigest
 import java.sql.Timestamp
-import java.util.{Date, Properties}
 import java.util.zip.GZIPOutputStream
+import java.util.{Date, Properties}
 
 import ing.wbaa.druid.definitions.{Granularity, GranularityType}
 import org.apache.hadoop.conf.Configuration
@@ -19,11 +19,11 @@ import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
 
 import scala.collection.mutable.ListBuffer
 //import org.ekstep.analytics.framework.conf.AppConf
-import java.util.zip.{ ZipEntry, ZipOutputStream }
+import java.util.zip.{ZipEntry, ZipOutputStream}
 
 import org.apache.commons.lang3.StringUtils
-import org.joda.time.format.{ DateTimeFormat, DateTimeFormatter }
-import org.joda.time.{ DateTime, DateTimeZone, Days, LocalDate, Weeks, Years }
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
 import org.sunbird.cloud.storage.conf.AppConf
 
 import scala.util.control.Breaks._
@@ -40,6 +40,7 @@ object CommonUtil {
   @transient val dayPeriod: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.forOffsetHoursMinutes(5, 30));
   @transient val monthPeriod: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMM").withZone(DateTimeZone.forOffsetHoursMinutes(5, 30));
   @transient val dayPeriodFormat: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZoneUTC();
+  val offset: Long = DateTimeZone.forID("Asia/Kolkata").getOffset(DateTime.now())
 
   def getParallelization(config: JobConfig): Int = {
 
@@ -312,8 +313,8 @@ object CommonUtil {
   }
 
   def zip(out: String, files: Iterable[String]) = {
-    import java.io.{ BufferedInputStream, FileInputStream, FileOutputStream }
-    import java.util.zip.{ ZipEntry, ZipOutputStream }
+    import java.io.{BufferedInputStream, FileInputStream, FileOutputStream}
+    import java.util.zip.{ZipEntry, ZipOutputStream}
 
     val zip = new ZipOutputStream(new FileOutputStream(out))
 
@@ -626,35 +627,35 @@ object CommonUtil {
   }
 
   // parse druid query interval
-  def getIntervalRange(period: String): String = {
+  def getIntervalRange(period: String, dataSource: String): String = {
     // LastDay, LastWeek, LastMonth, Last7Days, Last30Days
     period match {
-      case "LastDay"    => getDayRange(1);
+      case "LastDay"    => getDayRange(1, dataSource);
       case "LastWeek"   => getWeekRange(1);
       case "LastMonth"  => getMonthRange(1);
-      case "Last7Days"  => getDayRange(7);
-      case "Last30Days" => getDayRange(30);
+      case "Last7Days"  => getDayRange(7, dataSource);
+      case "Last30Days" => getDayRange(30, dataSource);
       case _            => period;
     }
   }
 
-  def getDayRange(count: Int): String = {
-    val endDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = endDate.minusDays(count).toString("yyyy-MM-dd");
-    startDate + "/" + endDate.toString("yyyy-MM-dd")
+  def getDayRange(count: Int, dataSource: String): String = {
+    val endDate = if(dataSource.contains("summary-rollup") || dataSource.contains("distinct")) DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay() else DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset)
+    val startDate = endDate.minusDays(count).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
+    startDate + "/" + endDate.toString("yyyy-MM-dd'T'HH:mm:ssZZ")
   }
 
   def getMonthRange(count: Int): String = {
-    val currentDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd");
-    val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd");
+    val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
+    val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
+    val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate
   }
 
   def getWeekRange(count: Int): String = {
-    val currentDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd")
-    val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd");
+    val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
+    val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ")
+    val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate
   }
 

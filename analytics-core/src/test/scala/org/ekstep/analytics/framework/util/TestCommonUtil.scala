@@ -366,12 +366,13 @@ class TestCommonUtil extends BaseSpec {
     CommonUtil.avg(List(3, 4, 5)) should be(4)
 
     DateTimeUtils.setCurrentMillisFixed(1577836800000L);
-    CommonUtil.getIntervalRange("LastDay") should be("2019-12-31/2020-01-01")
-    CommonUtil.getIntervalRange("LastWeek") should be("2019-12-23/2019-12-30")
-    CommonUtil.getIntervalRange("LastMonth") should be("2019-12-01/2020-01-01")
-    CommonUtil.getIntervalRange("Last7Days") should be("2019-12-25/2020-01-01")
-    CommonUtil.getIntervalRange("Last30Days") should be("2019-12-02/2020-01-01")
-    CommonUtil.getIntervalRange("Last60Days") should be("Last60Days")
+    CommonUtil.getIntervalRange("LastDay", "telemetry-rollup-syncts") should be("2019-12-31T05:30:00+00:00/2020-01-01T05:30:00+00:00")
+    CommonUtil.getIntervalRange("LastDay", "summary-rollup-syncts") should be("2019-12-31T00:00:00+00:00/2020-01-01T00:00:00+00:00")
+    CommonUtil.getIntervalRange("LastWeek","telemetry-rollup-syncts") should be("2019-12-23T05:30:00+00:00/2019-12-30T05:30:00+00:00")
+    CommonUtil.getIntervalRange("LastMonth","telemetry-rollup-syncts") should be("2019-12-01T05:30:00+00:00/2020-01-01T05:30:00+00:00")
+    CommonUtil.getIntervalRange("Last7Days", "telemetry-rollup-syncts") should be("2019-12-25T05:30:00+00:00/2020-01-01T05:30:00+00:00")
+    CommonUtil.getIntervalRange("Last30Days", "telemetry-rollup-syncts") should be("2019-12-02T05:30:00+00:00/2020-01-01T05:30:00+00:00")
+    CommonUtil.getIntervalRange("Last60Days", "telemetry-rollup-syncts") should be("Last60Days")
     DateTimeUtils.setCurrentMillisSystem();
 
     CommonUtil.getGranularity("") should be(GranularityType.All)
