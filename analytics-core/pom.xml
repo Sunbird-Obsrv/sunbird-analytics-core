@@ -251,8 +251,65 @@
 		<dependency>
 			<groupId>ing.wbaa.druid</groupId>
 			<artifactId>scruid_${scala.maj.version}</artifactId>
-			<version>2.3.0</version>
+			<version>2.3.2</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/scruid_2.11-2.3.2.jar</systemPath>
 		</dependency>
+		             <!-- Scruid dependency starts -->
+		<!-- https://mvnrepository.com/artifact/io.circe/circe-core -->
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-core_2.11</artifactId>
+			<version>0.11.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.circe/circe-parser -->
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-parser_2.11</artifactId>
+			<version>0.11.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.circe/circe-generic -->
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-generic_2.11</artifactId>
+			<version>0.11.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-stream-json -->
+		<dependency>
+			<groupId>org.mdedetrich</groupId>
+			<artifactId>akka-stream-json_2.11</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-http-json -->
+		<dependency>
+			<groupId>org.mdedetrich</groupId>
+			<artifactId>akka-http-json_2.11</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-stream-circe -->
+		<dependency>
+			<groupId>org.mdedetrich</groupId>
+			<artifactId>akka-stream-circe_2.11</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-http-circe -->
+		<dependency>
+			<groupId>org.mdedetrich</groupId>
+			<artifactId>akka-http-circe_2.11</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-http -->
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-http_2.11</artifactId>
+			<version>10.1.9</version>
+		</dependency>
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-java8_2.11</artifactId>
+			<version>0.11.1</version>
+		</dependency>
+		<!-- Scruid dependency ends -->
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch-hadoop</artifactId>

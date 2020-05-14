@@ -31,7 +31,7 @@ object DruidDataFetcher {
         val DQLQuery = DQL
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource))
           .agg(getAggregation(query.aggregations): _*)
           .groupBy(dims.map(f => getDimensionByType(f.`type`, f.fieldName, f.aliasName, f.outputType, f.extractionFn)): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
@@ -43,7 +43,7 @@ object DruidDataFetcher {
         val DQLQuery = DQL
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource))
           .topN(getDimensionByType(dims.head.`type`, dims.head.fieldName, dims.head.aliasName, dims.head.outputType, dims.head.extractionFn), query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
           .agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
@@ -54,7 +54,7 @@ object DruidDataFetcher {
         val DQLQuery = DQL
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource))
           .agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
@@ -132,6 +132,7 @@ object DruidDataFetcher {
       case AggregationType.LongLast    => longLast(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongLast.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.LongFirst   => longFirst(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongFirst.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.Javascript  => ing.wbaa.druid.dql.AggregationOps.javascript(name.getOrElse(""), Iterable(fieldName), fnAggregate.get, fnCombine.get, fnReset.get)
+      case AggregationType.HLLSketchMerge => ing.wbaa.druid.dql.AggregationOps.hllAggregator(fieldName, name.getOrElse(s"${AggregationType.HLLSketchMerge.toString.toLowerCase()}_${fieldName.toLowerCase()}"), lgk.getOrElse(12), tgtHllType.getOrElse("HLL_4"))
       case _                           => throw new Exception("Unsupported aggregation type")
     }
   }
@@ -222,6 +223,7 @@ object DruidDataFetcher {
   def getExtractionFn(extractionFunc: ExtractFn): ExtractionFn = {
     extractionFunc.`type`.toLowerCase match {
       case "javascript" => JavascriptExtractionFn(extractionFunc.fn).asInstanceOf[ExtractionFn]
+      case "registeredlookup" => RegisteredLookupExtractionFn(extractionFunc.fn).asInstanceOf[ExtractionFn]
     }
   }
 }
