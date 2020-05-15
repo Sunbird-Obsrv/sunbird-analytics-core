@@ -49,6 +49,7 @@ object KafkaDispatcher extends IDispatcher {
         }
 
         events.foreachPartition((partitions: Iterator[String]) => {
+            JobLogger.log("partition data count: " + partitions.length, None, INFO);
             val kafkaSink = KafkaSink(_getKafkaProducerConfig(brokerList));
             partitions.foreach { message =>
                 try {
@@ -78,11 +79,13 @@ object KafkaDispatcher extends IDispatcher {
 
     private def _getKafkaProducerConfig(brokerList: String): HashMap[String, Object] = {
         val props = new HashMap[String, Object]()
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 100.asInstanceOf[Integer]);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 10000.asInstanceOf[Integer]);
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 60000.asInstanceOf[Integer]);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList)
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy")
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 10.asInstanceOf[Integer])
         props
     }
 
