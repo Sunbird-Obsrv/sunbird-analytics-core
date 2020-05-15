@@ -28,19 +28,23 @@ object KafkaDispatcher extends IDispatcher {
     def dispatch(events: Array[String], config: Map[String, AnyRef])(implicit fc: FrameworkContext): Array[String] = {
         val brokerList = config.getOrElse("brokerList", null).asInstanceOf[String];
         val topic = config.getOrElse("topic", null).asInstanceOf[String];
+        val batchSize = config.getOrElse("batchSize", 100).asInstanceOf[Integer];
+        val lingerMs = config.getOrElse("lingerMs", 10).asInstanceOf[Integer];
         if (null == brokerList) {
             throw new DispatcherException("brokerList parameter is required to send output to kafka")
         }
         if (null == topic) {
             throw new DispatcherException("topic parameter is required to send output to kafka")
         }
-        KafkaEventProducer.sendEvents(events, topic, brokerList)
+        KafkaEventProducer.sendEvents(events, topic, brokerList, batchSize, lingerMs)
         events
     }
 
     def dispatch(config: Map[String, AnyRef], events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext) = {
         val brokerList = config.getOrElse("brokerList", null).asInstanceOf[String]
         val topic = config.getOrElse("topic", null).asInstanceOf[String]
+        val batchSize = config.getOrElse("batchSize", 100).asInstanceOf[Integer];
+        val lingerMs = config.getOrElse("lingerMs", 10).asInstanceOf[Integer];
         if (null == brokerList) {
             throw new DispatcherException("brokerList parameter is required to send output to kafka")
         }
@@ -49,7 +53,8 @@ object KafkaDispatcher extends IDispatcher {
         }
 
         events.foreachPartition((partitions: Iterator[String]) => {
-            val kafkaSink = KafkaSink(_getKafkaProducerConfig(brokerList));
+            JobLogger.log("partition data count: " + partitions.length, None, INFO);
+            val kafkaSink = KafkaSink(_getKafkaProducerConfig(brokerList, batchSize, lingerMs));
             partitions.foreach { message =>
                 try {
                     kafkaSink.send(topic, message, new Callback {
@@ -76,13 +81,15 @@ object KafkaDispatcher extends IDispatcher {
         
     }
 
-    private def _getKafkaProducerConfig(brokerList: String): HashMap[String, Object] = {
+    private def _getKafkaProducerConfig(brokerList: String, batchSize: Integer, lingerMs: Integer): HashMap[String, Object] = {
         val props = new HashMap[String, Object]()
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 100.asInstanceOf[Integer]);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 60000.asInstanceOf[Integer]);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList)
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy")
+        props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs)
         props
     }
 

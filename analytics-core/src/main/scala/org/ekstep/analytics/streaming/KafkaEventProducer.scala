@@ -24,15 +24,17 @@ object KafkaEventProducer {
 
     implicit val className: String = "KafkaEventProducer";
 
-    def init(brokerList: String): KafkaProducer[String, String] = {
+    def init(brokerList: String, batchSize: Integer, lingerMs: Integer): KafkaProducer[String, String] = {
 
         // Zookeeper connection properties
         val props = new HashMap[String, Object]()
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 100.asInstanceOf[Integer]);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 60000.asInstanceOf[Integer]);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy")
+        props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs)
 
         new KafkaProducer[String, String](props);
     }
@@ -41,15 +43,15 @@ object KafkaEventProducer {
         producer.close();
     }
 
-    def sendEvent(event: AnyRef, topic: String, brokerList: String) = {
-        val producer = init(brokerList);
+    def sendEvent(event: AnyRef, topic: String, brokerList: String, batchSize: Integer, lingerMs: Integer) = {
+        val producer = init(brokerList, batchSize, lingerMs);
         val message = new ProducerRecord[String, String](topic, null, JSONUtils.serialize(event));
         producer.send(message);
         close(producer);
     }
 
-    def sendEvents(events: Buffer[AnyRef], topic: String, brokerList: String) = {
-        val producer = init(brokerList);
+    def sendEvents(events: Buffer[AnyRef], topic: String, brokerList: String, batchSize: Integer, lingerMs: Integer) = {
+        val producer = init(brokerList, batchSize, lingerMs);
         events.foreach { event =>
             {
                 val message = new ProducerRecord[String, String](topic, null, JSONUtils.serialize(event));
@@ -60,8 +62,8 @@ object KafkaEventProducer {
     }
 
     @throws(classOf[DispatcherException])
-    def sendEvents(events: Array[String], topic: String, brokerList: String) = {
-        val producer = init(brokerList);
+    def sendEvents(events: Array[String], topic: String, brokerList: String, batchSize: Integer, lingerMs: Integer) = {
+        val producer = init(brokerList, batchSize, lingerMs);
         events.foreach { event =>
             {
                 val message = new ProducerRecord[String, String](topic, event);
@@ -71,8 +73,8 @@ object KafkaEventProducer {
         close(producer);
     }
 
-    def publishEvents(events: Buffer[String], topic: String, brokerList: String) = {
-        val producer = init(brokerList);
+    def publishEvents(events: Buffer[String], topic: String, brokerList: String, batchSize: Integer, lingerMs: Integer) = {
+        val producer = init(brokerList, batchSize, lingerMs);
         events.foreach { event =>
             {
                 val message = new ProducerRecord[String, String](topic, null, event);
