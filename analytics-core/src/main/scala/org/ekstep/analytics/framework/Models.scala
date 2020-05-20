@@ -83,7 +83,7 @@ case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: 
 @scala.beans.BeanInfo
 case class ExtractFn(`type`: String, fn: String)
 @scala.beans.BeanInfo
-case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"))
+case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"), round: Option[Boolean] = Option(false))
 @scala.beans.BeanInfo
 case class PostAggregation(`type`: String, name: String, fields: PostAggregationFields, fn: String, ordering: Option[String] = None)
 // only right field can have type as FieldAccess or Constant. Only if it Constant, need to specify "rightFieldType"
