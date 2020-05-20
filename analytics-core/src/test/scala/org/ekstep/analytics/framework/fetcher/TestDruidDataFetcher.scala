@@ -415,7 +415,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None, Option("count"))
 
       val druidQuery = DruidDataFetcher.getDruidQuery(query)
-      druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
+      druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel,Some(false),None)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
 
       val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
       val doc: Json = parse(json).getOrElse(Json.Null);
@@ -447,7 +447,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
     val json = """{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-05-08"}"""
     val doc: Json = parse(json).getOrElse(Json.Null);
     val results = List(DruidResult.apply(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC), doc));
-    val druidResponse = DruidResponse.apply(results, QueryType.TopN)
+    val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
 
     implicit val mockFc = mock[FrameworkContext];
     implicit val druidConfig = mock[DruidConfig];
@@ -458,7 +458,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
     val druidResult = DruidDataFetcher.getDruidData(lookupQuery)
     druidResult.size should be (1)
-    druidResult.head should be ("""district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-05-08""")
+    druidResult.head should be ("""{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-03-01"}""")
   }
 }
 
