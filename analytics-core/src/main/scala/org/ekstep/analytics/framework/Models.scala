@@ -81,9 +81,9 @@ case class DruidQueryModel(queryType: String, dataSource: String, intervals: Str
 @scala.beans.BeanInfo
 case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[ExtractFn] = None)
 @scala.beans.BeanInfo
-case class ExtractFn(`type`: String, fn: String)
+case class ExtractFn(`type`: String, fn: String, retainMissingValue: Option[Boolean] = Option(false), replaceMissingValueWith: Option[String] = None)
 @scala.beans.BeanInfo
-case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"))
+case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"), round: Option[Boolean] = None)
 @scala.beans.BeanInfo
 case class PostAggregation(`type`: String, name: String, fields: PostAggregationFields, fn: String, ordering: Option[String] = None)
 // only right field can have type as FieldAccess or Constant. Only if it Constant, need to specify "rightFieldType"
@@ -212,6 +212,14 @@ class V3EData(val datatype: String, val `type`: String, val dspec: Map[String, A
 
 @scala.beans.BeanInfo
 class V3Event(val eid: String, val ets: Long, val `@timestamp`: String, val ver: String, val mid: String, val actor: Actor, val context: V3Context, val `object`: Option[V3Object], val edata: V3EData, val tags: List[AnyRef] = null, val flags : V3FlagContent = null) extends AlgoInput with Input {}
+
+@scala.beans.BeanInfo
+class V3EventNew(val eid: String, val ets: Long, val `@timestamp`: String, val ver: String, val mid: String, val actor: Actor, val context: V3Context, val `object`: Option[V3Object], val edata: V3EDataNew, val tags: List[AnyRef] = null) extends AlgoInput with Input {}
+
+@scala.beans.BeanInfo
+class V3EDataNew(val `type`: String, val mode: String, val duration: Long, val pageid: String, val item: Question,
+                 val resvalues: Array[Map[String, AnyRef]], val pass: String, val score: Int) extends Serializable {}
+
 
 @scala.beans.BeanInfo
 case class V3DerivedEvent(eid: String, ets: Long, `@timestamp`: String, ver: String, mid: String, actor: Actor, context: V3Context, `object`: Option[V3Object], edata: AnyRef, tags: List[AnyRef] = null) extends AlgoOutput with Output
