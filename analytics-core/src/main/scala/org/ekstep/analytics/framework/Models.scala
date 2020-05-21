@@ -81,7 +81,7 @@ case class DruidQueryModel(queryType: String, dataSource: String, intervals: Str
 @scala.beans.BeanInfo
 case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[ExtractFn] = None)
 @scala.beans.BeanInfo
-case class ExtractFn(`type`: String, fn: String)
+case class ExtractFn(`type`: String, fn: String, retainMissingValue: Option[Boolean] = Option(false), replaceMissingValueWith: Option[String] = None)
 @scala.beans.BeanInfo
 case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"), round: Option[Boolean] = None)
 @scala.beans.BeanInfo
