@@ -53,7 +53,6 @@ object KafkaDispatcher extends IDispatcher {
         }
 
         events.foreachPartition((partitions: Iterator[String]) => {
-            JobLogger.log("partition data count: " + partitions.length, None, INFO);
             val kafkaSink = KafkaSink(_getKafkaProducerConfig(brokerList, batchSize, lingerMs));
             partitions.foreach { message =>
                 try {
