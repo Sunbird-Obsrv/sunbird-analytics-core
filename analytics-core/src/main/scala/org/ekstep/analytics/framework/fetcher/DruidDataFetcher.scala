@@ -191,14 +191,14 @@ object DruidDataFetcher {
       case PostAggregationType.Arithmetic =>
         fn match {
           // only right field can have type as Constant or FieldAccess
-          case "+" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField).+(fields.rightField.get.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField).+(Dim(fields.rightField.get.asInstanceOf[String])) as name
-          case "-" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField).-(fields.rightField.get.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField).-(Dim(fields.rightField.get.asInstanceOf[String])) as name
-          case "*" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField).*(fields.rightField.get.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField).*(Dim(fields.rightField.get.asInstanceOf[String])) as name
-          case "/" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField)./(fields.rightField.get.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField)./(Dim(fields.rightField.get.asInstanceOf[String])) as name
+          case "+" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField).+(fields.rightField.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField).+(Dim(fields.rightField.asInstanceOf[String])) as name
+          case "-" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField).-(fields.rightField.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField).-(Dim(fields.rightField.asInstanceOf[String])) as name
+          case "*" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField).*(fields.rightField.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField).*(Dim(fields.rightField.asInstanceOf[String])) as name
+          case "/" => if ("constant".equalsIgnoreCase(fields.rightFieldType)) Dim(fields.leftField)./(fields.rightField.asInstanceOf[Number].doubleValue()) as name else Dim(fields.leftField)./(Dim(fields.rightField.asInstanceOf[String])) as name
         }
       case PostAggregationType.Javascript =>
-        if(fields.rightField.nonEmpty) javascript(name, Seq(Dim(fields.leftField), Dim(fields.rightField.get.asInstanceOf[String])), fn)
-        else javascript(name, Seq(Dim(fields.leftField)), fn)
+        if(fields.rightField.asInstanceOf[String].isEmpty) javascript(name, Seq(Dim(fields.leftField)), fn)
+        else javascript(name, Seq(Dim(fields.leftField), Dim(fields.rightField.asInstanceOf[String])), fn)
       case _                              => throw new Exception("Unsupported post aggregation type")
     }
   }
