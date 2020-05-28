@@ -223,10 +223,11 @@ object DruidDataFetcher {
     }
   }
 
-  def getDimensionByType(`type`: Option[String], fieldName: String, aliasName: Option[String], outputType: Option[String] = None, extractionFn: Option[ExtractFn] = None): Dim = {
+  def getDimensionByType(`type`: Option[String], fieldName: String, aliasName: Option[String], outputType: Option[String] = None, extractionFn: Option[List[ExtractFn]] = None): Dim = {
     `type`.getOrElse("default").toLowerCase match {
       case "default" => Dim(fieldName, aliasName)
-      case "extraction" =>  Dim(fieldName,aliasName,outputType).extract(getExtractionFn(extractionFn.get))
+      case "extraction" =>  Dim(fieldName,aliasName,outputType).extract(getExtractionFn(extractionFn.get.head))
+      case "cascade"    => Dim(fieldName, aliasName, outputType).extract(CascadeExtractionFn(Seq(extractionFn.get.map(f => getExtractionFn(f)): _*)))
     }
   }
 
