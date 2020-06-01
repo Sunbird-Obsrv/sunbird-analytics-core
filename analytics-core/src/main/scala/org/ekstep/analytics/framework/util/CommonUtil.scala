@@ -236,11 +236,6 @@ object CommonUtil {
     getEventSyncTS(timeInString);
   }
 
-  def getEventSyncTS(event: WFSInputEvent): Long = {
-    val timeInString = event.`@timestamp`;
-    getEventSyncTS(timeInString);
-  }
-
   def getEventSyncTS(timeInStr: String): Long = {
     var ts = getTimestamp(timeInStr, df5, "yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     if (ts == 0) {
