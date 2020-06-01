@@ -236,7 +236,7 @@ object CommonUtil {
     getEventSyncTS(timeInString);
   }
 
-  def getEventSyncTS(event: V3EventNew): Long = {
+  def getEventSyncTS(event: ReducedV3Event): Long = {
     val timeInString = event.`@timestamp`;
     getEventSyncTS(timeInString);
   }
