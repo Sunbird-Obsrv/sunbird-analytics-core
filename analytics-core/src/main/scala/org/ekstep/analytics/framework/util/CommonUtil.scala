@@ -640,7 +640,7 @@ object CommonUtil {
   }
 
   def getDayRange(count: Int, dataSource: String): String = {
-    val endDate = if(dataSource.contains("summary-rollup") || dataSource.contains("distinct")) DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay() else DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset)
+    val endDate = if(dataSource.contains("rollup") || dataSource.contains("distinct")) DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay() else DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset)
     val startDate = endDate.minusDays(count).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate.toString("yyyy-MM-dd'T'HH:mm:ssZZ")
   }
