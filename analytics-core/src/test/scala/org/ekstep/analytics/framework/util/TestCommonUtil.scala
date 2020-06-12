@@ -382,4 +382,18 @@ class TestCommonUtil extends BaseSpec {
     EventBusUtil.dipatchEvent("Test Event");
     eventListener.event should be("Test Event")
   }
+
+  it should "pass test case of all new methods in CommonUtil" in {
+    val query1 = Query(Option("dev-data-store"), Option("raw/"), Option("2020-06-10"), Option("2020-06-11"), None, None, None, None, None, None, None, None, None, None, Option(List(0)))
+    val dates1 = CommonUtil.getQueryDates(query1)
+    dates1.length should be(2)
+
+    val query2 = Query(Option("dev-data-store"), Option("raw/"), None, Option("2020-06-11"), None, None, None, None, None, None, None, None, None, None, Option(List(0,1)))
+    val dates2 = CommonUtil.getQueryDates(query2)
+    dates2.length should be(1)
+
+    val query3 = Query(Option("dev-data-store"), Option("raw/"), None, Option("2020-06-11"), Option(1), None, None, None, None, None, None, None, None, None, Option(List(0)))
+    val dates3 = CommonUtil.getQueryDates(query3)
+    dates3.length should be(2)
+  }
 }

@@ -63,7 +63,7 @@ class ProfileEvent(val eid: String, val ts: String, val `@timestamp`: String, va
 case class UserProfile(uid: String, gender: String, age: Int)
 
 // Analytics Framework Job Models
-case class Query(bucket: Option[String] = None, prefix: Option[String] = None, startDate: Option[String] = None, endDate: Option[String] = None, delta: Option[Int] = None, brokerList: Option[String] = None, topic: Option[String] = None, windowType: Option[String] = None, windowDuration: Option[Int] = None, file: Option[String] = None, excludePrefix: Option[String] = None, datePattern: Option[String] = None, folder: Option[String] = None, creationDate: Option[String] = None)
+case class Query(bucket: Option[String] = None, prefix: Option[String] = None, startDate: Option[String] = None, endDate: Option[String] = None, delta: Option[Int] = None, brokerList: Option[String] = None, topic: Option[String] = None, windowType: Option[String] = None, windowDuration: Option[Int] = None, file: Option[String] = None, excludePrefix: Option[String] = None, datePattern: Option[String] = None, folder: Option[String] = None, creationDate: Option[String] = None, partitions: Option[List[Int]] = None)
 @scala.beans.BeanInfo
 case class Filter(name: String, operator: String, value: Option[AnyRef] = None)
 @scala.beans.BeanInfo

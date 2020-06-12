@@ -719,4 +719,16 @@ object CommonUtil {
     sc.hadoopConfiguration
   }
 
+  def getQueryDates(query: Query): Array[String] = {
+    val startDate = query.startDate
+    val endDate = query.endDate
+
+    val from = if (query.delta.nonEmpty) getStartDate(endDate, query.delta.get) else startDate;
+    if (from.nonEmpty) {
+      getDatesBetween(from.get, endDate)
+    } else {
+      Array(endDate.get)
+    }
+  }
+
 }

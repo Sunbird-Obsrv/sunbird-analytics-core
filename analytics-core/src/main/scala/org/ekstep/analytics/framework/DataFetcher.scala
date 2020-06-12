@@ -45,13 +45,27 @@ object DataFetcher {
             case _ =>
                 throw new DataFetcherException("Unknown fetcher type found");
         }
+
         if (null == keys || keys.length == 0) {
             return sc.parallelize(Seq[T](), JobContext.parallelization);
         }
         JobLogger.log("Deserializing Input Data", None, INFO);
+
+//        - apply filters on keys returned from AzureDataFetcher/S3DataFetcher for partitions
+//        - method- getFilteredKeys(query: Query, keys: Array[String], partitions: Option[List[Int]]) : returns Array[String]
+//        - if partitions is None, return input keys
+//        - if partitions are specified, filter keys for given partitions
+//        - filter values are created with combination of all dates and partitions list values
+//        - EX: fromDate=2020-06-01, toDate=2020-06-02 partitions=[0,1], returns all the keys matching "2020-06-01-0", "2020-06-01-1", "2020-06-02-0" & "2020-06-02-1"
+//        - get all dates between startDate and endDate from query: Handle for empty startDate, endDate with delta value, only endDate in the query
+
+        val filteredKeys = search.queries.get.map{q =>
+            getFilteredKeys(q, keys, q.partitions)
+        }.flatMap(f => f)
+
         val isString = mf.runtimeClass.getName.equals("java.lang.String");
         val inputEventsCount = fc.inputEventsCount;
-        sc.textFile(keys.mkString(","), JobContext.parallelization).map { line => {
+        sc.textFile(filteredKeys.mkString(","), JobContext.parallelization).map { line => {
             try {
                 inputEventsCount.add(1);
                 if (isString) line.asInstanceOf[T] else JSONUtils.deserialize[T](line);
@@ -71,4 +85,21 @@ object DataFetcher {
         null;
     }
 
+    def getFilteredKeys(query: Query, keys: Array[String], partitions: Option[List[Int]]): Array[String] = {
+        if (partitions.nonEmpty) {
+            val dates = CommonUtil.getQueryDates(query)
+            val filterValues = dates.map{d =>
+                partitions.get.map{p =>
+                    d + "-" + p
+                }
+            }.flatMap(f => f)
+            val finalKeys = keys.map{f =>
+                filterValues.map{x =>
+                    if(f.contains(x)) f else ""
+                }
+            }.flatMap(f => f)
+            finalKeys.filter(f => f.nonEmpty)
+        }
+        else keys
+    }
 }
