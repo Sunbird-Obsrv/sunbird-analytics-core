@@ -127,4 +127,39 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
       AzureDataFetcher.getObjectKeys(Array(query)).size should be (0)
       
     }
+
+
+    it should "check for getFilteredKeys from azure via partitions" in {
+
+        // with single partition
+        val query1 = Query(Option("dev-data-store"), Option("raw/"), Option("2020-06-10"), Option("2020-06-11"), None, None, None, None, None, None, None, None, None, None, Option(List(0)))
+        val keys1 = DataFetcher.getFilteredKeys(query1, Array("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-1-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-1-1591845501666.json.gz"), Option(List(0)))
+        keys1.length should be (2)
+        keys1.head should be ("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-0-1591845501666.json.gz")
+
+        // with mutilple partition
+        val query2 = Query(Option("dev-data-store"), Option("raw/"), Option("2020-06-11"), Option("2020-06-11"), None, None, None, None, None, None, None, None, None, None, Option(List(0,1)))
+        val keys2 = DataFetcher.getFilteredKeys(query2, Array("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-1-1591845501666.json.gz"), Option(List(0,1)))
+        keys2.length should be (2)
+        keys2.head should be ("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz")
+
+        // without partition
+        val query3 = Query(Option("dev-data-store"), Option("raw/"), Option("2020-06-11"), Option("2020-06-11"), None, None, None, None, None, None, None, None, None, None, None)
+        val keys3 = DataFetcher.getFilteredKeys(query3, Array("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-1-1591845501666.json.gz"), None)
+        keys3.length should be (2)
+        keys3.head should be ("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz")
+
+        // without only end date
+        val query4 = Query(Option("dev-data-store"), Option("raw/"), None, Option("2020-06-11"), None, None, None, None, None, None, None, None, None, None, Option(List(0,1)))
+        val keys4 = DataFetcher.getFilteredKeys(query4, Array("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-1-1591845501666.json.gz"), Option(List(0,1)))
+        keys4.length should be (2)
+        keys4.head should be ("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz")
+
+        // without only end date and delta
+        val query5 = Query(Option("dev-data-store"), Option("raw/"), None, Option("2020-06-11"), Option(1), None, None, None, None, None, None, None, None, None, Option(List(0)))
+        val keys5 = DataFetcher.getFilteredKeys(query5, Array("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-1-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-0-1591845501666.json.gz", "https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-11-1-1591845501666.json.gz"), Option(List(0)))
+        keys5.length should be (2)
+        keys5.head should be ("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-0-1591845501666.json.gz")
+    }
+
 }

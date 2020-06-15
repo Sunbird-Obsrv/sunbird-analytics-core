@@ -7,7 +7,7 @@ import org.apache.spark.streaming.dstream.DStream
 import org.ekstep.analytics.framework.Level.INFO
 import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetcher, S3DataFetcher}
-import org.ekstep.analytics.framework.util.{JSONUtils, JobLogger}
+import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, JobLogger}
 
 /**
  * @author Santhosh
@@ -45,13 +45,18 @@ object DataFetcher {
             case _ =>
                 throw new DataFetcherException("Unknown fetcher type found");
         }
+
         if (null == keys || keys.length == 0) {
             return sc.parallelize(Seq[T](), JobContext.parallelization);
         }
         JobLogger.log("Deserializing Input Data", None, INFO);
+        val filteredKeys = search.queries.get.map{q =>
+            getFilteredKeys(q, keys, q.partitions)
+        }.flatMap(f => f)
+
         val isString = mf.runtimeClass.getName.equals("java.lang.String");
         val inputEventsCount = fc.inputEventsCount;
-        sc.textFile(keys.mkString(","), JobContext.parallelization).map { line => {
+        sc.textFile(filteredKeys.mkString(","), JobContext.parallelization).map { line => {
             try {
                 inputEventsCount.add(1);
                 if (isString) line.asInstanceOf[T] else JSONUtils.deserialize[T](line);
@@ -71,4 +76,16 @@ object DataFetcher {
         null;
     }
 
+    def getFilteredKeys(query: Query, keys: Array[String], partitions: Option[List[Int]]): Array[String] = {
+        if (partitions.nonEmpty) {
+            val finalKeys = keys.map{f =>
+                partitions.get.map{p =>
+                    val reg = raw"(\d{4})-(\d{2})-(\d{2})-$p".r.findFirstIn(f)
+                    if(reg.nonEmpty && f.contains(reg.get)) f else ""
+                }
+            }.flatMap(f => f)
+            finalKeys.filter(f => f.nonEmpty)
+        }
+        else keys
+    }
 }

@@ -382,4 +382,5 @@ class TestCommonUtil extends BaseSpec {
     EventBusUtil.dipatchEvent("Test Event");
     eventListener.event should be("Test Event")
   }
+
 }
