@@ -78,15 +78,10 @@ object DataFetcher {
 
     def getFilteredKeys(query: Query, keys: Array[String], partitions: Option[List[Int]]): Array[String] = {
         if (partitions.nonEmpty) {
-            val dates = CommonUtil.getQueryDates(query)
-            val filterValues = dates.map{d =>
-                partitions.get.map{p =>
-                    d + "-" + p
-                }
-            }.flatMap(f => f)
             val finalKeys = keys.map{f =>
-                filterValues.map{x =>
-                    if(f.contains(x)) f else ""
+                partitions.get.map{p =>
+                    val reg = raw"(\d{4})-(\d{2})-(\d{2})-$p".r.findFirstIn(f)
+                    if(reg.nonEmpty && f.contains(reg.get)) f else ""
                 }
             }.flatMap(f => f)
             finalKeys.filter(f => f.nonEmpty)
