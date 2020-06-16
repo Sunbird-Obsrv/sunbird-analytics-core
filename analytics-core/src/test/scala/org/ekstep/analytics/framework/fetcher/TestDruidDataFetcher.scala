@@ -2,6 +2,7 @@ package org.ekstep.analytics.framework.fetcher
 
 import java.time.{ZoneOffset, ZonedDateTime}
 
+import akka.stream.scaladsl.Source
 import cats.syntax.either._
 import ing.wbaa.druid._
 import ing.wbaa.druid.client.DruidClient
@@ -511,5 +512,57 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         druidResult.size should be (1)
         druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_failed_scans":10.0,"date":"2020-03-01","district":"Ahmednagar"}""")
     }
+
+  it should "give result for stream query" in {
+    val query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])), Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
+    val druidQuery = DruidDataFetcher.getDruidQuery(query)
+    druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,Some(LessThanHaving(doubleSum,20.0)),None,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
+
+    val json: String = """
+          {
+              "total_scans" : 9007,
+              "producer_id" : "dev.sunbird.learning.platform"
+          }
+        """
+    val doc: Json = parse(json).getOrElse(Json.Null);
+    val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
+    val druidResponse = DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc)
+
+    implicit val mockFc = mock[FrameworkContext];
+    implicit val druidConfig = mock[DruidConfig];
+    val mockDruidClient = mock[DruidClient]
+    (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
+    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+
+    val druidResult = DruidDataFetcher.getDruidData(query,true)
+
+    druidResult.size should be (1)
+    druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+  }
+
+  it should "give result for stream topn query" in {
+    val query = DruidQueryModel("topN", "telemetry-events", "2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00", Option("all"),
+      Option(List(Aggregation(Option("count"), "count", "count"))),
+      Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
+        Option(List(ExtractFn("registeredlookup", "channel")))))),
+      Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None, Option("count"))
+    val druidQuery = DruidDataFetcher.getDruidQuery(query)
+
+    val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
+    val doc: Json = parse(json).getOrElse(Json.Null);
+    val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
+    val druidResponse = DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc)
+
+    implicit val mockFc = mock[FrameworkContext];
+    implicit val druidConfig = mock[DruidConfig];
+    val mockDruidClient = mock[DruidClient]
+    (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
+    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+
+    val druidResult = DruidDataFetcher.getDruidData(query,true)
+
+    druidResult.size should be (1)
+    druidResult.head should be ("""{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}""")
+  }
 }
 
