@@ -114,7 +114,7 @@ object DruidDataFetcher {
           series.map(f => JSONUtils.serialize(f))
       }
     } else
-      List();
+      List()
   }
 
   def executeQueryAsStream(query: DruidQuery)(implicit fc: FrameworkContext): Seq[DruidResult] = {
