@@ -132,7 +132,7 @@ object DruidDataFetcher {
   }
 
   def processStreamResult(query: DruidQueryModel, result: List[DruidResult]): List[String] = {
-    if (result.length > 0) {
+    if (result.nonEmpty) {
       query.queryType.toLowerCase match {
         case "timeseries" | "groupby" =>
           val series = result.map { f =>
