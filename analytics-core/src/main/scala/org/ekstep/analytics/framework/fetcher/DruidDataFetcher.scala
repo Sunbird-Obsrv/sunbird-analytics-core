@@ -26,10 +26,10 @@ object DruidDataFetcher {
 
     if(queryAsStream) {
       val result = executeQueryAsStream(request)
-      processStreamResult(query, result.toList)
+      processResult(query, result.toList)
     } else {
       val result = executeDruidQuery(request)
-      processResult(query, result)
+      processResult(query, result.results)
     }
   }
 
@@ -81,57 +81,7 @@ object DruidDataFetcher {
     Await.result(response, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
-  def processResult(query: DruidQueryModel, result: DruidResponse): List[String] = {
-    if (result.results.length > 0) {
-      query.queryType.toLowerCase match {
-        case "timeseries" | "groupby" =>
-          val series = result.results.map { f =>
-            f.result.asObject.get.+:("date", Json.fromString(f.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
-              if (f._2.isNull)
-                (f._1 -> "unknown")
-              else if ("String".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asString.get)
-              else if ("Number".equalsIgnoreCase(f._2.name)) {
-                (f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2))
-              } else (f._1 -> f._2)
-            }
-          }
-          series.map(f => JSONUtils.serialize(f))
-        case "topn" =>
-          val timeMap = Map("date" -> result.results.head.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-          val series = result.results.map(f => f).head.result.asArray.get.map { f =>
-            val dataMap = f.asObject.get.toMap.map { f =>
-              if (f._2.isNull)
-                (f._1 -> "unknown")
-              else if ("String".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asString.get)
-              else if ("Number".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asNumber.get.toBigDecimal.get)
-              else (f._1 -> f._2)
-            }
-            timeMap ++ dataMap
-          }.toList
-          series.map(f => JSONUtils.serialize(f))
-      }
-    } else
-      List();
-  }
-
-  def executeQueryAsStream(query: DruidQuery)(implicit fc: FrameworkContext): Seq[DruidResult] = {
-    implicit val system = ActorSystem("ExecuteQuery")
-    implicit val materializer = ActorMaterializer()
-
-    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQueryAsStream(query)
-    else fc.getDruidClient().doQueryAsStream(query)
-
-    val druidResult: Future[Seq[DruidResult]] = response
-      .runWith(Sink.seq[DruidResult])
-
-    val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
-    Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
-  }
-
-  def processStreamResult(query: DruidQueryModel, result: List[DruidResult]): List[String] = {
+  def processResult(query: DruidQueryModel, result: List[DruidResult]): List[String] = {
     if (result.nonEmpty) {
       query.queryType.toLowerCase match {
         case "timeseries" | "groupby" =>
@@ -165,6 +115,20 @@ object DruidDataFetcher {
       }
     } else
       List();
+  }
+
+  def executeQueryAsStream(query: DruidQuery)(implicit fc: FrameworkContext): Seq[DruidResult] = {
+    implicit val system = ActorSystem("ExecuteQuery")
+    implicit val materializer = ActorMaterializer()
+
+    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQueryAsStream(query)
+    else fc.getDruidClient().doQueryAsStream(query)
+
+    val druidResult: Future[Seq[DruidResult]] = response
+      .runWith(Sink.seq[DruidResult])
+
+    val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
+    Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
   def getAggregation(aggregations: Option[List[org.ekstep.analytics.framework.Aggregation]]): List[AggregationExpression] = {
