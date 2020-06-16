@@ -23,7 +23,6 @@ object DruidDataFetcher {
   @throws(classOf[DataFetcherException])
   def getDruidData(query: DruidQueryModel, queryAsStream: Boolean = false)(implicit fc: FrameworkContext): List[String] = {
     val request = getDruidQuery(query)
-
     if(queryAsStream) {
       val result = executeQueryAsStream(request)
       processResult(query, result.toList)
