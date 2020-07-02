@@ -627,20 +627,20 @@ object CommonUtil {
   }
 
   // parse druid query interval
-  def getIntervalRange(period: String, dataSource: String): String = {
+  def getIntervalRange(period: String, dataSource: String, intervalSlider: Int = 0): String = {
     // LastDay, LastWeek, LastMonth, Last7Days, Last30Days
     period match {
-      case "LastDay"    => getDayRange(1, dataSource);
+      case "LastDay"    => getDayRange(1, dataSource, intervalSlider);
       case "LastWeek"   => getWeekRange(1);
       case "LastMonth"  => getMonthRange(1);
-      case "Last7Days"  => getDayRange(7, dataSource);
-      case "Last30Days" => getDayRange(30, dataSource);
+      case "Last7Days"  => getDayRange(7, dataSource, intervalSlider);
+      case "Last30Days" => getDayRange(30, dataSource, intervalSlider);
       case _            => period;
     }
   }
 
-  def getDayRange(count: Int, dataSource: String): String = {
-    val endDate = if(dataSource.contains("rollup") || dataSource.contains("distinct")) DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay() else DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset)
+  def getDayRange(count: Int, dataSource: String, intervalSlider: Int): String = {
+    val endDate = if(dataSource.contains("rollup") || dataSource.contains("distinct")) DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().minusDays(intervalSlider) else DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().minusDays(intervalSlider).plus(offset)
     val startDate = endDate.minusDays(count).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate.toString("yyyy-MM-dd'T'HH:mm:ssZZ")
   }

@@ -39,7 +39,7 @@ object DruidDataFetcher {
         val DQLQuery = DQL
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
           .agg(getAggregation(query.aggregations): _*)
           .groupBy(dims.map(f => getDimensionByType(f.`type`, f.fieldName, f.aliasName, f.outputType, f.extractionFn)): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
@@ -51,7 +51,7 @@ object DruidDataFetcher {
         val DQLQuery = DQL
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
           .topN(getDimensionByType(dims.head.`type`, dims.head.fieldName, dims.head.aliasName, dims.head.outputType, dims.head.extractionFn), query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
           .agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
@@ -62,7 +62,7 @@ object DruidDataFetcher {
         val DQLQuery = DQL
           .from(query.dataSource)
           .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
           .agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)

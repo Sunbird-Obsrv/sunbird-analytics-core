@@ -372,6 +372,8 @@ class TestCommonUtil extends BaseSpec {
     CommonUtil.getIntervalRange("LastMonth","telemetry-rollup-syncts") should be("2019-12-01T05:30:00+00:00/2020-01-01T05:30:00+00:00")
     CommonUtil.getIntervalRange("Last7Days", "telemetry-rollup-syncts") should be("2019-12-25T00:00:00+00:00/2020-01-01T00:00:00+00:00")
     CommonUtil.getIntervalRange("Last30Days", "telemetry-rollup-syncts") should be("2019-12-02T00:00:00+00:00/2020-01-01T00:00:00+00:00")
+    CommonUtil.getIntervalRange("Last30Days", "telemetry-rollup-syncts", 0) should be("2019-12-02T00:00:00+00:00/2020-01-01T00:00:00+00:00")
+    CommonUtil.getIntervalRange("Last30Days", "telemetry-rollup-syncts", 2) should be("2019-11-30T00:00:00+00:00/2019-12-30T00:00:00+00:00")
     CommonUtil.getIntervalRange("Last60Days", "telemetry-rollup-syncts") should be("Last60Days")
     DateTimeUtils.setCurrentMillisSystem();
 
