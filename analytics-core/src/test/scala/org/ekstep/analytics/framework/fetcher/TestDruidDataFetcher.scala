@@ -12,6 +12,7 @@ import io.circe.parser._
 import org.ekstep.analytics.framework._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
+import org.joda.time.DateTimeUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -223,6 +224,12 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
       query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, None, None, None)
       druidQuery = DruidDataFetcher.getDruidQuery(query)
       druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),None,Day,false,List(),Map())");
+
+      DateTimeUtils.setCurrentMillisFixed(1577836800000L); // Setting Jan 1 2020 as current time
+      query = DruidQueryModel("topN", "telemetry-events", "Last7Days", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), None, None, None, intervalSlider = 2)
+      druidQuery = DruidDataFetcher.getDruidQuery(query)
+      druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-12-23T05:30:00+00:00/2019-12-30T05:30:00+00:00),Day,None,List(),Map())");
+      DateTimeUtils.setCurrentMillisSystem();
     }
     
     it should "fetch the data from druid using groupBy query type" in {
