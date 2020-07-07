@@ -68,25 +68,25 @@ object CommonUtil {
     }
 
     if (!conf.contains("spark.cassandra.connection.host"))
-      setSparkConf(conf, "spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
+      conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
     // $COVERAGE-ON$
 
     if (sparkCassandraConnectionHost.nonEmpty) {
-      setSparkConf(conf, "spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
+      conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
       println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
     }
 
     if (sparkElasticsearchConnectionHost.nonEmpty) {
-      setSparkConf(conf, "es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
-      setSparkConf(conf, "es.port", "9200")
-      setSparkConf(conf, "es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
-      setSparkConf(conf, "es.write.rest.error.handler.log.logger.level", "INFO")
+      conf.set("es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
+      conf.set("es.port", "9200")
+      conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
+      conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
     }
 
     if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
-      setSparkConf(conf, "spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      setSparkConf(conf, "spark.redis.port", "6379")
-      setSparkConf(conf, "spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
+      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
+      conf.set("spark.redis.port", "6379")
+      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
     }
 
     val sc = new SparkContext(conf)
@@ -112,29 +112,29 @@ object CommonUtil {
     }
 
     if (!conf.contains("spark.cassandra.connection.host"))
-    setSparkConf(conf, "spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
+    conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
     // $COVERAGE-ON$
 
     if (sparkCassandraConnectionHost.nonEmpty) {
-      setSparkConf(conf, "spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
+      conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
       if (readConsistencyLevel.nonEmpty) {
-        setSparkConf(conf, "spark.cassandra.input.consistency.level", readConsistencyLevel.get)
+        conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.get)
       }
       println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
     }
 
     if (sparkElasticsearchConnectionHost.nonEmpty) {
-      setSparkConf(conf, "es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
-      setSparkConf(conf, "es.port", "9200")
-      setSparkConf(conf, "es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
-      setSparkConf(conf, "es.write.rest.error.handler.log.logger.level", "INFO")
-      setSparkConf(conf, "es.write.operation", "upsert")
+      conf.set("es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
+      conf.set("es.port", "9200")
+      conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
+      conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
+      conf.set("es.write.operation", "upsert")
     }
 
     if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
-      setSparkConf(conf, "spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      setSparkConf(conf, "spark.redis.port", "6379")
-      setSparkConf(conf, "spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
+      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
+      conf.set("spark.redis.port", "6379")
+      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
     }
 
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
@@ -142,10 +142,6 @@ object CommonUtil {
     setAzureConf(sparkSession.sparkContext)
     JobLogger.log("SparkSession initialized")
     sparkSession
-  }
-
-  def setSparkConf(conf: SparkConf, key: String, value: String) {
-    conf.set(key, value)
   }
 
   def setS3Conf(sc: SparkContext) = {
