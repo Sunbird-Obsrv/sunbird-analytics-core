@@ -80,7 +80,7 @@ object BatchJobDriver {
                 val metricEvent = getMetricJson(model.name, endDate, "SUCCESS", metrics)
                 // $COVERAGE-OFF$
                 if (AppConf.getConfig("push.metrics.kafka").toBoolean)
-                    KafkaDispatcher.dispatch(Array(JSONUtils.serialize(metricEvent)), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
+                    KafkaDispatcher.dispatch(Array(metricEvent), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
                 // $COVERAGE-ON$
 
                 JobLogger.end(modelName + " processing complete", "SUCCESS", Option(Map("model" -> model.name, "date" -> endDate, "inputEvents" -> fc.inputEventsCount.value, "outputEvents" -> result._2, "timeTaken" -> Double.box(result._1 / 1000))));
