@@ -76,7 +76,7 @@ object BatchJobDriver {
                 val result = _processModel(config, data, model);
 
                 // generate metric event and push it to kafka topic
-                val metrics = List(Map("input-events" -> fc.inputEventsCount.value.asInstanceOf[AnyRef], "output-events" -> result._2.asInstanceOf[AnyRef], "time-taken-secs" -> Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
+                val metrics = List(Map("id" -> "input-events", "value" -> fc.inputEventsCount.value.asInstanceOf[AnyRef]), Map("id" -> "output-events", "value" -> result._2.asInstanceOf[AnyRef]), Map("id" -> "time-taken-secs", "value" -> Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
                 val metricEvent = getMetricJson(model.name, endDate, "SUCCESS", metrics)
                 // $COVERAGE-OFF$
                 if (AppConf.getConfig("push.metrics.kafka").toBoolean)
@@ -88,7 +88,7 @@ object BatchJobDriver {
                 case ex: Exception =>
                     JobLogger.log(ex.getMessage, None, ERROR);
                     JobLogger.end(modelName + " processing failed", "FAILED", Option(Map("model" -> model.name, "date" -> endDate, "statusMsg" -> ex.getMessage)));
-                    val metricEvent = getMetricJson(model.name, endDate, "FAILED", List(Map("metric" -> "input-events", "value" -> fc.inputEventsCount.value.asInstanceOf[AnyRef])))
+                    val metricEvent = getMetricJson(model.name, endDate, "FAILED", List(Map("id" -> "input-events", "value" -> fc.inputEventsCount.value.asInstanceOf[AnyRef])))
                     // $COVERAGE-OFF$
                     if (AppConf.getConfig("push.metrics.kafka").toBoolean)
                         KafkaDispatcher.dispatch(Array(metricEvent), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
