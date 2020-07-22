@@ -217,7 +217,7 @@ class V3Event(val eid: String, val ets: Long, val `@timestamp`: String, val ver:
 case class V3DerivedEvent(eid: String, ets: Long, `@timestamp`: String, ver: String, mid: String, actor: Actor, context: V3Context, `object`: Option[V3Object], edata: AnyRef, tags: List[AnyRef] = null) extends AlgoOutput with Output
 
 @scala.beans.BeanInfo
-case class V3MetricEdata(metric: String, value: AnyRef)
+case class V3MetricEdata(metric: String, value: AnyRef, range: Option[AnyRef] = None)
 
 @scala.beans.BeanInfo
 case class V3FlagContent(derived_location_retrieved: Boolean, device_data_retrieved: Boolean,
