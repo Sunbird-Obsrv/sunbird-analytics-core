@@ -79,9 +79,10 @@ object BatchJobDriver {
                 // $COVERAGE-OFF$
                 val date = if (endDate.isEmpty) new DateTime().toString(CommonUtil.dateFormat) else endDate.get
                 // $COVERAGE-ON$
-                val metrics = List(V3MetricEdata("date", date.asInstanceOf[AnyRef]), V3MetricEdata("inputEvents", fc.inputEventsCount.value.asInstanceOf[AnyRef]),
-                    V3MetricEdata("outputEvents", result._2.asInstanceOf[AnyRef]), V3MetricEdata("timeTakenSecs", Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
-                val metricEvent = CommonUtil.getMetricEvent(Map("system" -> "DataProduct", "subsystem" -> model.name, "metrics" -> metrics), AppConf.getConfig("metric.producer.id"), AppConf.getConfig("metric.producer.pid"))
+                val metrics = List( V3MetricEdata("input-events", fc.inputEventsCount.value.asInstanceOf[AnyRef]),
+                    V3MetricEdata("output-events", result._2.asInstanceOf[AnyRef]), V3MetricEdata("time-taken-secs", Double.box(result._1 / 1000).asInstanceOf[AnyRef]))
+                val metricDims = List(Map("id" -> "report-date", "value" -> date), Map("id" -> "status", "value" -> "SUCCESS"))
+                val metricEvent = Map("system" -> "DataProduct", "subsystem" -> model.name, "metrics" -> metrics, "dimensions" -> metricDims)
                 // $COVERAGE-OFF$
                 if (AppConf.getConfig("push.metrics.kafka").toBoolean)
                     KafkaDispatcher.dispatch(Array(JSONUtils.serialize(metricEvent)), Map("topic" -> AppConf.getConfig("metric.kafka.topic"), "brokerList" -> AppConf.getConfig("metric.kafka.broker")))
