@@ -113,7 +113,7 @@ object BatchJobDriver {
         val date = if (endDate.isEmpty) new DateTime().toString(CommonUtil.dateFormat) else endDate.get
         // $COVERAGE-ON$
         val dims = List(Map("id" -> "report-date", "value" -> date), Map("id" -> "status", "value" -> status))
-        val metricEvent = Map("system" -> "DataProduct", "subsystem" -> subsystem, "metrics" -> metrics, "dimensions" -> dims)
+        val metricEvent = Map("metricts" -> System.currentTimeMillis(), "system" -> "DataProduct", "subsystem" -> subsystem, "metrics" -> metrics, "dimensions" -> dims)
         JSONUtils.serialize(metricEvent)
     }
 }
