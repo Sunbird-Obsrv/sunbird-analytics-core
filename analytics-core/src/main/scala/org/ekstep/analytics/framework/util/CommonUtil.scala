@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
 import org.sunbird.cloud.storage.conf.AppConf
-
 import scala.util.control.Breaks._
 
 object CommonUtil {
@@ -155,6 +154,7 @@ object CommonUtil {
     val accKey = AppConf.getStorageSecret("azure")
     sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
     sc.hadoopConfiguration.set("fs.azure.account.key." + accName + ".blob.core.windows.net", accKey)
+    sc.hadoopConfiguration.set("fs.azure.account.keyprovider." + accName + ".blob.core.windows.net", "org.apache.hadoop.fs.azure.SimpleKeyProvider")
   }
 
   def closeSparkContext()(implicit sc: SparkContext) {
