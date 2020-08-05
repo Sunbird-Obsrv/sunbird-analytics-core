@@ -45,9 +45,7 @@ class HadoopFileUtil {
     def copyMerge(srcFS: FileSystem, srcDir: Path, dstFS: FileSystem, dstFile: Path,
                   deleteSource: Boolean, conf: Configuration): Boolean = {
 
-        if (dstFS.exists(dstFile))
-            throw new IOException(s"Target $dstFile already exists")
-
+        println(srcFS,srcDir)
         if (srcFS.getFileStatus(srcDir).isDirectory) {
             val outputFile = dstFS.create(dstFile)
             Try {

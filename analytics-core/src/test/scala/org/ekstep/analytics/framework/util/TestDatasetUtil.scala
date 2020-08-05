@@ -1,10 +1,8 @@
 package org.ekstep.analytics.framework.util
 
 import org.ekstep.analytics.framework._
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, DateTimeZone, LocalDate}
 import java.io.File
-
-import org.joda.time.DateTime
 import java.util.Date
 import java.text.SimpleDateFormat
 
@@ -15,6 +13,7 @@ import org.apache.spark.sql.Encoders
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.apache.hadoop.fs.azure.AzureException
 import org.apache.hadoop.fs.s3.S3Exception
+import org.ekstep.analytics.framework.util.CommonUtil.offset
 
 class TestDatasetUtil extends BaseSpec {
 
@@ -36,16 +35,20 @@ class TestDatasetUtil extends BaseSpec {
       val rdd3 = sparkSession.sparkContext.textFile("src/test/resources/test-report2.csv", 1).collect();
       rdd3.head should be ("env1,22.1,3")
       rdd3.last should be ("env1,32.1,4")
-      
       fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2", "src/test/resources/test-report2.csv");
+
+        val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
+        val startDate = currentDate.minusDays(1 * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
+        val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
+        println(startDate + "/" + endDate)
       sparkSession.stop();
     }
     
-    it should "test exception branches" in {
+    it should  "test exception branches" in {
       
       val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
-      
+
       import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
       a[AzureException] should be thrownBy {
