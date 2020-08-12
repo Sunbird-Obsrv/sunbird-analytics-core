@@ -10,8 +10,8 @@ import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetche
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, JobLogger}
 
 /**
- * @author Santhosh
- */
+  * @author Santhosh
+  */
 object DataFetcher {
 
     implicit val className = "org.ekstep.analytics.framework.DataFetcher"
@@ -37,11 +37,11 @@ object DataFetcher {
             case "druid" =>
                 JobLogger.log("Fetching the batch data from Druid")
                 val data = DruidDataFetcher.getDruidData(search.druidQuery.get)
-                // $COVERAGE-OFF$ 
+                // $COVERAGE-OFF$
                 // Disabling scoverage as the below code cannot be covered as DruidDataFetcher is not mockable being an object and embedded druid is not available yet
                 val druidDataList = data.map(f => JSONUtils.deserialize[T](f))
-                return sc.parallelize(druidDataList);
-                // $COVERAGE-ON$
+                return druidDataList
+            // $COVERAGE-ON$
             case _ =>
                 throw new DataFetcherException("Unknown fetcher type found");
         }
@@ -64,14 +64,14 @@ object DataFetcher {
                 case ex: Exception =>
                     JobLogger.log(ex.getMessage, None, INFO);
                     null.asInstanceOf[T]
-                }
             }
+        }
         }.filter { x => x != null };
     }
 
     /**
-     * API to fetch the streaming data given an array of query objects
-     */
+      * API to fetch the streaming data given an array of query objects
+      */
     def fetchStreamData[T](sc: StreamingContext, search: Fetcher)(implicit mf: Manifest[T]): DStream[T] = {
         null;
     }

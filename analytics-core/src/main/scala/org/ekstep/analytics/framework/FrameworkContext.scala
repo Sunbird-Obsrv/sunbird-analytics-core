@@ -65,7 +65,8 @@ class FrameworkContext {
       drc = DruidConfig.apply(
         Seq(QueryHost(AppConf.getConfig("druid.rollup.host"), AppConf.getConfig("druid.rollup.port").toInt)),
         conf.secure,
-        conf.url,conf.healthEndpoint,conf.datasource,conf.responseParsingTimeout,conf.clientBackend,conf.clientConfig,conf.system).client
+        conf.url,conf.healthEndpoint,conf.datasource,conf.responseParsingTimeout,conf.clientBackend,
+        conf.clientConfig,conf.scanQueryLegacyMode,conf.zoneId,conf.system).client
     }
     return drc;
   }

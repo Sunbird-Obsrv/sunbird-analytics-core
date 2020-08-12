@@ -10,6 +10,7 @@ import ing.wbaa.druid.definitions.{AggregationType, PostAggregationType}
 import io.circe._
 import io.circe.parser._
 import org.ekstep.analytics.framework._
+import org.ekstep.analytics.framework.util.JSONUtils
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.joda.time.DateTimeUtils
@@ -85,9 +86,9 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val javascriptExprWithoutName = DruidDataFetcher.getAggregationByType(AggregationType.Javascript, None, "field",
             Option("function(current, edata_size) { return current + (edata_size == 0 ? 1 : 0); }"),
             Option("function(partialA, partialB) { return partialA + partialB; }"), Option("function () { return 0; }"))
-            
+
         a[Exception] should be thrownBy {
-          DruidDataFetcher.getAggregationByType(AggregationType.Filtered, Option("Last"), "field", None, None, None)
+            DruidDataFetcher.getAggregationByType(AggregationType.Filtered, Option("Last"), "field", None, None, None)
         }
 
         a[Exception] should be thrownBy {
@@ -100,9 +101,9 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         val filteredExp = DruidDataFetcher.getAggregationByType(AggregationType.Filtered, Option("Last"), "field", None, None, None, None, None, None, Option("longSum"), Option("edata_size"), Option(0.asInstanceOf[AnyRef]))
         filteredExp.toString should be("SelectorFilteredAgg(edata_size,Some(0),LongSumAggregation(Last,field),None)")
-        
+
         DruidDataFetcher.getAggregation(Option(List(Aggregation(Option("count"), "test", "field")))).head.getName should be ("count");
-                 
+
     }
 
     it should "check for getFilterTypes methods" in {
@@ -131,41 +132,41 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val greaterThanExpr = DruidDataFetcher.getFilterByType("greaterthan", "field", List(0.asInstanceOf[AnyRef]))
 
         val lessThanExpr = DruidDataFetcher.getFilterByType("lessthan", "field", List(1000.asInstanceOf[AnyRef]))
-        
+
         a[Exception] should be thrownBy {
-          DruidDataFetcher.getFilterByType("test", "field", List(1000.asInstanceOf[AnyRef]))
+            DruidDataFetcher.getFilterByType("test", "field", List(1000.asInstanceOf[AnyRef]))
         }
-        
+
         DruidDataFetcher.getFilter(None) should be (None)
-        
+
         DruidDataFetcher.getFilter(Option(List(DruidFilter("in", "eid", None, None)))).get.asFilter.toString() should be ("AndFilter(List(InFilter(eid,List(),None)))")
         DruidDataFetcher.getFilter(Option(List(DruidFilter("in", "eid", Option("START"), None)))).get.asFilter.toString() should be ("AndFilter(List(InFilter(eid,List(START),None)))")
     }
-    
+
     it should "check for getGroupByHaving methods" in {
-      
-       var filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])));
-       filteringExpr.get.asFilter.toString() should be ("BoundFilter(doubleSum,None,Some(20.0),None,Some(true),Some(Numeric),None)")
-       
-       filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("equalTo", "user_id", "user1")));
-       filteringExpr.get.asFilter.toString() should be ("SelectFilter(user_id,Some(user1),None)")
-       
-       filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("not", "user_id", "user1")));
-       filteringExpr.get.asFilter.toString() should be ("NotFilter(SelectFilter(user_id,Some(user1),None))")
-       
-       filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("greaterThan", "doubleSum", 20.asInstanceOf[AnyRef])));
-       filteringExpr.get.asFilter.toString() should be ("BoundFilter(doubleSum,Some(20.0),None,Some(true),None,Some(Numeric),None)")
-       
-       a[Exception] should be thrownBy {
-         DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("and", "doubleSum", 20.asInstanceOf[AnyRef])));
-       }
-       
-       a[Exception] should be thrownBy {
-         DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("in", "doubleSum", 20.asInstanceOf[AnyRef])));
-       }
-       
-       DruidDataFetcher.getGroupByHaving(None) should be (None);
-       
+
+        var filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])));
+        filteringExpr.get.asFilter.toString() should be ("BoundFilter(doubleSum,None,Some(20.0),None,Some(true),Some(Numeric),None)")
+
+        filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("equalTo", "user_id", "user1")));
+        filteringExpr.get.asFilter.toString() should be ("SelectFilter(user_id,Some(user1),None)")
+
+        filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("not", "user_id", "user1")));
+        filteringExpr.get.asFilter.toString() should be ("NotFilter(SelectFilter(user_id,Some(user1),None))")
+
+        filteringExpr = DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("greaterThan", "doubleSum", 20.asInstanceOf[AnyRef])));
+        filteringExpr.get.asFilter.toString() should be ("BoundFilter(doubleSum,Some(20.0),None,Some(true),None,Some(Numeric),None)")
+
+        a[Exception] should be thrownBy {
+            DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("and", "doubleSum", 20.asInstanceOf[AnyRef])));
+        }
+
+        a[Exception] should be thrownBy {
+            DruidDataFetcher.getGroupByHaving(Option(DruidHavingFilter("in", "doubleSum", 20.asInstanceOf[AnyRef])));
+        }
+
+        DruidDataFetcher.getGroupByHaving(None) should be (None);
+
     }
 
     it should "check for getPostAggregation methods" in {
@@ -199,45 +200,45 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         val divisionExpr2 = DruidDataFetcher.getPostAggregationByType(PostAggregationType.Arithmetic, "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/")
         divisionExpr2.getName.toString should be ("Division")
-        
+
         a[Exception] should be thrownBy {
-          DruidDataFetcher.getPostAggregation(Option(List(PostAggregation("longLeast", "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/"))))
+            DruidDataFetcher.getPostAggregation(Option(List(PostAggregation("longLeast", "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/"))))
         }
-        
+
         a[Exception] should be thrownBy {
-          DruidDataFetcher.getPostAggregation(Option(List(PostAggregation("test", "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/"))))
+            DruidDataFetcher.getPostAggregation(Option(List(PostAggregation("test", "Division", PostAggregationFields("field", 1.asInstanceOf[AnyRef], "constant"), "/"))))
         }
-        
+
         DruidDataFetcher.getPostAggregation(None) should be (None);
 
     }
-    
-    it should "test the getDruidQuery method" in {
-      var query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), None, None, None)
-      var druidQuery = DruidDataFetcher.getDruidQuery(query)
-      druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),None,List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,None,None,List(),Map())");
-      
-      query = DruidQueryModel("topN", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), None, None, None)
-      druidQuery = DruidDataFetcher.getDruidQuery(query)
-      druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-11-01/2019-11-02),Day,None,List(),Map())");
-      
-      query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, None, None, None)
-      druidQuery = DruidDataFetcher.getDruidQuery(query)
-      druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),None,Day,false,List(),Map())");
 
-      DateTimeUtils.setCurrentMillisFixed(1577836800000L); // Setting Jan 1 2020 as current time
-      query = DruidQueryModel("topN", "telemetry-events", "Last7Days", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), None, None, None, intervalSlider = 2)
-      druidQuery = DruidDataFetcher.getDruidQuery(query)
-      druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-12-23T05:30:00+00:00/2019-12-30T05:30:00+00:00),Day,None,List(),Map())");
-      DateTimeUtils.setCurrentMillisSystem();
+    it should "test the getDruidQuery method" in {
+        var query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), None, None, None)
+        var druidQuery = DruidDataFetcher.getDruidQuery(query)
+        druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),None,List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,None,None,List(),Map())");
+
+        query = DruidQueryModel("topN", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), None, None, None)
+        druidQuery = DruidDataFetcher.getDruidQuery(query)
+        druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-11-01/2019-11-02),Day,None,List(),Map())");
+
+        query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, None, None, None)
+        druidQuery = DruidDataFetcher.getDruidQuery(query)
+        druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),None,Day,false,List(),Map())");
+
+        DateTimeUtils.setCurrentMillisFixed(1577836800000L); // Setting Jan 1 2020 as current time
+        query = DruidQueryModel("topN", "telemetry-events", "Last7Days", Option("day"), Option(List(Aggregation(Option("count"), "count", ""))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")))), None, None, None, intervalSlider = 2)
+        druidQuery = DruidDataFetcher.getDruidQuery(query)
+        druidQuery.toString() should be ("TopNQuery(DefaultDimension(context_pdata_id,Some(producer_id),None),100,count,List(CountAggregation(count)),List(2019-12-23T05:30:00+00:00/2019-12-30T05:30:00+00:00),Day,None,List(),Map())");
+        DateTimeUtils.setCurrentMillisSystem();
     }
-    
+
     it should "fetch the data from druid using groupBy query type" in {
 
         val query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])), Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
         druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,Some(LessThanHaving(doubleSum,20.0)),None,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
-        
+
         val json: String = """
           {
               "total_scans" : 9007,
@@ -245,27 +246,27 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           }
         """
         val doc: Json = parse(json).getOrElse(Json.Null);
-        val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
 
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
+        (mockDruidClient.doQuery[DruidResponse](_:DruidNativeQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
         (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
-        val druidResult = DruidDataFetcher.getDruidData(query)
+        val druidResult = DruidDataFetcher.getDruidData(query).collect
 
         druidResult.size should be (1)
         druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
     }
-    
+
     it should "fetch the data from druid using timeseries query type" in {
 
         val query = DruidQueryModel("timeSeries", "telemetry-events", "2019-11-01/2019-11-02", Option("day"), None, None, Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), None, Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
         val druidQuery = DruidDataFetcher.getDruidQuery(query);
         druidQuery.toString() should be ("TimeSeriesQuery(List(CountAggregation(count_count)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),Day,false,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())");
-        
+
         var json: String = """
           {
               "total_scans" : 9007,
@@ -273,20 +274,20 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           }
         """
         var doc: Json = parse(json).getOrElse(Json.Null);
-        var results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        var druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
+        var results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        var druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.Timeseries)
 
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
         (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes()
 
-        var druidResult = DruidDataFetcher.getDruidData(query)
+        var druidResult = DruidDataFetcher.getDruidData(query).collect
 
         druidResult.size should be (1)
         druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
-        
+
         json = """
           {
               "total_scans" : null,
@@ -294,15 +295,15 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           }
         """
         doc = parse(json).getOrElse(Json.Null);
-        results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
-//        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
+        results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.Timeseries)
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+        //        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
 
-        druidResult = DruidDataFetcher.getDruidData(query)
+        druidResult = DruidDataFetcher.getDruidData(query).collect()
         druidResult.size should be (1)
         druidResult.head should be ("""{"total_scans":"unknown","producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
-        
+
         json = """
           {
               "total_scans" : {},
@@ -310,13 +311,13 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           }
         """
         doc = parse(json).getOrElse(Json.Null);
-        results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        druidResponse = DruidResponse.apply(results, QueryType.Timeseries)
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
-//        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
+        results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.Timeseries)
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+        //        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
 
-        druidResult = DruidDataFetcher.getDruidData(query)
-        
+        druidResult = DruidDataFetcher.getDruidData(query).collect()
+
         druidResult.size should be (1)
     }
 
@@ -347,26 +348,26 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           ]
         """
         val doc: Json = parse(json).getOrElse(Json.Null);
-        val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        val druidResponse = DruidResponse.apply(results, QueryType.TopN)
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.TopN)
 
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
         (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
 
-        val druidResult = DruidDataFetcher.getDruidData(query)
+        val druidResult = DruidDataFetcher.getDruidData(query).collect()
 
         druidResult.size should be (4)
         druidResult(0) should be ("""{"date":"2019-11-28","count":5,"producer_id":"dev.sunbird.portal"}""")
         druidResult(1) should be ("""{"date":"2019-11-28","count":1,"producer_id":"local.sunbird.desktop"}""")
         druidResult(2) should be ("""{"date":"2019-11-28","count":"unknown","producer_id":"local.sunbird.app"}""")
-        
-        val druidResponse2 = DruidResponse.apply(List(), QueryType.TopN)
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse2))
+
+        val druidResponse2 = DruidResponseTimeseriesImpl.apply(List(), QueryType.TopN)
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse2))
         (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
-        val druidResult2 = DruidDataFetcher.getDruidData(query)
+        val druidResult2 = DruidDataFetcher.getDruidData(query).collect()
         druidResult2.size should be (0)
 
     }
@@ -383,120 +384,120 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           }
         """
         val doc: Json = parse(json).getOrElse(Json.Null);
-        val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-        val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
 
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
         (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient);
 
-        val druidResult = DruidDataFetcher.getDruidData(query)
+        val druidResult = DruidDataFetcher.getDruidData(query).collect()
 
         druidResult.size should be (1)
         druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
     }
 
-  it should "fetch data for groupBy dimensions with extraction fn" in {
-    val qrScans = DruidQueryModel("groupBy", "telemetry-rollup-syncts", "2020-03-01/2020-04-01", Option("all"), Option(List(Aggregation(Option("total_scans"),"longSum", "total_count"))), Option(List(DruidDimension("derived_loc_state", Option("state")), DruidDimension("derived_loc_district", Option("district"),Option("Extraction"), Option("STRING"), Option(List(ExtractFn("javascript", "function(str){return str == null ? null: str.toLowerCase().trim().split(' ').map(function(t){return t.substring(0,1).toUpperCase()+t.substring(1,t.length)}).join(' ')}")))))), Option(List(DruidFilter("in", "object_type", None, Option(List("qr", "Qr", "DialCode", "dialcode"))), DruidFilter("equals", "eid", Option("SEARCH")), DruidFilter("equals", "derived_loc_state", Option("Andhra Pradesh")), DruidFilter("isnotnull", "derived_loc_district", None))))
-    val druidQuery = DruidDataFetcher.getDruidQuery(qrScans)
-    druidQuery.toString should be ("GroupByQuery(List(LongSumAggregation(total_scans,total_count)),List(2020-03-01/2020-04-01),Some(AndFilter(List(InFilter(object_type,List(qr, Qr, DialCode, dialcode),None), SelectFilter(eid,Some(SEARCH),None), SelectFilter(derived_loc_state,Some(Andhra Pradesh),None), NotFilter(SelectFilter(derived_loc_district,None,None))))),List(DefaultDimension(derived_loc_state,Some(state),None), ExtractionDimension(derived_loc_district,Some(district),Some(STRING),JavascriptExtractionFn(function(str){return str == null ? null: str.toLowerCase().trim().split(' ').map(function(t){return t.substring(0,1).toUpperCase()+t.substring(1,t.length)}).join(' ')},Some(false)))),All,None,None,List(),Map())")
+    it should "fetch data for groupBy dimensions with extraction fn" in {
+        val qrScans = DruidQueryModel("groupBy", "telemetry-rollup-syncts", "2020-03-01/2020-04-01", Option("all"), Option(List(Aggregation(Option("total_scans"),"longSum", "total_count"))), Option(List(DruidDimension("derived_loc_state", Option("state")), DruidDimension("derived_loc_district", Option("district"),Option("Extraction"), Option("STRING"), Option(List(ExtractFn("javascript", "function(str){return str == null ? null: str.toLowerCase().trim().split(' ').map(function(t){return t.substring(0,1).toUpperCase()+t.substring(1,t.length)}).join(' ')}")))))), Option(List(DruidFilter("in", "object_type", None, Option(List("qr", "Qr", "DialCode", "dialcode"))), DruidFilter("equals", "eid", Option("SEARCH")), DruidFilter("equals", "derived_loc_state", Option("Andhra Pradesh")), DruidFilter("isnotnull", "derived_loc_district", None))))
+        val druidQuery = DruidDataFetcher.getDruidQuery(qrScans)
+        druidQuery.toString should be ("GroupByQuery(List(LongSumAggregation(total_scans,total_count)),List(2020-03-01/2020-04-01),Some(AndFilter(List(InFilter(object_type,List(qr, Qr, DialCode, dialcode),None), SelectFilter(eid,Some(SEARCH),None), SelectFilter(derived_loc_state,Some(Andhra Pradesh),None), NotFilter(SelectFilter(derived_loc_district,None,None))))),List(DefaultDimension(derived_loc_state,Some(state),None), ExtractionDimension(derived_loc_district,Some(district),Some(STRING),JavascriptExtractionFn(function(str){return str == null ? null: str.toLowerCase().trim().split(' ').map(function(t){return t.substring(0,1).toUpperCase()+t.substring(1,t.length)}).join(' ')},Some(false)))),All,None,None,List(),Map())")
 
 
-    val json = """{"total_scans":7257.0,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}"""
+        val json = """{"total_scans":7257.0,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}"""
 
-    val doc: Json = parse(json).getOrElse(Json.Null);
-    val results = List(DruidResult.apply(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC), doc));
-    val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
 
-    implicit val mockFc = mock[FrameworkContext];
-    implicit val druidConfig = mock[DruidConfig];
-    val mockDruidClient = mock[DruidClient]
-    (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
-    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-    (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-    val druidResult = DruidDataFetcher.getDruidData(qrScans)
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        val druidResult = DruidDataFetcher.getDruidData(qrScans).collect()
 
-    druidResult.size should be (1)
-    druidResult.head should be ("""{"total_scans":7257.0,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}""")
-  }
-
-  it should "fetch data for groupBy dimension with HLLAggregator" in {
-    val districtMonthly = DruidQueryModel("groupBy", "summary-distinct-counts", "2020-05-12/2020-05-13", Option("all"), Option(List(Aggregation(Option("total_unique_devices"), "HLLSketchMerge", "unique_devices", None, None, None, None, None), Aggregation(Option("Count"), "count", ""))), Option(List(DruidDimension("derived_loc_state", Option("state")), DruidDimension("derived_loc_district", Option("district")))), Option(List(DruidFilter("in", "dimensions_pdata_id", None, Option(List("prod.diksha.app", "prod.diksha.portal"))), DruidFilter("isnotnull", "derived_loc_district", None))))
-    val druidQuery = DruidDataFetcher.getDruidQuery(districtMonthly)
-    druidQuery.toString should be ("GroupByQuery(List(HLLAggregation(total_unique_devices,unique_devices,12,HLL_4,true), CountAggregation(Count)),List(2020-05-12/2020-05-13),Some(AndFilter(List(InFilter(dimensions_pdata_id,List(prod.diksha.app, prod.diksha.portal),None), NotFilter(SelectFilter(derived_loc_district,None,None))))),List(DefaultDimension(derived_loc_state,Some(state),None), DefaultDimension(derived_loc_district,Some(district),None)),All,None,None,List(),Map())")
-
-    val json = """{"state":"Andaman & Nicobar Islands","total_unique_devices":1.0,"Count":9.0,"date":"2020-03-01","district":"Ahmednagar"}"""
-    val doc: Json = parse(json).getOrElse(Json.Null);
-    val results = List(DruidResult.apply(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC), doc));
-    val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
-
-    implicit val mockFc = mock[FrameworkContext];
-    implicit val druidConfig = mock[DruidConfig];
-    val mockDruidClient = mock[DruidClient]
-    (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
-    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-    (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-
-    val druidResult = DruidDataFetcher.getDruidData(districtMonthly)
-    druidResult.size should be (1)
-    druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_unique_devices":1.0,"Count":9.0,"date":"2020-03-01","district":"Ahmednagar"}""")
-  }
-
-    it should "fetch data for TopN dimension with Lookup" in {
-      val query = DruidQueryModel("topN", "telemetry-events", "2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00", Option("all"),
-        Option(List(Aggregation(Option("count"), "count", "count"))),
-        Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
-        Option(List(ExtractFn("registeredlookup", "channel")))))),
-        Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None, Option("count"))
-
-      val druidQuery = DruidDataFetcher.getDruidQuery(query)
-      druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel,Some(false),None)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
-
-      val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
-      val doc: Json = parse(json).getOrElse(Json.Null);
-      val results = List(DruidResult.apply(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC), doc));
-      val druidResponse = DruidResponse.apply(results, QueryType.TopN)
-
-      implicit val mockFc = mock[FrameworkContext];
-      implicit val druidConfig = mock[DruidConfig];
-      val mockDruidClient = mock[DruidClient]
-      (mockDruidClient.doQuery(_: DruidQuery)(_: DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
-      (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-      (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-
-      val druidResult = DruidDataFetcher.getDruidData(query)
-      druidResult.size should be (1)
-      druidResult.head should be ("""{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}""")
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"total_scans":7257.0,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}""")
     }
 
-  it should "fetch data for GroupBy dimension with Lookup and replaceMissingValue as Unknown" in {
-    val lookupQuery = DruidQueryModel("groupBy", "telemetry-events", "2020-05-08T00:00:00+00:00/2020-05-15T00:00:00+00:00", Option("all"),
-      Option(List(Aggregation(Option("count"), "count", "count"))),
-      Option(List(DruidDimension("derived_loc_state", Option("state_slug"), Option("extraction"), None,
-        Option(List(ExtractFn("registeredlookup", "lookup_state", None, Option("Unknown"))))), DruidDimension("derived_loc_district", Option("district_slug"), Option("extraction"), None,
-        Option(List(ExtractFn("registeredlookup", "lookup_district", None, Option("Unknown"))))))))
+    it should "fetch data for groupBy dimension with HLLAggregator" in {
+        val districtMonthly = DruidQueryModel("groupBy", "summary-distinct-counts", "2020-05-12/2020-05-13", Option("all"), Option(List(Aggregation(Option("total_unique_devices"), "HLLSketchMerge", "unique_devices", None, None, None, None, None), Aggregation(Option("Count"), "count", ""))), Option(List(DruidDimension("derived_loc_state", Option("state")), DruidDimension("derived_loc_district", Option("district")))), Option(List(DruidFilter("in", "dimensions_pdata_id", None, Option(List("prod.diksha.app", "prod.diksha.portal"))), DruidFilter("isnotnull", "derived_loc_district", None))))
+        val druidQuery = DruidDataFetcher.getDruidQuery(districtMonthly)
+        druidQuery.toString should be ("GroupByQuery(List(HLLAggregation(total_unique_devices,unique_devices,12,HLL_4,true), CountAggregation(Count)),List(2020-05-12/2020-05-13),Some(AndFilter(List(InFilter(dimensions_pdata_id,List(prod.diksha.app, prod.diksha.portal),None), NotFilter(SelectFilter(derived_loc_district,None,None))))),List(DefaultDimension(derived_loc_state,Some(state),None), DefaultDimension(derived_loc_district,Some(district),None)),All,None,None,List(),Map())")
 
-    val query = DruidDataFetcher.getDruidQuery(lookupQuery)
-    query.toString should be("GroupByQuery(List(CountAggregation(count)),List(2020-05-08T00:00:00+00:00/2020-05-15T00:00:00+00:00),None,List(ExtractionDimension(derived_loc_state,Some(state_slug),None,RegisteredLookupExtractionFn(lookup_state,None,Some(Unknown))), ExtractionDimension(derived_loc_district,Some(district_slug),None,RegisteredLookupExtractionFn(lookup_district,None,Some(Unknown)))),All,None,None,List(),Map())")
+        val json = """{"state":"Andaman & Nicobar Islands","total_unique_devices":1.0,"Count":9.0,"date":"2020-03-01","district":"Ahmednagar"}"""
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
 
-    val json = """{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-05-08"}"""
-    val doc: Json = parse(json).getOrElse(Json.Null);
-    val results = List(DruidResult.apply(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC), doc));
-    val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
-    implicit val mockFc = mock[FrameworkContext];
-    implicit val druidConfig = mock[DruidConfig];
-    val mockDruidClient = mock[DruidClient]
-    (mockDruidClient.doQuery(_: DruidQuery)(_: DruidConfig)).expects(query, *).returns(Future(druidResponse)).anyNumberOfTimes()
-    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
-    (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        val druidResult = DruidDataFetcher.getDruidData(districtMonthly).collect()
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_unique_devices":1.0,"Count":9.0,"date":"2020-03-01","district":"Ahmednagar"}""")
+    }
 
-    val druidResult = DruidDataFetcher.getDruidData(lookupQuery)
-    druidResult.size should be (1)
-    druidResult.head should be ("""{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-03-01"}""")
-  }
+    "TestFetcher" should "fetch data for TopN dimension with Lookup" in {
+        val query = DruidQueryModel("topN", "telemetry-events", "2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00", Option("all"),
+            Option(List(Aggregation(Option("count"), "count", "count"))),
+            Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
+                Option(List(ExtractFn("registeredlookup", "channel")))))),
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None, Option("count"))
+
+        val druidQuery = DruidDataFetcher.getDruidQuery(query)
+        druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel,Some(false),None)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
+
+        val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.TopN)
+
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQuery[DruidResponse](_: DruidQuery)(_: DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+
+        val druidResult = DruidDataFetcher.getDruidData(query).collect()
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}""")
+    }
+
+    it should "fetch data for GroupBy dimension with Lookup and replaceMissingValue as Unknown" in {
+        val lookupQuery = DruidQueryModel("groupBy", "telemetry-events", "2020-05-08T00:00:00+00:00/2020-05-15T00:00:00+00:00", Option("all"),
+            Option(List(Aggregation(Option("count"), "count", "count"))),
+            Option(List(DruidDimension("derived_loc_state", Option("state_slug"), Option("extraction"), None,
+                Option(List(ExtractFn("registeredlookup", "lookup_state", None, Option("Unknown"))))), DruidDimension("derived_loc_district", Option("district_slug"), Option("extraction"), None,
+                Option(List(ExtractFn("registeredlookup", "lookup_district", None, Option("Unknown"))))))))
+
+        val query = DruidDataFetcher.getDruidQuery(lookupQuery)
+        query.toString should be("GroupByQuery(List(CountAggregation(count)),List(2020-05-08T00:00:00+00:00/2020-05-15T00:00:00+00:00),None,List(ExtractionDimension(derived_loc_state,Some(state_slug),None,RegisteredLookupExtractionFn(lookup_state,None,Some(Unknown))), ExtractionDimension(derived_loc_district,Some(district_slug),None,RegisteredLookupExtractionFn(lookup_district,None,Some(Unknown)))),All,None,None,List(),Map())")
+
+        val json = """{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-05-08"}"""
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
+
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQuery[DruidResponse](_: DruidQuery)(_: DruidConfig)).expects(query, *).returns(Future(druidResponse)).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+
+        val druidResult = DruidDataFetcher.getDruidData(lookupQuery).collect()
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-03-01"}""")
+    }
 
     it should "fetch data for filtered aggregation" in {
         val scansQuery = DruidQueryModel("groupBy", "summary-distinct-counts", "2020-05-12/2020-05-13", Option("all"), Option(List(Aggregation(Option("total_failed_scans"), "filtered", "total_count", None, None, None, None, None, None, Option("longSum"), Option("edata_size"), Option(0.asInstanceOf[AnyRef])))), Option(List(DruidDimension("derived_loc_state", Option("state")), DruidDimension("derived_loc_district", Option("district")))), Option(List(DruidFilter("in", "dimensions_pdata_id", None, Option(List("prod.diksha.app", "prod.diksha.portal"))), DruidFilter("isnotnull", "derived_loc_district", None))))
@@ -505,71 +506,116 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         val json = """{"state":"Andaman & Nicobar Islands","total_failed_scans":10,"date":"2020-03-01","district":"Ahmednagar"}"""
         val doc: Json = parse(json).getOrElse(Json.Null);
-        val results = List(DruidResult.apply(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC), doc));
-        val druidResponse = DruidResponse.apply(results, QueryType.GroupBy)
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
 
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
-        (mockDruidClient.doQuery(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
+        (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
         (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
         (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
-        val druidResult = DruidDataFetcher.getDruidData(scansQuery)
+        val druidResult = DruidDataFetcher.getDruidData(scansQuery).collect()
         druidResult.size should be (1)
         druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_failed_scans":10.0,"date":"2020-03-01","district":"Ahmednagar"}""")
     }
 
-  it should "give result for stream query" in {
-    val query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])), Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
-    val druidQuery = DruidDataFetcher.getDruidQuery(query)
-    druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,Some(LessThanHaving(doubleSum,20.0)),None,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
+    it should "give result for stream query" in {
+        val query = DruidQueryModel("groupBy", "telemetry-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])), Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
+        val druidQuery = DruidDataFetcher.getDruidQuery(query)
+        druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,Some(LessThanHaving(doubleSum,20.0)),None,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
 
-    val json: String = """
+        val json: String = """
           {
               "total_scans" : 9007,
               "producer_id" : "dev.sunbird.learning.platform"
           }
         """
-    val doc: Json = parse(json).getOrElse(Json.Null);
-    val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-    val druidResponse = DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc)
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc)
 
-    implicit val mockFc = mock[FrameworkContext];
-    implicit val druidConfig = mock[DruidConfig];
-    val mockDruidClient = mock[DruidClient]
-    (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
-    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
-    val druidResult = DruidDataFetcher.getDruidData(query,true)
+        val druidResult = DruidDataFetcher.getDruidData(query,true).collect()
 
-    druidResult.size should be (1)
-    druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
-  }
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+    }
 
-  it should "give result for stream topn query" in {
-    val query = DruidQueryModel("topN", "telemetry-events", "2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00", Option("all"),
-      Option(List(Aggregation(Option("count"), "count", "count"))),
-      Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
-        Option(List(ExtractFn("registeredlookup", "channel")))))),
-      Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None, Option("count"))
-    val druidQuery = DruidDataFetcher.getDruidQuery(query)
+    it should "give result for stream topn query" in {
+        val query = DruidQueryModel("topN", "telemetry-events", "2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00", Option("all"),
+            Option(List(Aggregation(Option("count"), "count", "count"))),
+            Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
+                Option(List(ExtractFn("registeredlookup", "channel")))))),
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None, Option("count"))
+        val druidQuery = DruidDataFetcher.getDruidQuery(query)
 
-    val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
-    val doc: Json = parse(json).getOrElse(Json.Null);
-    val results = List(DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc));
-    val druidResponse = DruidResult.apply(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC), doc)
+        val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+        val druidResponse = DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc)
 
-    implicit val mockFc = mock[FrameworkContext];
-    implicit val druidConfig = mock[DruidConfig];
-    val mockDruidClient = mock[DruidClient]
-    (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
-    (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
 
-    val druidResult = DruidDataFetcher.getDruidData(query,true)
+        val druidResult = DruidDataFetcher.getDruidData(query,true).collect()
 
-    druidResult.size should be (1)
-    druidResult.head should be ("""{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}""")
-  }
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}""")
+    }
+
+    it should "test scan query with stream" in {
+
+        val query = DruidQueryModel("scan", "summary-events", "2020-03-12T00:00:00+00:00/2020-03-13T00:00:00+00:00", Option("all"),
+            None, None, None, None, None,Option(List("derived_loc_state","derived_loc_district")), None, None)
+        val druidQuery = DruidDataFetcher.getDruidQuery(query)
+
+        val json = """{"__time":1583971200000,"derived_loc_state":"unknown","derived_loc_district":"unknown","date":"2019-03-12"}"""
+        val doc: Json = parse(json).getOrElse(Json.Null);
+        val druidResponse = DruidScanResult.apply(doc)
+        implicit val mockFc = mock[FrameworkContext];
+        implicit val druidConfig = mock[DruidConfig];
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQueryAsStream(_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Source(List(druidResponse))).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+
+        val druidResult = DruidDataFetcher.getDruidData(query,true).collect()
+
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"__time":1.5839712E12,"derived_loc_state":"unknown","derived_loc_district":"unknown","date":"2020-03-12"}""")
+
+    }
+
+    it should "test scan query without stream" in {
+
+        val query = DruidQueryModel("scan", "summary-events", "2020-03-12T00:00:00+00:00/2020-03-13T00:00:00+00:00", Option("all"),
+            None, None, None, None, None,Option(List("derived_loc_state","derived_loc_district")), None, None)
+        val druidQuery = DruidDataFetcher.getDruidQuery(query)
+
+        val json = """{"__time":1583971200000,"derived_loc_state":"unknown","derived_loc_district":"unknown","date":"2019-03-12"}"""
+        val doc: Json = parse(json).getOrElse(Json.Null)
+        val results = List(DruidScanResult.apply(doc));
+        val scanresults = DruidScanResults.apply("122",List("derived_loc_state","derived_loc_district"),results)
+        val druidResponse = DruidScanResponse.apply(List(scanresults))
+        implicit val mockFc = mock[FrameworkContext]
+        implicit val druidConfig = mock[DruidConfig]
+        val mockDruidClient = mock[DruidClient]
+        (mockDruidClient.doQuery[DruidResponse](_:DruidNativeQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse)).anyNumberOfTimes()
+        (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+
+        val druidResult = DruidDataFetcher.getDruidData(query).collect()
+
+        druidResult.size should be (1)
+        druidResult.head should be ("""{"__time":1.5839712E12,"derived_loc_state":"unknown","derived_loc_district":"unknown","date":"2020-03-12"}""")
+
+    }
 }
-
