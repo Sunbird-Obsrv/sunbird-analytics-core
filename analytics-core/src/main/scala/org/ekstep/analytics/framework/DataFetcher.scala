@@ -80,7 +80,7 @@ object DataFetcher {
         if (partitions.nonEmpty) {
             val finalKeys = keys.map{f =>
                 partitions.get.map{p =>
-                    val reg = raw"(\d{4})-(\d{2})-(\d{2})-$p".r.findFirstIn(f)
+                    val reg = raw"(\d{4})-(\d{2})-(\d{2})-$p-".r.findFirstIn(f)
                     if(reg.nonEmpty && f.contains(reg.get)) f else ""
                 }
             }.flatMap(f => f)
