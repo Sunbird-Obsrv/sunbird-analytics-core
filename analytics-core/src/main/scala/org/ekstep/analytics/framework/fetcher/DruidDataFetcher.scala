@@ -35,8 +35,6 @@ object DruidDataFetcher {
           sc.parallelize(processResult(query, response.asInstanceOf[DruidResponseTimeseriesImpl].results))
         case "scan" =>
           sc.parallelize(processResult (query, response.asInstanceOf[DruidScanResponse].results.flatMap(f => f.events)))
-        case  _ =>
-          sc.parallelize(processResult (query, response.list[DruidResult]))
       }
     }
 
@@ -166,7 +164,9 @@ object DruidDataFetcher {
                 (f._1 -> f._2.asString.get)
               else if ("Number".equalsIgnoreCase(f._2.name)) {
                 (f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2))
-              } else (f._1 -> f._2)
+              } else {
+                (f._1 -> JSONUtils.deserialize[Map[String,Any]](JSONUtils.serialize(f._2)).get("value").get)
+              }
             }
           }
           series.map(f => JSONUtils.serialize(f))
