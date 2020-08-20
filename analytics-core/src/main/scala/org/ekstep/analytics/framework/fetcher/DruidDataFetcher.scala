@@ -19,7 +19,7 @@ import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, ResultAccumulator}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 
 object DruidDataFetcher {
 
@@ -100,12 +100,14 @@ object DruidDataFetcher {
     else fc.getDruidClient().doQuery(query)
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(response, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
+
+
   }
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
     implicit val system = ActorSystem("ExecuteQuery")
     implicit val materializer = ActorMaterializer()
-    implicit val ec : ExecutionContext = system.getDispatcher
+
     val response =
       if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct"))
         fc.getDruidRollUpClient().doQueryAsStream(query)
@@ -121,16 +123,7 @@ object DruidDataFetcher {
 
 
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
-    try {
-      Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
-    } catch {
-      case e: TimeoutException =>
-        druidResult.onComplete { _ =>
-          println("in exception")
-          system.terminate()
-        }
-        throw e
-    }
+    Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
   def processResult(query: DruidQueryModel, result: Seq[BaseResult]): Seq[String] = {
