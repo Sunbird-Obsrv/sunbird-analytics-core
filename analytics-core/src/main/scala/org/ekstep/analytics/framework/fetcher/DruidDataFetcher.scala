@@ -1,38 +1,47 @@
 package org.ekstep.analytics.framework.fetcher
 
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeoutException
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.{Keep, Sink}
 import ing.wbaa.druid._
 import ing.wbaa.druid.definitions._
 import ing.wbaa.druid.dql.DSL._
 import ing.wbaa.druid.dql.Dim
 import ing.wbaa.druid.dql.expressions.{AggregationExpression, FilteringExpression, PostAggregationExpression}
 import io.circe.Json
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils}
+import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, ResultAccumulator}
 
 import scala.concurrent.{Await, Future}
 
 object DruidDataFetcher {
 
   @throws(classOf[DataFetcherException])
-  def getDruidData(query: DruidQueryModel, queryAsStream: Boolean = false)(implicit fc: FrameworkContext): List[String] = {
+  def getDruidData(query: DruidQueryModel, queryAsStream: Boolean = false)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
     val request = getDruidQuery(query)
-    if(queryAsStream) {
-      val result = executeQueryAsStream(request)
-      processResult(query, result.toList)
+    if (queryAsStream) {
+      executeQueryAsStream(query, request)
+
     } else {
-      val result = executeDruidQuery(request)
-      processResult(query, result.results)
+      val response = executeDruidQuery(query, request)
+      query.queryType.toLowerCase() match {
+        case "timeseries" | "groupby" | "topn"=>
+          sc.parallelize(processResult(query, response.asInstanceOf[DruidResponseTimeseriesImpl].results))
+        case "scan" =>
+          sc.parallelize(processResult (query, response.asInstanceOf[DruidScanResponse].results.flatMap(f => f.events)))
+      }
     }
+
   }
 
-  def getDruidQuery(query: DruidQueryModel): DruidQuery = {
+  def getDruidQuery(query: DruidQueryModel): DruidNativeQuery = {
     val dims = query.dimensions.getOrElse(List())
     query.queryType.toLowerCase() match {
       case "groupby" => {
@@ -68,38 +77,61 @@ object DruidDataFetcher {
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         DQLQuery.build()
       }
+      case "scan" => {
+        val DQLQuery = DQL
+          .from(query.dataSource)
+          .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
+          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
+          .scan()
+        if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
+        if (query.columns.nonEmpty) DQLQuery.columns(query.columns.get)
+        DQLQuery.batchSize(AppConf.getConfig("druid.scan.batch.size").toInt)
+        DQLQuery.setQueryContextParam("maxQueuedBytes",AppConf.getConfig("druid.scan.batch.bytes"))
+        DQLQuery.build()
+      }
+
       case _ =>
         throw new DataFetcherException("Unknown druid query type found");
     }
   }
 
-  def executeDruidQuery(query: DruidQuery)(implicit fc: FrameworkContext): DruidResponse = {
+  def executeDruidQuery(model: DruidQueryModel,query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): DruidResponse = {
     val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQuery(query)
-                else fc.getDruidClient().doQuery(query)
+    else fc.getDruidClient().doQuery(query)
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(response, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
+
+
   }
 
-  def executeQueryAsStream(query: DruidQuery)(implicit fc: FrameworkContext): Seq[DruidResult] = {
+  def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
     implicit val system = ActorSystem("ExecuteQuery")
     implicit val materializer = ActorMaterializer()
 
-    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQueryAsStream(query)
-    else fc.getDruidClient().doQueryAsStream(query)
+    val response =
+      if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct"))
+        fc.getDruidRollUpClient().doQueryAsStream(query)
+      else
+        fc.getDruidClient().doQueryAsStream(query)
 
-    val druidResult: Future[Seq[DruidResult]] = response
-      .runWith(Sink.seq[DruidResult])
+    val druidResult: Future[RDD[String]] =
+      response
+        .via(new ResultAccumulator[BaseResult])
+        .map(f => processResult(model,f))
+        .map(sc.parallelize(_))
+        .toMat(Sink.fold[RDD[String], RDD[String]]((sc.emptyRDD[String]))(_ union _))(Keep.right).run()
+
 
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
-  def processResult(query: DruidQueryModel, result: List[DruidResult]): List[String] = {
+  def processResult(query: DruidQueryModel, result: Seq[BaseResult]): Seq[String] = {
     if (result.nonEmpty) {
       query.queryType.toLowerCase match {
         case "timeseries" | "groupby" =>
-          val series = result.map { f =>
-            f.result.asObject.get.+:("date", Json.fromString(f.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
+          val series = result.asInstanceOf[List[DruidResult]].map { f =>
+            f.result.asObject.get.+:("date", Json.fromString(f.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
               if (f._2.isNull)
                 (f._1 -> "unknown")
               else if ("String".equalsIgnoreCase(f._2.name))
@@ -111,8 +143,8 @@ object DruidDataFetcher {
           }
           series.map(f => JSONUtils.serialize(f))
         case "topn" =>
-          val timeMap = Map("date" -> result.head.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-          val series = result.map(f => f).head.result.asArray.get.map { f =>
+          val timeMap = Map("date" -> result.head.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+          val series = result.asInstanceOf[List[DruidResult]].map(f => f).head.result.asArray.get.map { f =>
             val dataMap = f.asObject.get.toMap.map { f =>
               if (f._2.isNull)
                 (f._1 -> "unknown")
@@ -124,6 +156,21 @@ object DruidDataFetcher {
             }
             timeMap ++ dataMap
           }.toList
+          series.map(f => JSONUtils.serialize(f))
+        case "scan"=>
+          val series = result.toList.asInstanceOf[List[DruidScanResult]].map { f =>
+            f.result.asObject.get.+:("date", Json.fromString(f.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
+              if (f._2.isNull)
+                (f._1 -> "unknown")
+              else if ("String".equalsIgnoreCase(f._2.name))
+                (f._1 -> f._2.asString.get)
+              else if ("Number".equalsIgnoreCase(f._2.name)) {
+                (f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2))
+              } else {
+                (f._1 -> JSONUtils.deserialize[Map[String,Any]](JSONUtils.serialize(f._2)).get("value").get)
+              }
+            }
+          }
           series.map(f => JSONUtils.serialize(f))
       }
     } else
@@ -156,7 +203,7 @@ object DruidDataFetcher {
       case AggregationType.Javascript  => ing.wbaa.druid.dql.AggregationOps.javascript(name.getOrElse(""), Iterable(fieldName), fnAggregate.get, fnCombine.get, fnReset.get)
       case AggregationType.HLLSketchMerge => ing.wbaa.druid.dql.AggregationOps.hllAggregator(fieldName, name.getOrElse(s"${AggregationType.HLLSketchMerge.toString.toLowerCase()}_${fieldName.toLowerCase()}"), lgk.getOrElse(12), tgtHllType.getOrElse("HLL_4"), round.getOrElse(true))
       case AggregationType.Filtered    => getFilteredAggregationByType(filterAggType, name, fieldName, filterFieldName, filterValue)
-//      case _                           => throw new Exception("Unsupported aggregation type")
+      //      case _                           => throw new Exception("Unsupported aggregation type")
     }
   }
 
