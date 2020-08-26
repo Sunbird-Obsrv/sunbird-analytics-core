@@ -1,8 +1,10 @@
 package org.ekstep.analytics.framework.util
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.FileUtil
+import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
+import org.apache.hadoop.io.IOUtils
+
+import scala.util.Try
 
 class HadoopFileUtil {
   
@@ -27,16 +29,33 @@ class HadoopFileUtil {
     }
     
   }
-  
+
   /**
-   * Merge a hadoop source folder/file into another file
-   */
+    * Merge a hadoop source folder/file into another file
+    */
   def copyMerge(srcPath: String, destPath: String, conf: Configuration, deleteSrc: Boolean) {
-    
+
     val srcFilePath = new Path(srcPath);
     val destFilePath = new Path(destPath);
-    
-    FileUtil.copyMerge(srcFilePath.getFileSystem(conf), srcFilePath, destFilePath.getFileSystem(conf), destFilePath, deleteSrc, conf, null)
+    copyMerge(srcFilePath.getFileSystem(conf), srcFilePath, destFilePath.getFileSystem(conf), destFilePath, deleteSrc, conf)
   }
-  
+
+  def copyMerge(srcFS: FileSystem, srcDir: Path, dstFS: FileSystem, dstFile: Path,
+                deleteSource: Boolean, conf: Configuration): Boolean = {
+
+    if (srcFS.exists(srcDir) && srcFS.getFileStatus(srcDir).isDirectory) {
+      val outputFile = dstFS.create(dstFile)
+      Try {
+        srcFS.listStatus(srcDir).sortBy(_.getPath.getName)
+          .collect {
+            case status if status.isFile() =>
+              val inputFile = srcFS.open(status.getPath())
+              Try(IOUtils.copyBytes(inputFile, outputFile, conf, false))
+              inputFile.close()
+          }
+      }
+      outputFile.close()
+      if (deleteSource) srcFS.delete(srcDir, true) else true
+    } else false
+  }
 }
