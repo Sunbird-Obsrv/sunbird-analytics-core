@@ -249,5 +249,4 @@ case class DeviceProfileOutput(device_id: String, first_access: Option[Timestamp
                                
 case class StorageConfig(store: String, container: String, fileName: String, accountKey: Option[String] = None, secretKey: Option[String] = None);
 
-
-case class ReportConfigs(requestId: String, reportConfigList : List[String])
+case class OnDemandJobRequest(request_id: String, request_data : String,download_urls :List[String], status: String)

@@ -1,16 +1,16 @@
 package org.ekstep.analytics.framework
 
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 
 
-trait ReportOnDemandModel[T,R] {
+trait ReportOnDemandModel[T] {
 
-    def execute(reportParams: Option[Map[String, AnyRef]])(implicit spark: SparkSession, fc: FrameworkContext) : DataFrame
+    def execute(reportParams: Option[Map[String, AnyRef]])(implicit spark: SparkSession, fc: FrameworkContext) : Unit
 
-    def getReportConfigs(datasetId: String) (implicit  sparkSession: SparkSession, fc: FrameworkContext): Dataset[T]
+    def getJobRequest(jobId: String) (implicit  sparkSession: SparkSession, fc: FrameworkContext): Dataset[T]
 
-    def saveReportLocations(reportBlobs :  Dataset[R]) (implicit  sparkSession: SparkSession, fc: FrameworkContext): DataFrame
+    def updateJobRequest(reportBlobs :  Dataset[T]) (implicit  sparkSession: SparkSession, fc: FrameworkContext): Unit
 
     def name() : String = "OnDemandReportModel";
 
