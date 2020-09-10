@@ -1,10 +1,12 @@
 package org.ekstep.analytics.framework
 
-import ing.wbaa.druid.{ DruidConfig,QueryHost }
+import ing.wbaa.druid.{DruidConfig, QueryHost}
 import ing.wbaa.druid.client.DruidClient
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.StructType
 import org.sunbird.cloud.storage.BaseStorageService
 import org.sunbird.cloud.storage.conf.AppConf
-import org.sunbird.cloud.storage.factory.{ StorageServiceFactory }
+import org.sunbird.cloud.storage.factory.StorageServiceFactory
 
 import scala.collection.mutable.Map
 import org.ekstep.analytics.framework.util.HadoopFileUtil
@@ -89,6 +91,15 @@ class FrameworkContext {
     shutdownDruidClient();
     shutdownDruidRollUpClien();
     shutdownStorageService();
+  }
+
+  def loadData(spark: SparkSession, settings: scala.collection.Map[String, String], url: String, schema: StructType): DataFrame = {
+    if (schema.nonEmpty) {
+      spark.read.schema(schema).format(url).options(settings).load()
+    }
+    else {
+      spark.read.format(url).options(settings).load()
+    }
   }
 
 }

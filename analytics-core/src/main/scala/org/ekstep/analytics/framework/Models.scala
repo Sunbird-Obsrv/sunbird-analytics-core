@@ -247,4 +247,6 @@ case class DeviceProfileOutput(device_id: String, first_access: Option[Timestamp
                                updated_date: Option[Timestamp] = Option(new Timestamp(System.currentTimeMillis()))) extends AlgoOutput
                                
                                
-case class StorageConfig(store: String, container: String, fileName: String, accountKey: Option[String] = None, secretKey: Option[String] = None);                               
+case class StorageConfig(store: String, container: String, fileName: String, accountKey: Option[String] = None, secretKey: Option[String] = None);
+
+case class OnDemandJobRequest(request_id: String, request_data : String,download_urls :List[String], status: String)
