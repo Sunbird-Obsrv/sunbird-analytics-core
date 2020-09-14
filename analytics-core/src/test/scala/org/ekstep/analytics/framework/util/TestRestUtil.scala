@@ -36,7 +36,7 @@ class TestRestUtil extends BaseSpec {
         response should be(null);
         
         val url2 = "https://httpbin.org/xml";
-        val response2 = RestUtil.get[String](url);
+        val response2 = RestUtil.get[String](url2, Option(Map("Content-Type" -> "application/json")));
         response2 should not be(null);
     }
 
