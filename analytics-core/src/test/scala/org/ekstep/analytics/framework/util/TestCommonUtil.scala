@@ -318,6 +318,12 @@ class TestCommonUtil extends BaseSpec {
     val s3StorageConf = CommonUtil.setStorageConf("s3", Option("aws_storage_key"), Option("aws_storage_secret"))
     s3StorageConf.get("fs.s3n.awsAccessKeyId") should be("aws-test-key")
     s3StorageConf.get("fs.s3n.awsSecretAccessKey") should be("aws-test-secret")
+    
+    val fileUtil = new HadoopFileUtil;
+    val copiedFile = fileUtil.copy("src/test/resources/sample_telemetry.log", "src/test/resources/sample_telemetry.json", sc.hadoopConfiguration)
+    sc.textFile(copiedFile, 1).count() should be (7437)
+    fileUtil.delete(sc.hadoopConfiguration, copiedFile)
+    
     sc.stop()
   }
 

@@ -18,6 +18,14 @@ class HadoopFileUtil {
     fileSystem.delete(path, true);
   }
   
+  def copy(srcFile: String, destFile: String, conf: Configuration) : String = {
+    
+    val src = new Path(srcFile);
+    val fileSystem = src.getFileSystem(conf);
+    fileSystem.copyToLocalFile(false, src, new Path(destFile))
+    destFile
+  }
+  
   /**
    * Delete multiple files. Different file sources (aws, azure etc) can be passed here
    */
