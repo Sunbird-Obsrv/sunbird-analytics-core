@@ -5,12 +5,12 @@ import ing.wbaa.druid.client.DruidClient
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.StructType
 import org.sunbird.cloud.storage.BaseStorageService
-import org.sunbird.cloud.storage.conf.AppConf
 import org.sunbird.cloud.storage.factory.StorageServiceFactory
 
 import scala.collection.mutable.Map
 import org.ekstep.analytics.framework.util.HadoopFileUtil
 import org.apache.spark.util.LongAccumulator
+import org.ekstep.analytics.framework.conf.AppConf
 
 class FrameworkContext {
 
@@ -44,7 +44,7 @@ class FrameworkContext {
       return null;
     }
     if (!storageContainers.contains(storageType + "|" + storageKey)) {
-      storageContainers.put(storageType + "|" + storageKey, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
+      storageContainers.put(storageType + "|" + storageKey, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret))));
     }
     storageContainers.get(storageType + "|" + storageKey).get
   }
