@@ -67,12 +67,12 @@ class DatasetExt(df: Dataset[Row]) {
         fileUtil.delete(conf, filePrefix + f._2)
         fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true);
       })
-      map.map(f => f._2).toList
+      map.map(f => filePrefix + f._2).toList
     } else {
       df.coalesce(1).write.format(format).options(opts).save(filePrefix + tempDir);
       fileUtil.delete(conf, filePrefix + finalDir + "." + format)
       fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);
-      List(finalDir + "." + format)
+      List(filePrefix + finalDir + "." + format)
     }
     fileUtil.delete(conf, filePrefix + tempDir)
     files
