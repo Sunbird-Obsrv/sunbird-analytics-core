@@ -44,7 +44,7 @@ class FrameworkContext {
       return null;
     }
     if (!storageContainers.contains(storageType + "|" + storageKey)) {
-      storageContainers.put(storageType + "|" + storageKey, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getStorageKey(storageKey), AppConf.getStorageSecret(storageSecret))));
+      storageContainers.put(storageType + "|" + storageKey, StorageServiceFactory.getStorageService(org.sunbird.cloud.storage.factory.StorageConfig(storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret))));
     }
     storageContainers.get(storageType + "|" + storageKey).get
   }

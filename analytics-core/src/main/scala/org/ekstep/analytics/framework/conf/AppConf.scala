@@ -29,14 +29,4 @@ object AppConf {
         getConfig("aws_secret");
     }
 
-    def getStorageKey(`type`: String): String = {
-        if (`type`.equals("azure")) getConfig("azure_storage_key");
-        else "";
-    }
-
-    def getStorageSecret(`type`: String): String = {
-        if (`type`.equals("azure")) getConfig("azure_storage_secret");
-        else "";
-    }
-
 }
