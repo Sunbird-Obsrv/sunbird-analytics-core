@@ -36,7 +36,9 @@ object BatchJobDriver {
             }
             val autocloseSC = if (sc.isEmpty) true else false;
             val frameworkContext = if (fc.isEmpty) {
-                CommonUtil.getFrameworkContext(Option(Array((AppConf.getConfig("cloud_storage_type"), AppConf.getConfig("cloud_storage_type"), AppConf.getConfig("cloud_storage_type")))));
+                val storageKey = config.modelParams.getOrElse(Map()).getOrElse("storageKeyConfig", "azure_storage_key").asInstanceOf[String]
+                val storageSecret = config.modelParams.getOrElse(Map()).getOrElse("storageSecretConfig", "azure_storage_secret").asInstanceOf[String]
+                CommonUtil.getFrameworkContext(Option(Array((AppConf.getConfig("cloud_storage_type"), storageKey, storageSecret))));
             } else {
                 fc.get
             }
