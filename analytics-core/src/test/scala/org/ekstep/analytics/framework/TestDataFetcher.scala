@@ -90,7 +90,7 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
         implicit val mockFc = mock[FrameworkContext];
         mockFc.inputEventsCount = sc.longAccumulator("Count");
         val mockStorageService = mock[BaseStorageService]
-        (mockFc.getStorageService(_:String):BaseStorageService).expects("azure").returns(mockStorageService);
+        (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService);
         (mockStorageService.searchObjects _).expects("dev-data-store", "raw/", Option("2017-08-31"), Option("2017-08-31"), None, "yyyy-MM-dd").returns(null);
         (mockStorageService.getPaths _).expects("dev-data-store", null).returns(List("src/test/resources/sample_telemetry_2.log"))
         val queries = Option(Array(
