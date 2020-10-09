@@ -153,7 +153,6 @@ object DruidDataFetcher {
 
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     val result =Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
-    system.terminate()
     result
   }
 
@@ -182,7 +181,6 @@ object DruidDataFetcher {
 
     val data = Await.result(result, scala.concurrent.duration.Duration.
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
-    system.terminate()
     data.filter(f => !f.isEmpty).map(f => DruidOutput(JSONUtils.deserialize[Map[String, Any]](f)))
   }
 

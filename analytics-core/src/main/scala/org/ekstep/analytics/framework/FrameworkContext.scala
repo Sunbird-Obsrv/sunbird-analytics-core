@@ -11,7 +11,7 @@ import scala.collection.mutable.Map
 import org.ekstep.analytics.framework.util.HadoopFileUtil
 import org.apache.spark.util.LongAccumulator
 import org.ekstep.analytics.framework.conf.AppConf
-import org.ekstep.analytics.framework.fetcher.{AkkaHttpClient, AkkaHttpUtil}
+import org.ekstep.analytics.framework.fetcher.{AkkaHttpClient, AkkaHttpUtil, DruidDataFetcher}
 
 class FrameworkContext {
 
@@ -91,11 +91,15 @@ class FrameworkContext {
       storageContainers.foreach(f => f._2.closeContext());
     }
   }
+  def shutDownDruidActor() ={
+    DruidDataFetcher.system.terminate()
+  }
 
   def closeContext() = {
     shutdownDruidClient();
     shutdownDruidRollUpClien();
     shutdownStorageService();
+    shutDownDruidActor()
   }
 
   def loadData(spark: SparkSession, settings: scala.collection.Map[String, String], url: String, schema: StructType): DataFrame = {
