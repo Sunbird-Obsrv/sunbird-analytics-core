@@ -683,4 +683,24 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         response.count() should be (2)
 
     }
+
+    "DruidDataFetcher" should "verify DruidOutput operations"  in {
+        val json: String =
+            """
+          {
+              "total_sessions" : 2000,
+              "total_ts" : 5,
+              "district" : "Nellore",
+              "state" : "Andhra Pradesh"
+          }
+        """
+
+        val output = new DruidOutput(JSONUtils.deserialize[Map[String,AnyRef]](json))
+        output.size should be(4)
+        val output2 =output + ("count" -> 1)
+        output2.size should be(5)
+        val output3 = output - ("count")
+        output3.size should be(4)
+        output3.get("total_ts").get should be(5)
+    }
 }

@@ -46,7 +46,7 @@ class TestFrameworkContext extends BaseSpec with BeforeAndAfterAll {
       fc.getDruidClient() should not be (null);
       fc.setDruidClient(fc.getDruidClient(), fc.getDruidRollUpClient())
       
-      
+      fc.getAkkaHttpUtil() should  not be (null)
       fc.closeContext();
     }
         
