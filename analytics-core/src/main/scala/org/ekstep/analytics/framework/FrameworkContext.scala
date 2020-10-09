@@ -11,6 +11,7 @@ import scala.collection.mutable.Map
 import org.ekstep.analytics.framework.util.HadoopFileUtil
 import org.apache.spark.util.LongAccumulator
 import org.ekstep.analytics.framework.conf.AppConf
+import org.ekstep.analytics.framework.fetcher.{AkkaHttpClient, AkkaHttpUtil}
 
 class FrameworkContext {
 
@@ -71,6 +72,10 @@ class FrameworkContext {
         conf.clientConfig,conf.scanQueryLegacyMode,conf.zoneId,conf.system).client
     }
     return drc;
+  }
+
+  def getAkkaHttpUtil(): AkkaHttpClient = {
+      AkkaHttpUtil
   }
 
   def shutdownDruidClient() = {
