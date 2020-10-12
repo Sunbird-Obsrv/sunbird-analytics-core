@@ -2,7 +2,10 @@ package org.ekstep.analytics.framework.fetcher
 
 import java.time.{ZoneOffset, ZonedDateTime}
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import cats.syntax.either._
 import ing.wbaa.druid._
 import ing.wbaa.druid.client.DruidClient
@@ -10,10 +13,11 @@ import ing.wbaa.druid.definitions.{AggregationType, PostAggregationType}
 import io.circe._
 import io.circe.parser._
 import org.ekstep.analytics.framework._
-import org.ekstep.analytics.framework.util.JSONUtils
+import org.ekstep.analytics.framework.util.{CommonUtil, HTTPClient, JSONUtils}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.joda.time.DateTimeUtils
+import org.sunbird.cloud.storage.conf.AppConf
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -450,7 +454,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             Option(List(Aggregation(Option("count"), "count", "count"))),
             Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
                 Option(List(ExtractFn("registeredlookup", "channel")))))),
-            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None, Option("count"))
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None,None, Option("count"))
 
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
         druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel,Some(false),None)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
@@ -553,7 +557,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             Option(List(Aggregation(Option("count"), "count", "count"))),
             Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
                 Option(List(ExtractFn("registeredlookup", "channel")))))),
-            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None, Option("count"))
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None,None, Option("count"))
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
 
         val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
@@ -647,8 +651,57 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidResult = DruidDataFetcher.getDruidData(query,true).collect()
 
         druidResult.size should be (0)
+    }
+
+    it should "test sql query " in {
+
+        val sqlQuery = DruidQueryModel("scan", "summary-rollup-syncts", "2020-08-23T00:00:00+00:00/2020-08-24T00:00:00+00:00", Option("all"),
+            None, None, None, None, None, None, Option(List(DruidSQLDimension("state",Option("LOOKUP(derived_loc_state, 'stateSlugLookup')")),
+                DruidSQLDimension("dimensions_pdata_id",None))),None)
 
 
+        implicit val fc = new FrameworkContext
+        implicit val druidConfig = mock[DruidConfig];
 
+
+        val mockAKkaUtil = mock[AkkaHttpClient]
+        val url = String.format("%s://%s:%s%s%s", "http",AppConf.getConfig("druid.rollup.host"),
+            AppConf.getConfig("druid.rollup.port"),AppConf.getConfig("druid.url"),"sql")
+        val request = HttpRequest(method = HttpMethods.POST,
+            uri = url,
+            entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(DruidDataFetcher.getSQLDruidQuery(sqlQuery))))
+        val stripString =
+            """
+              {"dimensions_pdata_id":"", "state":10}
+              {"dimensions_pdata_id":null, "state":5}
+              |{"dimensions_pdata_id":"dev.portal", "state":5}
+            """.stripMargin
+
+        (mockAKkaUtil.sendRequest(_: HttpRequest)(_: ActorSystem))
+          .expects(request,DruidDataFetcher.system)
+          .returns(Future.successful(HttpResponse(entity = HttpEntity(ByteString(stripString))))).anyNumberOfTimes();
+        val response = DruidDataFetcher.executeSQLQuery(sqlQuery, mockAKkaUtil)
+        response.count() should be (3)
+
+    }
+
+    "DruidDataFetcher" should "verify DruidOutput operations"  in {
+        val json: String =
+            """
+          {
+              "total_sessions" : 2000,
+              "total_ts" : 5,
+              "district" : "Nellore",
+              "state" : "Andhra Pradesh"
+          }
+        """
+
+        val output = new DruidOutput(JSONUtils.deserialize[Map[String,AnyRef]](json))
+        output.size should be(4)
+        val output2 =output + ("count" -> 1)
+        output2.size should be(5)
+        val output3 = output - ("count")
+        output3.size should be(4)
+        output3.get("total_ts").get should be(5)
     }
 }

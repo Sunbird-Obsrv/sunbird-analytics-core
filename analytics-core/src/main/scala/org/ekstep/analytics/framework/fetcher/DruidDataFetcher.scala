@@ -1,11 +1,13 @@
 package org.ekstep.analytics.framework.fetcher
 
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeoutException
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Keep, Sink}
+import akka.stream.scaladsl.{Flow, Framing, Keep, Sink, Source}
+import akka.util.ByteString
 import ing.wbaa.druid._
 import ing.wbaa.druid.definitions._
 import ing.wbaa.druid.dql.DSL._
@@ -15,14 +17,25 @@ import io.circe.Json
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework._
-import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, ResultAccumulator}
+import org.sunbird.cloud.storage.conf.AppConf
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+
+
+trait AkkaHttpClient {
+  def sendRequest(httpRequest: HttpRequest)(implicit actorSystem: ActorSystem): Future[HttpResponse]
+}
+
+object AkkaHttpUtil extends AkkaHttpClient {
+  def sendRequest(httpRequest: HttpRequest)(implicit actorSystem: ActorSystem): Future[HttpResponse] ={
+    Http().singleRequest(httpRequest)
+  }
+}
 
 object DruidDataFetcher {
-
+  implicit val system = ActorSystem("ExecuteQuery")
   @throws(classOf[DataFetcherException])
   def getDruidData(query: DruidQueryModel, queryAsStream: Boolean = false)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
     val request = getDruidQuery(query)
@@ -104,8 +117,24 @@ object DruidDataFetcher {
 
   }
 
+  def getSQLDruidQuery(model : DruidQueryModel) : DruidSQLQuery ={
+    val columns = model.sqlDimensions.get.map({f=>
+      if(f.function == None)
+        f.fieldName
+      else
+        f.function.get + "AS \"" + f.fieldName + "\""
+
+    })
+    val sqlString = "SELECT " + columns.mkString(",") +
+      " from \"druid\".\"" + model.dataSource + "\" where " +
+      "__time >= '" + model.intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '"+
+      model.intervals.split("/").apply(1).split("T").apply(0) + "'"
+
+    DruidSQLQuery(sqlString)
+  }
+
+
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
-    implicit val system = ActorSystem("ExecuteQuery")
     implicit val materializer = ActorMaterializer()
 
     val response =
@@ -125,6 +154,35 @@ object DruidDataFetcher {
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
+
+  def executeSQLQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
+
+    val druidQuery = getSQLDruidQuery(model)
+    implicit val materializer = ActorMaterializer()
+    implicit val ec: ExecutionContextExecutor = system.dispatcher
+    val url = String.format("%s://%s:%s%s%s", "http", AppConf.getConfig("druid.rollup.host"),
+      AppConf.getConfig("druid.rollup.port"), AppConf.getConfig("druid.url"), "sql")
+    val request = HttpRequest(method = HttpMethods.POST,
+      uri = url,
+      entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(druidQuery)))
+    val responseFuture: Future[HttpResponse] = client.sendRequest(request)
+
+    val convertStringFlow =
+      Flow[ByteString].map(s => s.utf8String.trim)
+
+    val result = Source.fromFuture[HttpResponse](responseFuture)
+      .flatMapConcat(response => response.entity.withoutSizeLimit()
+        .dataBytes.via(Framing.delimiter(ByteString("\n"),
+        AppConf.getConfig("druid.scan.batch.bytes").toInt, true)))
+      .via(convertStringFlow).via(new ResultAccumulator[String])
+      .map(sc.parallelize(_))
+      .toMat(Sink.fold[RDD[String], RDD[String]]((sc.emptyRDD[String]))(_ union _))(Keep.right).run()
+
+    val data = Await.result(result, scala.concurrent.duration.Duration.
+      apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
+    data.filter(f => !f.isEmpty).map(f=> processSqlResult(f))
+  }
+
 
   def processResult(query: DruidQueryModel, result: Seq[BaseResult]): Seq[String] = {
     if (result.nonEmpty) {
@@ -175,6 +233,18 @@ object DruidDataFetcher {
       }
     } else
       List();
+  }
+
+  def processSqlResult(result: String): DruidOutput = {
+
+    val finalResult = JSONUtils.deserialize[Map[String,Any]](result)
+    val finalMap  =finalResult.map(m => {
+      if(m._2== null)
+        (m._1, "unknown")
+      else if (m._2.isInstanceOf[String])
+        (m._1, if(m._2.toString.isEmpty) "unknown" else m._2)
+      else (m._1,m._2)})
+    DruidOutput(finalMap)
   }
 
   def getAggregation(aggregations: Option[List[org.ekstep.analytics.framework.Aggregation]]): List[AggregationExpression] = {

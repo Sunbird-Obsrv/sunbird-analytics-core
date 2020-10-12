@@ -77,7 +77,14 @@ case class JobConfig(search: Fetcher, filters: Option[Array[Filter]], sort: Opti
 
 //Druid Query Models
 @scala.beans.BeanInfo
-case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, columns: Option[List[String]] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"), intervalSlider: Int = 0)
+case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, columns: Option[List[String]] = None,sqlDimensions: Option[List[DruidSQLDimension]] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"), intervalSlider: Int = 0)
+
+@scala.beans.BeanInfo
+case class DruidSQLQuery(query: String, resultFormat : String = "objectLines", header:Boolean =true )
+
+@scala.beans.BeanInfo
+case class DruidSQLDimension(fieldName: String, function: Option[String])
+
 @scala.beans.BeanInfo
 case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[List[ExtractFn]] = None)
 @scala.beans.BeanInfo
@@ -250,3 +257,15 @@ case class DeviceProfileOutput(device_id: String, first_access: Option[Timestamp
 case class StorageConfig(store: String, container: String, fileName: String, accountKey: Option[String] = None, secretKey: Option[String] = None);
 
 case class OnDemandJobRequest(request_id: String, request_data : String,download_urls :List[String], status: String)
+
+@scala.beans.BeanInfo
+case class DruidOutput(t: Map[String, Any]) extends Map[String,Any]  with Input with AlgoInput with AlgoOutput with Output {
+  private val internalMap = t
+  override def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = new DruidOutput(internalMap + kv)
+
+  override def get(key: String): Option[Any] =internalMap.get(key)
+
+  override def iterator: Iterator[(String, Any)] = internalMap.iterator
+
+  override def -(key: String): Map[String, Any] = new DruidOutput(internalMap - key)
+}
