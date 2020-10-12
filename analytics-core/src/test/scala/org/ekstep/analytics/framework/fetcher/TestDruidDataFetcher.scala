@@ -672,9 +672,9 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(DruidDataFetcher.getSQLDruidQuery(sqlQuery))))
         val stripString =
             """
-              {"dimensions_pdata_id":"", "state":"10"}
-              {"dimensions_pdata_id":null, "state":"5"}
-              |{"dimensions_pdata_id":"dev.portal", "state":"5"}
+              {"dimensions_pdata_id":"", "state":10}
+              {"dimensions_pdata_id":null, "state":5}
+              |{"dimensions_pdata_id":"dev.portal", "state":5}
             """.stripMargin
 
         (mockAKkaUtil.sendRequest(_: HttpRequest)(_: ActorSystem))
