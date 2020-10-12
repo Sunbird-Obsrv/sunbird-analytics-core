@@ -152,11 +152,10 @@ object DruidDataFetcher {
 
 
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
-    val result =Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
-    result
+    Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
-  def executeExhaustQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
+  def executeSQLQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
 
     val druidQuery = getSQLDruidQuery(model)
     implicit val materializer = ActorMaterializer()

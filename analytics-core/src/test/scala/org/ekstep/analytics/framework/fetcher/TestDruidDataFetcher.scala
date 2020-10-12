@@ -680,7 +680,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         (mockAKkaUtil.sendRequest(_: HttpRequest)(_: ActorSystem))
           .expects(request,DruidDataFetcher.system)
           .returns(Future.successful(HttpResponse(entity = HttpEntity(ByteString(stripString))))).anyNumberOfTimes();
-        val response = DruidDataFetcher.executeExhaustQuery(sqlQuery, mockAKkaUtil)
+        val response = DruidDataFetcher.executeSQLQuery(sqlQuery, mockAKkaUtil)
         response.count() should be (3)
 
     }
