@@ -39,6 +39,7 @@ object DruidDataFetcher {
   @throws(classOf[DataFetcherException])
   def getDruidData(query: DruidQueryModel, queryAsStream: Boolean = false)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
     val request = getDruidQuery(query)
+    fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
     if (queryAsStream) {
       executeQueryAsStream(query, request)
 
@@ -158,6 +159,8 @@ object DruidDataFetcher {
   def executeSQLQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
 
     val druidQuery = getSQLDruidQuery(model)
+    fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
+
     implicit val materializer = ActorMaterializer()
     implicit val ec: ExecutionContextExecutor = system.dispatcher
     val url = String.format("%s://%s:%s%s%s", "http", AppConf.getConfig("druid.rollup.host"),
@@ -175,7 +178,10 @@ object DruidDataFetcher {
         .dataBytes.via(Framing.delimiter(ByteString("\n"),
         AppConf.getConfig("druid.scan.batch.bytes").toInt, true)))
       .via(convertStringFlow).via(new ResultAccumulator[String])
-      .map(sc.parallelize(_))
+      .map(events => {
+        fc.inputEventsCount.add(events.filter(p=> !p.isEmpty).size)
+        sc.parallelize(events)
+      })
       .toMat(Sink.fold[RDD[String], RDD[String]]((sc.emptyRDD[String]))(_ union _))(Keep.right).run()
 
     val data = Await.result(result, scala.concurrent.duration.Duration.
@@ -184,8 +190,9 @@ object DruidDataFetcher {
   }
 
 
-  def processResult(query: DruidQueryModel, result: Seq[BaseResult]): Seq[String] = {
+  def processResult(query: DruidQueryModel, result: Seq[BaseResult])(implicit fc: FrameworkContext): Seq[String] = {
     if (result.nonEmpty) {
+      fc.inputEventsCount.add(result.size)
       query.queryType.toLowerCase match {
         case "timeseries" | "groupby" =>
           val series = result.asInstanceOf[List[DruidResult]].map { f =>
