@@ -181,7 +181,7 @@ object DruidDataFetcher {
 
     val data = Await.result(result, scala.concurrent.duration.Duration.
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
-    data.filter(f => !f.isEmpty).map(f => DruidOutput(JSONUtils.deserialize[Map[String, Any]](f)))
+    data.filter(f => !f.isEmpty).map(f=> processSqlResult(f))
   }
 
 
@@ -234,6 +234,18 @@ object DruidDataFetcher {
       }
     } else
       List();
+  }
+
+  def processSqlResult(result: String): DruidOutput = {
+
+    val finalResult = JSONUtils.deserialize[Map[String,Any]](result)
+    val finalMap  =finalResult.map(m => {
+      if(m._2== null)
+        (m._1, "unknown")
+      else if (m._2.isInstanceOf[String])
+        (m._1, if(m._2.toString.isEmpty) "unknown" else m._2)
+      else (m._1,m._2)})
+    DruidOutput(finalMap)
   }
 
   def getAggregation(aggregations: Option[List[org.ekstep.analytics.framework.Aggregation]]): List[AggregationExpression] = {
