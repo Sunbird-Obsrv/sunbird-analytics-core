@@ -35,7 +35,6 @@ object AkkaHttpUtil extends AkkaHttpClient {
 }
 
 object DruidDataFetcher {
-  implicit val system = ActorSystem("ExecuteQuery")
   @throws(classOf[DataFetcherException])
   def getDruidData(query: DruidQueryModel, queryAsStream: Boolean = false)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
     val request = getDruidQuery(query)
@@ -136,6 +135,11 @@ object DruidDataFetcher {
 
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
+
+    implicit val system = if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct"))
+      fc.getDruidRollUpClient().actorSystem
+    else
+      fc.getDruidClient().actorSystem
     implicit val materializer = ActorMaterializer()
 
     val response =
@@ -160,7 +164,10 @@ object DruidDataFetcher {
 
     val druidQuery = getSQLDruidQuery(model)
     fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
-
+    implicit val system = if (model.dataSource.contains("rollup") || model.dataSource.contains("distinct"))
+      fc.getDruidRollUpClient().actorSystem
+    else
+      fc.getDruidClient().actorSystem
     implicit val materializer = ActorMaterializer()
     implicit val ec: ExecutionContextExecutor = system.dispatcher
     val url = String.format("%s://%s:%s%s%s", "http", AppConf.getConfig("druid.rollup.host"),

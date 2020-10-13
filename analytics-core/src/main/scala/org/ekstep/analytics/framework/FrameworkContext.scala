@@ -91,15 +91,11 @@ class FrameworkContext {
       storageContainers.foreach(f => f._2.closeContext());
     }
   }
-  def shutDownDruidActor() ={
-    DruidDataFetcher.system.terminate()
-  }
 
   def closeContext() = {
     shutdownDruidClient();
     shutdownDruidRollUpClien();
     shutdownStorageService();
-    shutDownDruidActor()
   }
 
   def loadData(spark: SparkSession, settings: scala.collection.Map[String, String], url: String, schema: StructType): DataFrame = {
