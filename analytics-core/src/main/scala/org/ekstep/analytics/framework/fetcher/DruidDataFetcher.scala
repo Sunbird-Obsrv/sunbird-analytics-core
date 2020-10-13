@@ -164,10 +164,7 @@ object DruidDataFetcher {
 
     val druidQuery = getSQLDruidQuery(model)
     fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
-    implicit val system = if (model.dataSource.contains("rollup") || model.dataSource.contains("distinct"))
-      fc.getDruidRollUpClient().actorSystem
-    else
-      fc.getDruidClient().actorSystem
+    implicit val system = fc.getDruidRollUpClient().actorSystem
     implicit val materializer = ActorMaterializer()
     implicit val ec: ExecutionContextExecutor = system.dispatcher
     val url = String.format("%s://%s:%s%s%s", "http", AppConf.getConfig("druid.rollup.host"),
