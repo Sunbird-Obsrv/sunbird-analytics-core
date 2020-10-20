@@ -1,16 +1,18 @@
 package org.ekstep.analytics.framework.util
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import org.ekstep.analytics.framework.BaseSpec
 import org.ekstep.analytics.framework.Metadata
 import org.ekstep.analytics.framework.Request
 import org.ekstep.analytics.framework.Response
 import org.ekstep.analytics.framework.Search
 import org.ekstep.analytics.framework.SearchFilter
-
 import com.fasterxml.jackson.core.JsonParseException
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.Params
 import com.google.common.net.InetAddresses
+import org.ekstep.analytics.framework.fetcher.AkkaHttpUtil
 
 /**
  * @author Santhosh
@@ -100,6 +102,17 @@ class TestRestUtil extends BaseSpec {
         val request = Map("popularity" -> 1);
         val response = RestUtil.patch[PostErrR](url, JSONUtils.serialize(request));
         response should be(null);
+    }
+
+    it should "should test akka util" in {
+        val url = "https://httpbin.org/patch?type=test";
+         implicit val system=ActorSystem("Test")
+        val request = HttpRequest(method = HttpMethods.POST,
+            uri = url,
+            entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(Map("popularity" -> 1))))
+        val response = AkkaHttpUtil.sendRequest(request)
+        response should not be (null);
+        system.terminate()
     }
 
 }
