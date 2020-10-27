@@ -109,7 +109,8 @@ object DruidDataFetcher {
   }
 
   def executeDruidQuery(model: DruidQueryModel,query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): DruidResponse = {
-    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")) fc.getDruidRollUpClient().doQuery(query)
+    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")
+      || query.dataSource.contains("snapshot")) fc.getDruidRollUpClient().doQuery(query)
     else fc.getDruidClient().doQuery(query)
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(response, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
@@ -137,14 +138,14 @@ object DruidDataFetcher {
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
 
-    implicit val system = if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct"))
+    implicit val system = if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct") || query.dataSource.contains("snapshot"))
       fc.getDruidRollUpClient().actorSystem
     else
       fc.getDruidClient().actorSystem
     implicit val materializer = ActorMaterializer()
 
     val response =
-      if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct"))
+      if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct") || query.dataSource.contains("snapshot"))
         fc.getDruidRollUpClient().doQueryAsStream(query)
       else
         fc.getDruidClient().doQueryAsStream(query)
