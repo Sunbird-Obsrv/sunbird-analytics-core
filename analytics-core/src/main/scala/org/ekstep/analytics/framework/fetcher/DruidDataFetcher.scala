@@ -125,10 +125,11 @@ object DruidDataFetcher {
         f.function.get + "AS \"" + f.fieldName + "\""
 
     })
+      val intervals = CommonUtil.getIntervalRange(model.intervals, model.dataSource, model.intervalSlider)
     val sqlString = "SELECT " + columns.mkString(",") +
       " from \"druid\".\"" + model.dataSource + "\" where " +
-      "__time >= '" + model.intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '"+
-      model.intervals.split("/").apply(1).split("T").apply(0) + "'"
+      "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '"+
+      intervals.split("/").apply(1).split("T").apply(0) + "'"
 
     DruidSQLQuery(sqlString)
   }
