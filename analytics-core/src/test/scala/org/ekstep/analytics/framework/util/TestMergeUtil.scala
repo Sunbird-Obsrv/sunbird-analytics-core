@@ -36,12 +36,12 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
             """{"type":"azure","id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
               |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
               |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"}],"dims":["Date"]},"container":"reports",
-              |"postContainer":"test-container","deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
+              |"postContainer":"test-container","deltaFileAccess":true,"reportFileAccess":false}""".stripMargin
         val jsonConfig = JSONUtils.deserialize[MergeScriptConfig](config)
         (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService)
         (mockStorageService.searchObjects _).expects(jsonConfig.container,"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv",None,None,None,"yyyy-MM-dd").returns(null)
         (mockStorageService.getPaths _).expects(jsonConfig.container, null).returns(List("src/test/resources/delta.csv"))
-        (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService)
+        (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "report_storage_key", "report_storage_secret").returns(mockStorageService)
         (mockStorageService.searchObjects _).expects(jsonConfig.postContainer.get,"apekx/daily_metrics.csv",None,None,None,"yyyy-MM-dd").returns(null)
         (mockStorageService.getPaths _).expects(jsonConfig.postContainer.get, null).returns(List("src/test/resources/report.csv"))
         a[AzureException] should be thrownBy {
@@ -105,6 +105,29 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
                   |"deltaPath":"src/test/resources/delta.csv"}],
                   |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
             mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeScriptConfig](config4)).count should be(4)
+            val config5 =
+                """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"None",
+                  |"rollupCol":"Date","rollupRange":4,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+                  |"deltaPath":"src/test/resources/delta.csv"}],
+                  |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
+            mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeScriptConfig](config5)).count should be(11)
+    }
+
+    "MergeUtil" should "test without rollup condition" in {
+
+        implicit val mockFc = mock[FrameworkContext]
+        val mergeUtil = new MergeUtil()
+
+        val config =
+            """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":0,"rollupAge":"ACADEMIC_YEAR",
+              |"rollupCol":"Date","rollupRange":2,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+              |"deltaPath":"src/test/resources/delta.csv"}],
+              |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
+        implicit val sqlContext = new SQLContext(sc)
+        val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/delta_rollup.csv")
+        val reportDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/report_rollup.csv")
+        mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeScriptConfig](config)).count should be(1)
+
     }
 
 }

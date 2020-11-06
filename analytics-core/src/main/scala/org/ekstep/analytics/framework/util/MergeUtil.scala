@@ -40,25 +40,29 @@ class MergeUtil {
 
     def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeScriptConfig): DataFrame = {
 
-        val reportDfColumns = reportDF.columns
-        val deltaDF = if (mergeConfig.rollup > 0 && reportDF.columns.contains(mergeConfig.rollupCol.get))
-            delta.withColumn("Date", date_format(col("Date"), "dd-MM-yyyy"))
+        if (mergeConfig.rollup > 0) {
+            val defaultFormat = "dd-MM-yyyy"
+            val reportDfColumns = reportDF.columns
+            val rollupCol = mergeConfig.rollupCol.getOrElse("Date")
+            val deltaDF = delta.withColumn(rollupCol, date_format(col(rollupCol), defaultFormat))
+            val filteredDf = reportDF.as("report").join(deltaDF.as("delta"),
+                col("report." + rollupCol) === col("delta." + rollupCol), "inner")
+              .select("report.*")
+
+            val finalDf = reportDF.except(filteredDf).union(deltaDF.dropDuplicates()
+              .drop(deltaDF.columns.filter(p => !reportDfColumns.contains(p)): _*)
+              .select(reportDfColumns.head, reportDfColumns.tail: _*))
+            rollupReport(finalDf, mergeConfig).orderBy(unix_timestamp(col(rollupCol), defaultFormat))
+        }
         else
             delta
-        val filteredDf = reportDF.as("report").join(deltaDF.as("delta"),
-            col("report." + mergeConfig.rollupCol.get) === col("delta." + mergeConfig.rollupCol.get), "inner")
-          .select("report.*")
-
-        val finalDf = reportDF.except(filteredDf).union(deltaDF.dropDuplicates()
-          .drop(deltaDF.columns.filter(p => !reportDfColumns.contains(p)): _*)
-          .select(reportDfColumns.head, reportDfColumns.tail: _*))
-        rollupReport(finalDf, mergeConfig).orderBy(unix_timestamp(col("Date"), "dd-MM-yyyy"))
     }
 
     def rollupReport(reportDF: DataFrame, mergeScriptConfig: MergeScriptConfig): DataFrame = {
+        val defaultFormat = "dd-MM-yyyy"
         val subtract = (x: Int, y: Int) => x - y
         val rollupRange = subtract(mergeScriptConfig.rollupRange.get,1)
-        val maxDate = reportDF.agg(max(unix_timestamp(col("Date"), "dd-MM-yyyy")) as "Max").collect().apply(0).getAs[Long]("Max")
+        val maxDate = reportDF.agg(max(unix_timestamp(col("Date"),defaultFormat)) as "Max").collect().apply(0).getAs[Long]("Max")
         val convert = (x: Long) => x * 1000L
         val endDate = new time.DateTime(convert(maxDate))
         var endYear = endDate.year().get()
@@ -76,7 +80,7 @@ class MergeUtil {
             case "MONTH" =>
                 endMonth = subtract(endMonth, rollupRange)
                 endYear = if (endMonth < 1) endYear + ((if (endMonth != 0) endMonth else -1) / 12).floor.toInt else endYear
-                endMonth = if (endMonth < 1) (endMonth + 12) else endMonth
+                endMonth = if (endMonth < 1) endMonth + 12 else endMonth
                 new time.DateTime(endYear, endMonth, 1, 0, 0, 0)
             case "WEEK" =>
                 endDate.withDayOfWeek(1).minusWeeks(rollupRange)
@@ -85,7 +89,7 @@ class MergeUtil {
             case _ =>
                 new time.DateTime(1970, 1, 1, 0, 0, 0)
         }
-        reportDF.filter(p => DateTimeFormat.forPattern("dd-MM-yyyy")
+        reportDF.filter(p => DateTimeFormat.forPattern(defaultFormat)
           .parseDateTime(p.getAs[String]("Date"))
           .getMillis >= startDate.asInstanceOf[time.DateTime].getMillis)
     }
