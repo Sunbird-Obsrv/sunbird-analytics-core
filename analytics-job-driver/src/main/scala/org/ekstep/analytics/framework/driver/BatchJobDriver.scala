@@ -32,11 +32,8 @@ object BatchJobDriver {
                 val sparkElasticsearchConnectionHost = config.modelParams.getOrElse(Map()).get("sparkElasticsearchConnectionHost")
                 val sparkRedisConnectionHost = config.modelParams.getOrElse(Map()).get("sparkRedisConnectionHost")
                 val sparkRedisDB = config.modelParams.getOrElse(Map()).get("sparkRedisDB")
-                println("sparkRedisDB: " + sparkRedisDB)
-                println("sparkRedisConnectionHost: " + sparkRedisConnectionHost)
                 CommonUtil.getSparkContext(JobContext.parallelization, config.appName.getOrElse(config.model), sparkCassandraConnectionHost,sparkElasticsearchConnectionHost, sparkRedisConnectionHost, sparkRedisDB)
             } else {
-                println("sc. is not empty")
                 sc.get
             }
             val autocloseSC = if (sc.isEmpty) true else false;
