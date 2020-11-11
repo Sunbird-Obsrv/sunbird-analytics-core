@@ -5,14 +5,14 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.{col, unix_timestamp, _}
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.ekstep.analytics.framework.{FrameworkContext, MergeScriptConfig, StorageConfig}
+import org.ekstep.analytics.framework.{FrameworkContext, MergeConfig, StorageConfig}
 import org.joda.time
 import org.joda.time.format.DateTimeFormat
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 
 class MergeUtil {
 
-    def mergeFile(mergeConfig: MergeScriptConfig)(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
+    def mergeFile(mergeConfig: MergeConfig)(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
         implicit val sqlContext = new SQLContext(sc)
         mergeConfig.merge.files.foreach(filePaths => {
             val path = new Path(filePaths("reportPath"))
@@ -22,10 +22,10 @@ class MergeUtil {
                     val reportDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("reportPath"))
                     (mergeReport(deltaDF, reportDF, mergeConfig),StorageConfig(mergeConfig.`type`, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath"))))
                 case "azure" =>
-                    val deltaDF = downloadAzureFile(filePaths("deltaPath"),
+                    val deltaDF = fetchBlobFile(filePaths("deltaPath"),
                         mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
 
-                    val reportDF = downloadAzureFile(filePaths("reportPath"), mergeConfig.reportFileAccess.getOrElse(true),
+                    val reportDF = fetchBlobFile(filePaths("reportPath"), mergeConfig.reportFileAccess.getOrElse(true),
                         mergeConfig.postContainer.getOrElse("reports"))
                     (mergeReport(deltaDF, reportDF, mergeConfig),StorageConfig(mergeConfig.`type`, mergeConfig.postContainer.get, path.getParent.getName))
                 case _ =>
@@ -38,7 +38,7 @@ class MergeUtil {
     }
 
 
-    def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeScriptConfig): DataFrame = {
+    def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeConfig): DataFrame = {
 
         if (mergeConfig.rollup > 0) {
             val defaultFormat = "dd-MM-yyyy"
@@ -58,7 +58,7 @@ class MergeUtil {
             delta
     }
 
-    def rollupReport(reportDF: DataFrame, mergeScriptConfig: MergeScriptConfig): DataFrame = {
+    def rollupReport(reportDF: DataFrame, mergeScriptConfig: MergeConfig): DataFrame = {
         val defaultFormat = "dd-MM-yyyy"
         val subtract = (x: Int, y: Int) => x - y
         val rollupRange = subtract(mergeScriptConfig.rollupRange.get,1)
@@ -94,7 +94,7 @@ class MergeUtil {
           .getMillis >= startDate.asInstanceOf[time.DateTime].getMillis)
     }
 
-    def downloadAzureFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
+    def fetchBlobFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
 
         val storageService =
             if (isPrivate)
