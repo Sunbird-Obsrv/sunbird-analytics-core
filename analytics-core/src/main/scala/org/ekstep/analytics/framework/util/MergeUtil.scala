@@ -5,69 +5,92 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.{col, unix_timestamp, _}
 import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.ekstep.analytics.framework.{FrameworkContext, MergeConfig, StorageConfig}
 import org.joda.time
 import org.joda.time.format.DateTimeFormat
-import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 
+case class MergeResult(updatedReportDF : DataFrame, oldReportDF : DataFrame, storageConfig : StorageConfig)
 class MergeUtil {
 
     def mergeFile(mergeConfig: MergeConfig)(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
         implicit val sqlContext = new SQLContext(sc)
         mergeConfig.merge.files.foreach(filePaths => {
             val path = new Path(filePaths("reportPath"))
-            val mergeResult:(DataFrame, StorageConfig) = mergeConfig.`type`.toLowerCase() match {
+            val mergeResult = mergeConfig.`type`.toLowerCase() match {
                 case "local" =>
                     val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("deltaPath"))
                     val reportDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("reportPath"))
-                    (mergeReport(deltaDF, reportDF, mergeConfig),StorageConfig(mergeConfig.`type`, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath"))))
+                    MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
+                      StorageConfig(mergeConfig.`type`, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath"))))
+
                 case "azure" =>
                     val deltaDF = fetchBlobFile(filePaths("deltaPath"),
                         mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
 
                     val reportDF = fetchBlobFile(filePaths("reportPath"), mergeConfig.reportFileAccess.getOrElse(true),
                         mergeConfig.postContainer.getOrElse("reports"))
-                    (mergeReport(deltaDF, reportDF, mergeConfig),StorageConfig(mergeConfig.`type`, mergeConfig.postContainer.get, path.getParent.getName))
+                    MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
+                      StorageConfig(mergeConfig.`type`, mergeConfig.postContainer.get, path.getParent.getName))
+
                 case _ =>
-                    throw new Exception("Merge type unknown");
+                    throw new Exception("Merge type unknown")
             }
-            val mergeDF= mergeResult._1
-            mergeDF.saveToBlobStore(mergeResult._2, "csv", FilenameUtils.removeExtension(path.getName), Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-            mergeDF.saveToBlobStore(mergeResult._2, "json", FilenameUtils.removeExtension(path.getName), Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+            // Rename old file with appending date
+            mergeResult.oldReportDF.saveToBlobStore(mergeResult.storageConfig, "csv",
+                String.format("%s-%s",FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
+                Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+            mergeResult.oldReportDF.saveToBlobStore(mergeResult.storageConfig, "json",
+                String.format("%s-%s",FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
+                Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+
+            // Append new data to report file
+            mergeResult.updatedReportDF.saveToBlobStore(mergeResult.storageConfig, "csv", FilenameUtils.removeExtension(path.getName),
+                Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+            mergeResult.updatedReportDF.saveToBlobStore(mergeResult.storageConfig, "json", FilenameUtils.removeExtension(path.getName),
+                Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+
         })
     }
 
 
-    def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeConfig): DataFrame = {
+    def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeConfig, dims: List[String]): DataFrame = {
 
         if (mergeConfig.rollup > 0) {
-            val defaultFormat = "dd-MM-yyyy"
+            val rollupFormat = mergeConfig.rollupFormat.getOrElse("dd-MM-yyyy")
             val reportDfColumns = reportDF.columns
             val rollupCol = mergeConfig.rollupCol.getOrElse("Date")
-            val deltaDF = delta.withColumn(rollupCol, date_format(col(rollupCol), defaultFormat))
-            val filteredDf = reportDF.as("report").join(deltaDF.as("delta"),
-                col("report." + rollupCol) === col("delta." + rollupCol), "inner")
-              .select("report.*")
+            val deltaDF = delta.withColumn(rollupCol, date_format(col(rollupCol), rollupFormat)).dropDuplicates()
+              .drop(delta.columns.filter(p => !reportDfColumns.contains(p)): _*)
+              .select(reportDfColumns.head, reportDfColumns.tail: _*)
 
-            val finalDf = reportDF.except(filteredDf).union(deltaDF.dropDuplicates()
-              .drop(deltaDF.columns.filter(p => !reportDfColumns.contains(p)): _*)
-              .select(reportDfColumns.head, reportDfColumns.tail: _*))
-            rollupReport(finalDf, mergeConfig).orderBy(unix_timestamp(col(rollupCol), defaultFormat))
+            val filteredDf = mergeConfig.rollupCol.map { rollupCol =>
+                reportDF.as("report").join(deltaDF.as("delta"),
+                    col("report." + rollupCol) === col("delta." + rollupCol), "inner")
+                  .select("report.*")
+            }.getOrElse({
+                reportDF.as("report").join(deltaDF.as("delta"), dims,"inner")
+                  .select("report.*")
+            })
+
+            val finalDf = reportDF.except(filteredDf).union(deltaDF)
+            rollupReport(finalDf, mergeConfig).orderBy(unix_timestamp(col(rollupCol), rollupFormat))
         }
         else
             delta
     }
 
-    def rollupReport(reportDF: DataFrame, mergeScriptConfig: MergeConfig): DataFrame = {
-        val defaultFormat = "dd-MM-yyyy"
+    def rollupReport(reportDF: DataFrame, mergeConfig: MergeConfig): DataFrame = {
+        val rollupFormat = mergeConfig.rollupFormat.getOrElse("dd-MM-yyyy")
         val subtract = (x: Int, y: Int) => x - y
-        val rollupRange = subtract(mergeScriptConfig.rollupRange.get,1)
-        val maxDate = reportDF.agg(max(unix_timestamp(col("Date"),defaultFormat)) as "Max").collect().apply(0).getAs[Long]("Max")
+        val rollupRange = subtract(mergeConfig.rollupRange.get, 1)
+        val maxDate = reportDF.agg(max(unix_timestamp(col(mergeConfig.rollupCol.getOrElse("Date"))
+            , rollupFormat)) as "Max").collect().apply(0).getAs[Long]("Max")
         val convert = (x: Long) => x * 1000L
         val endDate = new time.DateTime(convert(maxDate))
         var endYear = endDate.year().get()
         var endMonth = endDate.monthOfYear().get()
-        val startDate = mergeScriptConfig.rollupAge.get match {
+        val startDate = mergeConfig.rollupAge.get match {
             case "ACADEMIC_YEAR" =>
                 if (endMonth <= 5)
                     endYear = subtract(subtract(endYear, 1), rollupRange)
@@ -89,7 +112,7 @@ class MergeUtil {
             case _ =>
                 new time.DateTime(1970, 1, 1, 0, 0, 0)
         }
-        reportDF.filter(p => DateTimeFormat.forPattern(defaultFormat)
+        reportDF.filter(p => DateTimeFormat.forPattern(rollupFormat)
           .parseDateTime(p.getAs[String]("Date"))
           .getMillis >= startDate.asInstanceOf[time.DateTime].getMillis)
     }
@@ -105,5 +128,4 @@ class MergeUtil {
 
         sqlContext.read.options(Map("header" -> "true")).csv(storageService.getPaths(container, keys).toArray.mkString(","))
     }
-
 }
