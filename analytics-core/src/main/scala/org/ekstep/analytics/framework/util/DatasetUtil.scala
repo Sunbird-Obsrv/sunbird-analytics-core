@@ -62,14 +62,14 @@ class DatasetExt(df: Dataset[Row]) {
     val opts = options.getOrElse(Map());
     val files = if(dims.nonEmpty) {
       val map = df.select(dims.map(f => col(f)):_*).distinct().collect().map(f => filePaths(dims, f, format, tempDir, finalDir)).toMap
-      df.coalesce(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + tempDir);
+      df.repartition(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + tempDir);
       map.foreach(f => {
         fileUtil.delete(conf, filePrefix + f._2)
         fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true);
       })
       map.map(f => filePrefix + f._2).toList
     } else {
-      df.coalesce(1).write.format(format).options(opts).save(filePrefix + tempDir);
+      df.repartition(1).write.format(format).options(opts).save(filePrefix + tempDir);
       fileUtil.delete(conf, filePrefix + finalDir + "." + format)
       fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);
       List(filePrefix + finalDir + "." + format)
