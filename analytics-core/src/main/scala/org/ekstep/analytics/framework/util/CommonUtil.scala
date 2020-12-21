@@ -672,7 +672,12 @@ object CommonUtil {
   }
 
   def getGranularity(value: String): Granularity = {
-    GranularityType.decode(value).right.getOrElse(GranularityType.All)
+    value.toLowerCase match {
+      case "latest_index" =>
+        GranularityType.decode("all").right.getOrElse(GranularityType.All)
+      case _ =>
+        GranularityType.decode(value).right.getOrElse(GranularityType.All)
+    }
   }
 
   def getMetricEvent(params: Map[String, AnyRef], producerId: String, producerPid: String): V3DerivedEvent = {
@@ -691,10 +696,9 @@ object CommonUtil {
   }
 
   def getPostgresConnectionProps(): Properties = {
+    val connProperties = new Properties()
     val user = AppConf.getConfig("postgres.user")
     val pass = AppConf.getConfig("postgres.pass")
-
-    val connProperties = new Properties()
     connProperties.setProperty("driver", "org.postgresql.Driver")
     connProperties.setProperty("user", user)
     connProperties.setProperty("password", pass)
@@ -731,4 +735,11 @@ object CommonUtil {
     sc.hadoopConfiguration
   }
 
+  def getPostgresConnectionUserProps(user:String,pass: String): Properties = {
+    val connProperties = new Properties()
+    connProperties.setProperty("driver", "org.postgresql.Driver")
+    connProperties.setProperty("user", user)
+    connProperties.setProperty("password", pass)
+    connProperties
+  }
 }

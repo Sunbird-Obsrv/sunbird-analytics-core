@@ -13,7 +13,7 @@ import ing.wbaa.druid.definitions.{AggregationType, PostAggregationType}
 import io.circe._
 import io.circe.parser._
 import org.ekstep.analytics.framework._
-import org.ekstep.analytics.framework.util.{CommonUtil, HTTPClient, JSONUtils}
+import org.ekstep.analytics.framework.util.{CommonUtil, EmbeddedPostgresqlService, HTTPClient, JSONUtils}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.joda.time.DateTimeUtils
@@ -22,7 +22,14 @@ import org.sunbird.cloud.storage.conf.AppConf
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+
+
 class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
+    override def beforeAll () {
+        super.beforeAll()
+        EmbeddedPostgresqlService.start()
+        EmbeddedPostgresqlService.createNominationTable()
+    }
 
     it should "check for getDimensionByType methods" in {
         val defaultExpr = DruidDataFetcher.getDimensionByType(None, "field", Option("field1"))
@@ -704,5 +711,25 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val output3 = output - ("count")
         output3.size should be(4)
         output3.get("total_ts").get should be(5)
+    }
+
+
+    it should "test the latest_index granularity" in {
+        EmbeddedPostgresqlService.execute("INSERT INTO druid_segments (id,datasource,start,\"end\",used) VALUES('segment1','content-model-snapshot','2020-10-27T00:00:00.000Z','2020-10-28T00:00:00.000Z','t')")
+        val query = DruidQueryModel("groupBy", "content-model-snapshot", "LastDay",
+            Option("latest_index"), Option(List(Aggregation(Option("count"), "count", ""))),
+            Option(List(DruidDimension("status", Option("status")))),
+            None,None,None)
+        val druidQuery = DruidDataFetcher.getDruidQuery(query)
+
+        druidQuery.toDebugString.contains("2020-10-27T00:00:00.000Z") should be (true)
+        druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count)),List(2020-10-27T00:00:00.000Z/2020-10-28T00:00:00.000Z),None,List(DefaultDimension(status,Some(status),None)),All,None,None,List(),Map())")
+        val query1 = DruidQueryModel("groupBy", "content-snapshot", "2019-11-01/2019-11-02",
+            Option("latest_index"), Option(List(Aggregation(Option("count"), "count", ""))),
+            Option(List(DruidDimension("status", Option("status")))),
+            None,None,None)
+        val druidQuery1 = DruidDataFetcher.getDruidQuery(query1)
+        druidQuery1.toDebugString.contains("2019-11-01") should be (true)
+
     }
 }
