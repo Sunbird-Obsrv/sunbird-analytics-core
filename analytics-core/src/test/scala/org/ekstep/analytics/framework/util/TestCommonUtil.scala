@@ -304,8 +304,7 @@ class TestCommonUtil extends BaseSpec {
     val epochToTimestamp = CommonUtil.getTimestampFromEpoch(1537550355883L)
     epochToTimestamp.toString should be("2018-09-21 17:19:15.883")
 
-    val connectionProperties = CommonUtil.getPostgresConnectionProps(AppConf.getConfig("postgres.user")
-      ,AppConf.getConfig("postgres.pass"))
+    val connectionProperties = CommonUtil.getPostgresConnectionProps()
     connectionProperties.getProperty("user") should be("postgres")
     connectionProperties.getProperty("password") should be("postgres")
     connectionProperties.getProperty("driver") should be("org.postgresql.Driver")
