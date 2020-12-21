@@ -14,6 +14,7 @@ import org.ekstep.analytics.framework.Period._
 import org.joda.time.DateTimeUtils
 import ing.wbaa.druid.definitions.GranularityType
 import com.google.common.eventbus.Subscribe
+import org.ekstep.analytics.framework.conf.AppConf
 
 class TestCommonUtil extends BaseSpec {
 
@@ -303,7 +304,8 @@ class TestCommonUtil extends BaseSpec {
     val epochToTimestamp = CommonUtil.getTimestampFromEpoch(1537550355883L)
     epochToTimestamp.toString should be("2018-09-21 17:19:15.883")
 
-    val connectionProperties = CommonUtil.getPostgresConnectionProps()
+    val connectionProperties = CommonUtil.getPostgresConnectionProps(AppConf.getConfig("postgres.user")
+      ,AppConf.getConfig("postgres.pass"))
     connectionProperties.getProperty("user") should be("postgres")
     connectionProperties.getProperty("password") should be("postgres")
     connectionProperties.getProperty("driver") should be("org.postgresql.Driver")

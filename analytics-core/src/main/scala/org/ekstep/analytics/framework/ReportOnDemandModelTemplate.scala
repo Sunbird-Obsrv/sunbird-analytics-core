@@ -10,7 +10,9 @@ import org.ekstep.analytics.framework.util.CommonUtil
 
 trait ReportOnDemandModelTemplate[A <: AnyRef, B <: AnyRef] extends ReportOnDemandModel[OnDemandJobRequest] {
 
-    val connProperties: Properties = CommonUtil.getPostgresConnectionProps()
+    val connProperties: Properties = CommonUtil.getPostgresConnectionProps(AppConf.getConfig("postgres.user")
+        ,AppConf.getConfig("postgres.pass")
+    )
     val db: String = AppConf.getConfig("postgres.db")
     val url: String = AppConf.getConfig("postgres.url") + s"$db"
     val report_config_table: String = AppConf.getConfig("postgres.table.job_request")
@@ -65,7 +67,8 @@ trait ReportOnDemandModelTemplate[A <: AnyRef, B <: AnyRef] extends ReportOnDema
       * @return
       */
     override def updateJobRequest(reportLocationsDf: Dataset[OnDemandJobRequest])(implicit spark: SparkSession, fc: FrameworkContext) = {
-        val connProperties: Properties = CommonUtil.getPostgresConnectionProps()
+        val connProperties: Properties = CommonUtil.getPostgresConnectionProps(AppConf.getConfig("postgres.user")
+            ,AppConf.getConfig("postgres.pass"))
         val db: String = AppConf.getConfig("postgres.db")
         val url: String = AppConf.getConfig("postgres.url") + s"$db"
         val report_config_table: String = AppConf.getConfig("postgres.table.job_request")

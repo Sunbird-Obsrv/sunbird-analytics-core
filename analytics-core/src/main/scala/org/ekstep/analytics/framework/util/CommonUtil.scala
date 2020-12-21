@@ -672,7 +672,12 @@ object CommonUtil {
   }
 
   def getGranularity(value: String): Granularity = {
-    GranularityType.decode(value).right.getOrElse(GranularityType.All)
+    value.toLowerCase match {
+      case "latest_index" =>
+        GranularityType.decode("all").right.getOrElse(GranularityType.All)
+      case _ =>
+        GranularityType.decode(value).right.getOrElse(GranularityType.All)
+    }
   }
 
   def getMetricEvent(params: Map[String, AnyRef], producerId: String, producerPid: String): V3DerivedEvent = {
@@ -690,10 +695,7 @@ object CommonUtil {
     Timestamp.valueOf(new DateTime(epochValue).withZone(DateTimeZone.UTC).toString("yyyy-MM-dd HH:mm:ss.SSS"))
   }
 
-  def getPostgresConnectionProps(): Properties = {
-    val user = AppConf.getConfig("postgres.user")
-    val pass = AppConf.getConfig("postgres.pass")
-
+  def getPostgresConnectionProps(user:String,pass: String): Properties = {
     val connProperties = new Properties()
     connProperties.setProperty("driver", "org.postgresql.Driver")
     connProperties.setProperty("user", user)

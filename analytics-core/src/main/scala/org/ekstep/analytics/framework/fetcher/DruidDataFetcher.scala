@@ -1,6 +1,8 @@
 package org.ekstep.analytics.framework.fetcher
 
+import java.sql.{Connection, DriverManager, ResultSet, Statement}
 import java.time.format.DateTimeFormatter
+import java.util.Properties
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -56,13 +58,13 @@ object DruidDataFetcher {
 
   def getDruidQuery(query: DruidQueryModel): DruidNativeQuery = {
     val dims = query.dimensions.getOrElse(List())
+    val druidQuery = DQL
+      .from(query.dataSource)
+      .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
+      .interval(getIntervals(query))
     query.queryType.toLowerCase() match {
       case "groupby" => {
-        val DQLQuery = DQL
-          .from(query.dataSource)
-          .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
-          .agg(getAggregation(query.aggregations): _*)
+        val DQLQuery = druidQuery.agg(getAggregation(query.aggregations): _*)
           .groupBy(dims.map(f => getDimensionByType(f.`type`, f.fieldName, f.aliasName, f.outputType, f.extractionFn)): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
@@ -70,32 +72,22 @@ object DruidDataFetcher {
         DQLQuery.build()
       }
       case "topn" => {
-        val DQLQuery = DQL
-          .from(query.dataSource)
-          .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
-          .topN(getDimensionByType(dims.head.`type`, dims.head.fieldName, dims.head.aliasName, dims.head.outputType, dims.head.extractionFn), query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
+        val DQLQuery = druidQuery.topN(getDimensionByType(dims.head.`type`, dims.head.fieldName,
+          dims.head.aliasName, dims.head.outputType, dims.head.extractionFn),
+          query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
           .agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         DQLQuery.build()
       }
       case "timeseries" => {
-        val DQLQuery = DQL
-          .from(query.dataSource)
-          .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
-          .agg(getAggregation(query.aggregations): _*)
+        val DQLQuery = druidQuery.agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         DQLQuery.build()
       }
       case "scan" => {
-        val DQLQuery = DQL
-          .from(query.dataSource)
-          .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
-          .interval(CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider))
-          .scan()
+        val DQLQuery = druidQuery.scan()
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.columns.nonEmpty) DQLQuery.columns(query.columns.get)
         DQLQuery.batchSize(AppConf.getConfig("druid.scan.batch.size").toInt)
@@ -105,6 +97,32 @@ object DruidDataFetcher {
 
       case _ =>
         throw new DataFetcherException("Unknown druid query type found");
+    }
+  }
+
+  def getIntervals(query: DruidQueryModel): String = {
+    if (query.granularity.getOrElse("all").toUpperCase == "LATEST_INDEX") {
+        var connection : Connection = null
+        var statement : Statement = null
+        try {
+            val connProperties: Properties = CommonUtil.getPostgresConnectionProps(AppConf.getConfig("postgres.druid.user")
+                , AppConf.getConfig("postgres.druid.pass"))
+            val db: String = AppConf.getConfig("postgres.druid.db")
+            val url: String = AppConf.getConfig("postgres.druid.url") + s"$db"
+            val getLatestIndexQuery = s"""select segment.start, segment.end from druid_segments segment where datasource = '${query.dataSource}'  and used='t' order by start"""
+             connection = DriverManager.getConnection(url, connProperties)
+             statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+            val result: ResultSet = statement.executeQuery(getLatestIndexQuery)
+            if(result.first())
+            result.getString("start") + "/" + result.getString("end")
+            else
+                CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider)
+        }finally{
+            statement.close()
+            connection.close()
+        }
+    } else {
+      CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider)
     }
   }
 
@@ -134,7 +152,6 @@ object DruidDataFetcher {
 
     DruidSQLQuery(sqlString)
   }
-
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
 
