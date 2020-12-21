@@ -105,7 +105,7 @@ object DruidDataFetcher {
         var connection : Connection = null
         var statement : Statement = null
         try {
-            val connProperties: Properties = CommonUtil.getPostgresConnectionProps(AppConf.getConfig("postgres.druid.user")
+            val connProperties: Properties = CommonUtil.getPostgresConnectionUserProps(AppConf.getConfig("postgres.druid.user")
                 , AppConf.getConfig("postgres.druid.pass"))
             val db: String = AppConf.getConfig("postgres.druid.db")
             val url: String = AppConf.getConfig("postgres.druid.url") + s"$db"

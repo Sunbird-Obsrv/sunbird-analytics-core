@@ -695,8 +695,10 @@ object CommonUtil {
     Timestamp.valueOf(new DateTime(epochValue).withZone(DateTimeZone.UTC).toString("yyyy-MM-dd HH:mm:ss.SSS"))
   }
 
-  def getPostgresConnectionProps(user:String,pass: String): Properties = {
+  def getPostgresConnectionProps(): Properties = {
     val connProperties = new Properties()
+    val user = AppConf.getConfig("postgres.user")
+    val pass = AppConf.getConfig("postgres.pass")
     connProperties.setProperty("driver", "org.postgresql.Driver")
     connProperties.setProperty("user", user)
     connProperties.setProperty("password", pass)
@@ -733,4 +735,11 @@ object CommonUtil {
     sc.hadoopConfiguration
   }
 
+  def getPostgresConnectionUserProps(user:String,pass: String): Properties = {
+    val connProperties = new Properties()
+    connProperties.setProperty("driver", "org.postgresql.Driver")
+    connProperties.setProperty("user", user)
+    connProperties.setProperty("password", pass)
+    connProperties
+  }
 }
