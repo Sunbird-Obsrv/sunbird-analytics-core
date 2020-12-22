@@ -53,7 +53,9 @@ object CommonUtil {
     fc;
   }
 
-  def getSparkContext(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None, sparkElasticsearchConnectionHost: Option[AnyRef] = None, sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None): SparkContext = {
+  def getSparkContext(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
+                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, sparkRedisConnectionHost: Option[AnyRef] = None,
+                      sparkRedisDB: Option[AnyRef] = None, sparkRedisPort: Option[AnyRef] = Option("6379")): SparkContext = {
     JobLogger.log("Initializing Spark Context")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
@@ -84,7 +86,7 @@ object CommonUtil {
 
     if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
       conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.redis.port", "6379")
+      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
       conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
     }
 
@@ -97,7 +99,8 @@ object CommonUtil {
 
   def getSparkSession(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
                       sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None,
-                      sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None): SparkSession = {
+                      sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None,
+                      sparkRedisPort: Option[AnyRef] = Option("6379")): SparkSession = {
     JobLogger.log("Initializing SparkSession")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
@@ -132,7 +135,7 @@ object CommonUtil {
 
     if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
       conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.redis.port", "6379")
+      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
       conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
     }
 
