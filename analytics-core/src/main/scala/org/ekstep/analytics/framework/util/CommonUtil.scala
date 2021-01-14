@@ -106,6 +106,7 @@ object CommonUtil {
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
       .set("spark.memory.fraction", AppConf.getConfig("spark.memory_fraction"))
       .set("spark.memory.storageFraction", AppConf.getConfig("spark.storage_fraction"))
+      .set("spark.sql.extensions", AppConf.getConfig("com.datastax.spark.connector.CassandraSparkExtensions"))
     val master = conf.getOption("spark.master")
     // $COVERAGE-OFF$ Disabling scoverage as the below code cannot be covered as they depend on environment variables
     if (master.isEmpty) {
