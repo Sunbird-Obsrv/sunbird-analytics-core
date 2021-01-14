@@ -2,14 +2,15 @@ package org.ekstep.analytics.framework.util
 
 import java.io._
 import java.net.URL
+import java.nio.file.Files
 import java.nio.file.Paths.get
-import java.nio.file.{Files, Paths, StandardCopyOption}
 import java.security.MessageDigest
 import java.sql.Timestamp
-import java.util.{Date, Properties}
 import java.util.zip.GZIPOutputStream
+import java.util.{Date, Properties}
 
 import ing.wbaa.druid.definitions.{Granularity, GranularityType}
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.ekstep.analytics.framework.Level._
@@ -24,7 +25,6 @@ import org.apache.commons.lang3.StringUtils
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
 import org.sunbird.cloud.storage.conf.AppConf
-
 import scala.util.control.Breaks._
 
 object CommonUtil {
@@ -39,6 +39,7 @@ object CommonUtil {
   @transient val dayPeriod: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.forOffsetHoursMinutes(5, 30));
   @transient val monthPeriod: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMM").withZone(DateTimeZone.forOffsetHoursMinutes(5, 30));
   @transient val dayPeriodFormat: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZoneUTC();
+  val offset: Long = DateTimeZone.forID("Asia/Kolkata").getOffset(DateTime.now())
 
   def getParallelization(config: JobConfig): Int = {
 
@@ -52,7 +53,9 @@ object CommonUtil {
     fc;
   }
 
-  def getSparkContext(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None, sparkElasticsearchConnectionHost: Option[AnyRef] = None): SparkContext = {
+  def getSparkContext(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
+                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, sparkRedisConnectionHost: Option[AnyRef] = None,
+                      sparkRedisDB: Option[AnyRef] = None, sparkRedisPort: Option[AnyRef] = Option("6379")): SparkContext = {
     JobLogger.log("Initializing Spark Context")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
@@ -67,6 +70,7 @@ object CommonUtil {
 
     if (!conf.contains("spark.cassandra.connection.host"))
       conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
+    // $COVERAGE-ON$
 
     if (sparkCassandraConnectionHost.nonEmpty) {
       conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
@@ -80,7 +84,12 @@ object CommonUtil {
       conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
     }
 
-    // $COVERAGE-ON$
+    if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
+      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
+      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
+      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
+    }
+
     val sc = new SparkContext(conf)
     setS3Conf(sc)
     setAzureConf(sc)
@@ -89,7 +98,9 @@ object CommonUtil {
   }
 
   def getSparkSession(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
-                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None): SparkSession = {
+                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None,
+                      sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None,
+                      sparkRedisPort: Option[AnyRef] = Option("6379")): SparkSession = {
     JobLogger.log("Initializing SparkSession")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
@@ -103,14 +114,13 @@ object CommonUtil {
     }
 
     if (!conf.contains("spark.cassandra.connection.host"))
-      conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
-    if (embeddedCassandraMode)
-      conf.set("spark.cassandra.connection.port", AppConf.getConfig("cassandra.service.embedded.connection.port"))
+    conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
+    // $COVERAGE-ON$
 
     if (sparkCassandraConnectionHost.nonEmpty) {
       conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
       if (readConsistencyLevel.nonEmpty) {
-        conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.get);
+        conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.get)
       }
       println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
     }
@@ -121,20 +131,19 @@ object CommonUtil {
       conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
       conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
       conf.set("es.write.operation", "upsert")
-
     }
 
-    // $COVERAGE-ON$
+    if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
+      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
+      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
+      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
+    }
+
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
     setS3Conf(sparkSession.sparkContext)
     setAzureConf(sparkSession.sparkContext)
     JobLogger.log("SparkSession initialized")
     sparkSession
-  }
-
-  private def embeddedCassandraMode(): Boolean = {
-    val isEmbedded = AppConf.getConfig("cassandra.service.embedded.enable");
-    StringUtils.isNotBlank(isEmbedded) && StringUtils.equalsIgnoreCase("true", isEmbedded);
   }
 
   def setS3Conf(sc: SparkContext) = {
@@ -148,6 +157,7 @@ object CommonUtil {
     val accKey = AppConf.getStorageSecret("azure")
     sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
     sc.hadoopConfiguration.set("fs.azure.account.key." + accName + ".blob.core.windows.net", accKey)
+    sc.hadoopConfiguration.set("fs.azure.account.keyprovider." + accName + ".blob.core.windows.net", "org.apache.hadoop.fs.azure.SimpleKeyProvider")
   }
 
   def closeSparkContext()(implicit sc: SparkContext) {
@@ -189,11 +199,6 @@ object CommonUtil {
     val path = get(dir);
     JobLogger.log("Creating directory", Option(path.toString()))
     Files.createDirectories(path);
-  }
-
-  def copyFile(from: InputStream, path: String, fileName: String) = {
-    createDirectory(path);
-    Files.copy(from, Paths.get(path + fileName), StandardCopyOption.REPLACE_EXISTING);
   }
 
   def deleteFile(file: String) {
@@ -280,14 +285,6 @@ object CommonUtil {
     if (event.gdata != null) event.gdata.ver else null;
   }
 
-  def getGameId(event: V3Event): String = {
-    if (event.`object`.isEmpty) null else event.`object`.get.id;
-  }
-
-  def getGameVersion(event: V3Event): String = {
-    if (event.`object`.isEmpty) null else event.`object`.get.ver.getOrElse(null);
-  }
-
   def getParallelization(config: Option[Map[String, String]]): Int = {
     getParallelization(config.getOrElse(Map[String, String]()));
   }
@@ -339,26 +336,6 @@ object CommonUtil {
     files.foreach { name =>
       zip.putNextEntry(new ZipEntry(name.split("/").last))
       val in = new BufferedInputStream(new FileInputStream(name))
-      var b = in.read()
-      while (b > -1) {
-        zip.write(b)
-        b = in.read()
-      }
-      in.close()
-      zip.closeEntry()
-    }
-    zip.close()
-  }
-
-  def zipFolder(outFile: String, dir: String) = {
-    import java.io.{BufferedInputStream, FileInputStream, FileOutputStream}
-    import java.util.zip.{ZipEntry, ZipOutputStream}
-
-    val zip = new ZipOutputStream(new FileOutputStream(outFile))
-    val files = new File(dir).listFiles();
-    files.foreach { file =>
-      zip.putNextEntry(new ZipEntry(file.getName.split("/").last))
-      val in = new BufferedInputStream(new FileInputStream(file))
       var b = in.read()
       while (b > -1) {
         zip.write(b)
@@ -593,32 +570,6 @@ object CommonUtil {
     x.toArray;
   }
 
-  def getValidTags(event: Any, registeredTags: Array[String]): Array[String] = {
-
-    val appTag = if (event.isInstanceOf[DerivedEvent]) {
-      event.asInstanceOf[DerivedEvent].etags.get.app
-    } else if (event.isInstanceOf[Event]) {
-      getETags(event.asInstanceOf[Event]).app
-    } else if (event.isInstanceOf[V3Event]) {
-      getETags(event.asInstanceOf[V3Event]).app
-    } else {
-      None
-    }
-    val dimTag = if (event.isInstanceOf[DerivedEvent]) {
-      event.asInstanceOf[DerivedEvent].etags.get.dims
-    } else if (event.isInstanceOf[Event]) {
-      getETags(event.asInstanceOf[Event]).dims
-    } else if (event.isInstanceOf[V3Event]) {
-      getETags(event.asInstanceOf[V3Event]).dims
-    } else {
-      None
-    }
-    val genieTagFilter = if (appTag.isDefined) appTag.get else List()
-    val dimTagFilter = if (dimTag.isDefined) dimTag.get else List()
-    val tagFilter = genieTagFilter ++ dimTagFilter
-    tagFilter.filter { x => registeredTags.contains(x) }.toArray;
-  }
-
   def getValidTagsForWorkflow(event: DerivedEvent, registeredTags: Array[String]): Array[String] = {
     val tagFilter = if (event.tags != null && !event.tags.isEmpty) { event.tags.get.asInstanceOf[List[String]] } else List()
     tagFilter.filter { x => registeredTags.contains(x) }.toArray;
@@ -664,46 +615,12 @@ object CommonUtil {
     if (event.isInstanceOf[Event]) {
       if (event.asInstanceOf[Event].channel.nonEmpty && StringUtils.isNotBlank(event.asInstanceOf[Event].channel.get)) event.asInstanceOf[Event].channel.get else defaultChannelId
     } else if (event.isInstanceOf[V3Event]) {
-      if (event.asInstanceOf[V3Event].context.channel.nonEmpty && StringUtils.isNotBlank(event.asInstanceOf[V3Event].context.channel)) event.asInstanceOf[V3Event].context.channel else defaultChannelId
+      if (StringUtils.isNotBlank(event.asInstanceOf[V3Event].context.channel)) event.asInstanceOf[V3Event].context.channel else defaultChannelId
     } else if (event.isInstanceOf[DerivedEvent]) {
       if (event.asInstanceOf[DerivedEvent].dimensions.channel.nonEmpty) event.asInstanceOf[DerivedEvent].dimensions.channel.get else if (StringUtils.isBlank(event.asInstanceOf[DerivedEvent].channel)) defaultChannelId else event.asInstanceOf[DerivedEvent].channel
     } else if (event.isInstanceOf[ProfileEvent]) {
       if (event.asInstanceOf[ProfileEvent].channel.nonEmpty && StringUtils.isNotBlank(event.asInstanceOf[ProfileEvent].channel.get)) event.asInstanceOf[ProfileEvent].channel.get else defaultChannelId
     } else defaultChannelId;
-  }
-
-  def getETags(event: Event): ETags = {
-    if (event.etags.isDefined) {
-      event.etags.get;
-    } else {
-      if (event.tags != null) {
-        val tags = event.tags.asInstanceOf[List[Map[String, List[String]]]]
-        val genieTags = tags.filter(f => f.contains("genie")).map { x => x.get("genie").get }.flatMap { x => x }
-        val partnerTags = tags.filter(f => f.contains("partner")).map { x => x.get("partner").get }.flatMap { x => x }
-        val dims = tags.filter(f => f.contains("dims")).map { x => x.get("dims").get }.flatMap { x => x }
-        ETags(Option(genieTags), Option(partnerTags), Option(dims))
-      } else {
-        ETags()
-      }
-
-    }
-  }
-
-  def getETags(event: V3Event): ETags = {
-    if (event.tags != null && !event.tags.isEmpty) {
-      val first = event.tags.apply(0)
-      if (first.isInstanceOf[String]) {
-        ETags(Option(event.tags.asInstanceOf[List[String]]))
-      } else {
-        val tags = event.tags.asInstanceOf[List[Map[String, List[String]]]]
-        val genieTags = tags.filter(f => f.contains("genie")).map { x => x.get("genie").get }.flatMap { x => x }
-        val partnerTags = tags.filter(f => f.contains("partner")).map { x => x.get("partner").get }.flatMap { x => x }
-        val dims = tags.filter(f => f.contains("dims")).map { x => x.get("dims").get }.flatMap { x => x }
-        ETags(Option(genieTags), Option(partnerTags), Option(dims))
-      }
-    } else {
-      ETags()
-    }
   }
 
   def dayPeriodToLong(period: Int): Long = {
@@ -725,35 +642,35 @@ object CommonUtil {
   }
 
   // parse druid query interval
-  def getIntervalRange(period: String): String = {
+  def getIntervalRange(period: String, dataSource: String, intervalSlider: Int = 0): String = {
     // LastDay, LastWeek, LastMonth, Last7Days, Last30Days
     period match {
-      case "LastDay"    => getDayRange(1);
+      case "LastDay"    => getDayRange(1, dataSource, intervalSlider);
       case "LastWeek"   => getWeekRange(1);
       case "LastMonth"  => getMonthRange(1);
-      case "Last7Days"  => getDayRange(7);
-      case "Last30Days" => getDayRange(30);
+      case "Last7Days"  => getDayRange(7, dataSource, intervalSlider);
+      case "Last30Days" => getDayRange(30, dataSource, intervalSlider);
       case _            => period;
     }
   }
 
-  def getDayRange(count: Int): String = {
-    val endDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = endDate.minusDays(count).toString("yyyy-MM-dd");
-    startDate + "/" + endDate.toString("yyyy-MM-dd")
+  def getDayRange(count: Int, dataSource: String, intervalSlider: Int): String = {
+    val endDate = if(dataSource.contains("rollup") || dataSource.contains("distinct")) DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().minusDays(intervalSlider) else DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().minusDays(intervalSlider).plus(offset)
+    val startDate = endDate.minusDays(count).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
+    startDate + "/" + endDate.toString("yyyy-MM-dd'T'HH:mm:ssZZ")
   }
 
   def getMonthRange(count: Int): String = {
-    val currentDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd");
-    val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd");
+    val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
+    val startDate = currentDate.minusDays(count * 30).dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
+    val endDate = currentDate.dayOfMonth().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate
   }
 
   def getWeekRange(count: Int): String = {
-    val currentDate = DateTime.now(DateTimeZone.UTC);
-    val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd")
-    val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd");
+    val currentDate = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay().plus(offset);
+    val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ")
+    val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate
   }
 
@@ -786,4 +703,35 @@ object CommonUtil {
     connProperties.setProperty("password", pass)
     connProperties
   }
+
+  def getS3File(bucket: String, file: String): String = {
+    "s3n://" + bucket + "/" + file;
+  }
+  
+  def getS3FileWithoutPrefix(bucket: String, file: String): String = {
+    bucket + "/" + file;
+  }
+
+  def getAzureFile(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
+    "wasb://" + bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+  
+  def getAzureFileWithoutPrefix(bucket: String, file: String, storageKey: String = "azure_storage_key"): String = {
+    bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
+  }
+
+  def setStorageConf(store: String, accountKey: Option[String], accountSecret: Option[String])(implicit sc: SparkContext): Configuration = {
+    store.toLowerCase() match {
+      case "s3" =>
+        sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")));
+        sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getConfig(accountSecret.getOrElse("aws_storage_secret")));
+      case "azure" =>
+        sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
+        sc.hadoopConfiguration.set("fs.azure.account.key." + AppConf.getConfig(accountKey.getOrElse("azure_storage_key")) + ".blob.core.windows.net", AppConf.getConfig(accountSecret.getOrElse("azure_storage_secret")))
+      case _ =>
+      // Do nothing
+    }
+    sc.hadoopConfiguration
+  }
+
 }

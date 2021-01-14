@@ -8,7 +8,7 @@ import org.ekstep.analytics.framework.Level._
 import scala.io.Source
 
 trait HTTPClient {
-    def get[T](apiURL: String)(implicit mf: Manifest[T]): T
+    def get[T](apiURL: String, requestHeaders: Option[Map[String, String]] = None)(implicit mf: Manifest[T]): T
     def post[T](apiURL: String, body: String, requestHeaders: Option[Map[String, String]] = None)(implicit mf: Manifest[T]): T
     def patch[T](apiURL: String, body: String, headers: Option[Map[String,String]] = None)(implicit mf: Manifest[T]): T
     def put[T](apiURL:String, body:String,headers:Option[Map[String,String]] = None)(implicit mf:Manifest[T]):T
@@ -41,9 +41,12 @@ object RestUtil extends HTTPClient{
         }
     }
 
-    def get[T](apiURL: String)(implicit mf: Manifest[T]) = {
+    def get[T](apiURL: String, headers: Option[Map[String,String]] = None)(implicit mf: Manifest[T]) = {
         val request = new HttpGet(apiURL);
         request.addHeader("user-id", "analytics");
+        headers.getOrElse(Map()).foreach { header =>
+            request.addHeader(header._1, header._2)
+        }
         try {
             _call(request.asInstanceOf[HttpRequestBase]);
         } catch {

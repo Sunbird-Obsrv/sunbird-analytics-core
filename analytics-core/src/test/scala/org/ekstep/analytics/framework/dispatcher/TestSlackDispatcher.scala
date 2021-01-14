@@ -23,6 +23,10 @@ class TestSlackDispatcher extends SparkSpec {
         the[DispatcherException] thrownBy {
             SlackDispatcher.dispatch(Map("channel" -> "testing"), sc.parallelize(List("test")));
         } should have message "'channel' & 'userName' parameters are required to send output to slack"
+        
+        the[DispatcherException] thrownBy {
+            SlackDispatcher.dispatch(Map("userName" -> "testing"), sc.parallelize(List("test")));
+        } should have message "'channel' & 'userName' parameters are required to send output to slack"
 
     }
 }

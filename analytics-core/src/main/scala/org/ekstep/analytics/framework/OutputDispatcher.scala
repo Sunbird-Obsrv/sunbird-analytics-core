@@ -21,11 +21,6 @@ object OutputDispatcher {
     implicit val className = "org.ekstep.analytics.framework.OutputDispatcher";
 
     @throws(classOf[DispatcherException])
-    private def _dispatch(dispatcher: Dispatcher, events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext) = {
-        DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, events);
-    }
-
-    @throws(classOf[DispatcherException])
     def dispatch[T](outputs: Option[Array[Dispatcher]], events: RDD[T])(implicit sc: SparkContext, fc: FrameworkContext): Long = {
 
         if (outputs.isEmpty) {
@@ -36,8 +31,7 @@ object OutputDispatcher {
             JobLogger.log("Dispatching output", Option(dispatcher.to));
             DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, eventArr);
         }
-        events.count;
-
+        0
     }
 
     @throws(classOf[DispatcherException])
@@ -50,20 +44,16 @@ object OutputDispatcher {
         DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, eventArr);
         events.count;
     }
-
+    
     @throws(classOf[DispatcherException])
-    def dispatch[T](dispatcher: Dispatcher, events: Array[String])(implicit fc: FrameworkContext) = {
+    def dispatch[T](config: StorageConfig, events: RDD[T])(implicit sc: SparkContext, fc: FrameworkContext): Long = {
 
-        if (null == dispatcher) {
-            throw new DispatcherException("No output configurations found");
+        if (null == config) {
+            throw new DispatcherException("No configuration found");
         }
-        if (events.length != 0) {
-            JobLogger.log("Dispatching output", Option(dispatcher.to));
-            DispatcherFactory.getDispatcher(dispatcher).dispatch(events, dispatcher.params);
-        } else {
-            JobLogger.log("No events produced");
-            null;
-        }
+        val eventArr = stringify(events);
+        DispatcherFactory.getDispatcher(config).dispatch(eventArr, config);
+        events.count;
     }
 
     def stringify[T](events: RDD[T]): RDD[String] = {

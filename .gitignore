@@ -3,3 +3,5 @@ output-*
 dependency-reduced-pom.xml
 **/target
 **/logs
+**/.idea/**
+*.iml

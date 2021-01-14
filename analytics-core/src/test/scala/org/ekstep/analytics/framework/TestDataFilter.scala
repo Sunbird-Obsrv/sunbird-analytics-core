@@ -36,32 +36,14 @@ class TestDataFilter extends SparkSpec {
         val filteredEvents = DataFilter.filterAndSort[Event](events, filters, None);
         filteredEvents.count() should be (20);
         filteredEvents.first().eid should be("GE_GENIE_START")
+        
+        DataFilter.filter[Event, String](events, "GE_GENIE_START", (event: Event, id: String) => {
+          id.equals(event.eid) 
+        }).count() should be (20);
+        
+        DataFilter.filter[Event, String](events, "GE_GENIE_START", null).count() should be (7437);
     }
     
-    it should "filter the events where game id equals org.ekstep.aser" in {
-        val filters = Option(Array[Filter](
-            Filter("gameId", "EQ", Option("org.ekstep.aser"))
-        ));
-        val filteredEvents = DataFilter.filterAndSort(events, filters, None);
-        filteredEvents.count() should be (6276);
-        filteredEvents.first().gdata.id should be("genie.android")
-    }
-    
-    it should "filter the events where game id not equals org.ekstep.aser" in {
-        val filters = Option(Array[Filter](
-            Filter("gameId", "NE", Option("org.ekstep.aser"))
-        ));
-        val filteredEvents = DataFilter.filterAndSort(events, filters, None);
-        filteredEvents.count() should be (1161);
-    }
-    
-    it should "filter the events by game version" in {
-        val filters = Option(Array[Filter](
-            Filter("gameVersion", "EQ", Option("3.0.26"))
-        ));
-        val filteredEvents = DataFilter.filterAndSort(events, filters, None);
-        filteredEvents.count() should be (1413);
-    }
     
     it should "filter by custom key using bean property matching " in {
         val filters = Option(Array[Filter](
@@ -138,7 +120,7 @@ class TestDataFilter extends SparkSpec {
     it should "filter by two criteria" in {
         val filters = Option(Array[Filter](
             Filter("eventId", "IN", Option(List("OE_ASSESS", "OE_LEVEL_SET"))),
-            Filter("gameId", "EQ", Option("org.ekstep.aser"))
+            Filter("gdata.id", "EQ", Option("org.ekstep.aser"))
         ));
         val filteredEvents = DataFilter.filterAndSort(events, filters, None);
         filteredEvents.count() should be (1872);
@@ -247,14 +229,6 @@ class TestDataFilter extends SparkSpec {
         result1(0).id should be ("Two");
     }
     
-    it should "filter by genie tag" in {
-        val filteredEvents = DataFilter.filter(events, Filter("genieTag", "IN", Option(List("e4d7a0063b665b7a718e8f7e4014e59e28642f8c"))));
-        filteredEvents.count() should be (3);
-        
-        val filteredEvents2 = DataFilter.filter(events, Filter("genieTag", "IN", Option(List("e4d7a0063b665b7a718e8f7e4014e59e28642f9c"))));
-        filteredEvents2.count() should be (2);
-    }
-    
     it should "filter events using range" in {
         
         val date = CommonUtil.dateFormat.parseDateTime("2015-09-23");
@@ -282,7 +256,7 @@ class TestDataFilter extends SparkSpec {
         val date = new DateTime()
         val filters: Array[Filter] = Array(
             Filter("eventts", "RANGE", Option(Map("start" -> 0L, "end" -> date.getMillis))),
-            Filter("genieTag", "IN", Option("")))
+            Filter("tags", "IN", Option("")))
         DataFilter.matches(inputEvent.first(), filters) should be(false)
         DataFilter.matches(inputEvent.first(), Filter("eventts", "RANGE", Option(Map("start" -> 0L, "end" -> date.getMillis)))) should be(true)
         DataFilter.matches(inputEvent.first(), Array[Filter]()) should be(true)
@@ -304,6 +278,27 @@ class TestDataFilter extends SparkSpec {
         );
         val filteredEvents = DataFilter.filter(rddData, filters);
         filteredEvents.count() should be (0);
+        
+        DataFilter.matches[TestLessThan](TestLessThan("0", 4, 10L, 1.0, sdf.parse("2019-11-11")), Filter("intCol", "LT", Option(3.asInstanceOf[AnyRef]))) should be (false)
+        DataFilter.matches[TestLessThan](TestLessThan("0", 4, 10L, 1.0, sdf.parse("2019-11-11")), Filter("longCol", "LT", Option(9L.asInstanceOf[AnyRef]))) should be (false)
+        DataFilter.matches[TestLessThan](TestLessThan("0", 4, 10L, 3.0, sdf.parse("2019-11-11")), Filter("doubleCol", "LT", Option(2.0.asInstanceOf[AnyRef]))) should be (false)
+        DataFilter.matches[TestLessThan](TestLessThan("0", 4, 10L, 1.0, sdf.parse("2019-11-11")), Filter("dateCol", "LT", Option("2019-11-10".asInstanceOf[AnyRef]))) should be (false)
+        DataFilter.matches[TestLessThan](TestLessThan("0", 4, 10L, 1.0, sdf.parse("2019-11-11")), Filter("dateCol", "RANGE", Option(Map("start" -> "2019-11-10", "end" -> "2019-11-14")))) should be (true)
+        DataFilter.matches[TestLessThan](TestLessThan("0", 4, 10L, 1.0, sdf.parse("2019-11-11")), Filter("dateCol", "RANGE", Option(Map("start" -> "2019-11-07", "end" -> "2019-11-09")))) should be (false)
+    }
+    
+    it should "cover all uncovered branches" in {
+      DataFilter.matches[MeasuredEvent](MeasuredEvent(null, 0l, 123l, null, null, null, null, None, None, null, null, null), Filter("eventts", "RANGE", Option(Map("start" -> 0L, "end" -> 124l)))) should be (true)
+      
+      case class Event1(val eid: String, val ts: String, val ets: Long, val `@timestamp`: String)
+      DataFilter.matches[Event1](Event1(null, "", 123l, "2016-01-02T00:59:22.924Z"), Filter("eventts", "EQ", Option(1451696362924l.asInstanceOf[AnyRef]))) should be (true)
+      
+      @scala.beans.BeanInfo
+      case class Event2(eid: String, tags: List[String])
+      DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("tags", "IN", Option(List("tag2")))) should be (true)
+      DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("tags", "NIN", Option(List("tag2")))) should be (false)
+      DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("eid", "NE", Option("Test"))) should be (false)
+      DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("eid", "NE", None)) should be (true)
     }
     
 }
