@@ -83,9 +83,9 @@ object JobLogger {
     }
 
     def logToKakfa(event: String) = {
-        if (StringUtils.equalsIgnoreCase(AppConf.getConfig("log4j.appender.kafka.enable"), "true")) {
-            val brokerList = AppConf.getConfig("log4j.appender.kafka.broker_host")
-            val topic = AppConf.getConfig("log4j.appender.kafka.topic")
+        if (StringUtils.equalsIgnoreCase(AppConf.getConfig("log.appender.kafka.enable"), "true")) {
+            val brokerList = AppConf.getConfig("log.appender.kafka.broker_host")
+            val topic = AppConf.getConfig("log.appender.kafka.topic")
             KafkaDispatcher.dispatch(Array(event), Map("brokerList" -> brokerList, "topic" -> topic))
         }
     }
