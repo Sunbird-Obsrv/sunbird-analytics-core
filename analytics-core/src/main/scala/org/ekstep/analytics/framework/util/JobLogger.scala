@@ -13,9 +13,12 @@ import org.apache.logging.log4j.core.layout.PatternLayout
 import java.nio.charset.Charset
 
 import org.apache.logging.log4j.core.config.AppenderRef
+import org.ekstep.analytics.framework.dispatcher.KafkaDispatcher
 import org.joda.time.DateTime
 
 object JobLogger {
+
+    implicit val fc = new FrameworkContext();
 
     def init(jobName: String) = {
         System.setProperty("logFilename", jobName.toLowerCase());
@@ -29,31 +32,41 @@ object JobLogger {
     }
 
     private def info(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
+        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "INFO", msg, data, None, pdata_id, pdata_pid))
         logger(name).info(JSONUtils.serialize(getV3JobEvent("JOB_LOG", "INFO", msg, data, None, pdata_id, pdata_pid)));
+        logToKakfa(logEvent)
     }
 
     private def debug(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        logger(name).debug(JSONUtils.serialize(getV3JobEvent("JOB_LOG", "DEBUG", msg, data, None, pdata_id, pdata_pid)))
+        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "DEBUG", msg, data, None, pdata_id, pdata_pid))
+        logger(name).debug(logEvent)
+//        logToKakfa(logEvent)
     }
 
     private def error(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        logger(name).error(JSONUtils.serialize(getV3JobEvent("JOB_LOG", "ERROR", msg, data, None, pdata_id, pdata_pid)));
+        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "ERROR", msg, data, None, pdata_id, pdata_pid))
+        logger(name).error(logEvent);
+        logToKakfa(logEvent)
     }
 
     private def warn(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        logger(name).debug(JSONUtils.serialize(getV3JobEvent("JOB_LOG", "WARN", msg, data, None, pdata_id, pdata_pid)))
+        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "WARN", msg, data, None, pdata_id, pdata_pid))
+        logger(name).debug(logEvent)
+//        logToKakfa(logEvent)
     }
 
     def start(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) = {
         val event = JSONUtils.serialize(getV3JobEvent("JOB_START", "INFO", msg, data, None, pdata_id, pdata_pid));
         EventBusUtil.dipatchEvent(event);
         logger(name).info(event);
+        logToKakfa(event)
     }
 
     def end(msg: String, status: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) = {
         val event = JSONUtils.serialize(getV3JobEvent("JOB_END", "INFO", msg, data, Option(status), pdata_id, pdata_pid));
         EventBusUtil.dipatchEvent(event);
         logger(name).info(event);
+        logToKakfa(event)
     }
 
     def log(msg: String, data: Option[AnyRef] = None, logLevel: Level = DEBUG, name: String = "org.ekstep.analytics")(implicit className: String) = {
@@ -66,6 +79,14 @@ object JobLogger {
                 warn(msg, data, name)
             case ERROR =>
                 error(msg, data, name)
+        }
+    }
+
+    def logToKakfa(event: String) = {
+        if (StringUtils.equalsIgnoreCase(AppConf.getConfig("log4j.appender.kafka.enable"), "true")) {
+            val brokerList = AppConf.getConfig("log4j.appender.kafka.broker_host")
+            val topic = AppConf.getConfig("log4j.appender.kafka.topic")
+            KafkaDispatcher.dispatch(Array(event), Map("brokerList" -> brokerList, "topic" -> topic))
         }
     }
 
