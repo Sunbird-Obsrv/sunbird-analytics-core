@@ -32,41 +32,35 @@ object JobLogger {
     }
 
     private def info(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "INFO", msg, data, None, pdata_id, pdata_pid))
-        logger(name).info(JSONUtils.serialize(getV3JobEvent("JOB_LOG", "INFO", msg, data, None, pdata_id, pdata_pid)));
-        logToKakfa(logEvent)
+        val event = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "INFO", msg, data, None, pdata_id, pdata_pid))
+        logEvent(event, name, INFO)
     }
 
     private def debug(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "DEBUG", msg, data, None, pdata_id, pdata_pid))
-        logger(name).debug(logEvent)
-//        logToKakfa(logEvent)
+        val event = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "DEBUG", msg, data, None, pdata_id, pdata_pid))
+        logEvent(event, name, DEBUG)
     }
 
     private def error(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "ERROR", msg, data, None, pdata_id, pdata_pid))
-        logger(name).error(logEvent);
-        logToKakfa(logEvent)
+        val event = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "ERROR", msg, data, None, pdata_id, pdata_pid))
+        logEvent(event, name, ERROR)
     }
 
     private def warn(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {
-        val logEvent = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "WARN", msg, data, None, pdata_id, pdata_pid))
-        logger(name).debug(logEvent)
-//        logToKakfa(logEvent)
+        val event = JSONUtils.serialize(getV3JobEvent("JOB_LOG", "WARN", msg, data, None, pdata_id, pdata_pid))
+        logEvent(event, name, WARN)
     }
 
     def start(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) = {
         val event = JSONUtils.serialize(getV3JobEvent("JOB_START", "INFO", msg, data, None, pdata_id, pdata_pid));
         EventBusUtil.dipatchEvent(event);
-        logger(name).info(event);
-        logToKakfa(event)
+        logEvent(event, name, INFO)
     }
 
     def end(msg: String, status: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) = {
         val event = JSONUtils.serialize(getV3JobEvent("JOB_END", "INFO", msg, data, Option(status), pdata_id, pdata_pid));
         EventBusUtil.dipatchEvent(event);
-        logger(name).info(event);
-        logToKakfa(event)
+        logEvent(event, name, INFO)
     }
 
     def log(msg: String, data: Option[AnyRef] = None, logLevel: Level = DEBUG, name: String = "org.ekstep.analytics")(implicit className: String) = {
@@ -82,11 +76,23 @@ object JobLogger {
         }
     }
 
-    def logToKakfa(event: String) = {
+    def logEvent(event: String, name: String = "org.ekstep.analytics", logLevel: Level = DEBUG) = {
         if (StringUtils.equalsIgnoreCase(AppConf.getConfig("log.appender.kafka.enable"), "true")) {
             val brokerList = AppConf.getConfig("log.appender.kafka.broker_host")
             val topic = AppConf.getConfig("log.appender.kafka.topic")
             KafkaDispatcher.dispatch(Array(event), Map("brokerList" -> brokerList, "topic" -> topic))
+        }
+        else {
+            logLevel match {
+                case INFO =>
+                    logger(name).info(event);
+                case DEBUG =>
+                    logger(name).debug(event);
+                case WARN =>
+                    logger(name).debug(event);
+                case ERROR =>
+                    logger(name).error(event);
+            }
         }
     }
 
