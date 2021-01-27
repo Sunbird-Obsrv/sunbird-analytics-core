@@ -44,6 +44,8 @@ class TestJobLogger extends BaseSpec {
         JobLogger.log("testing warn method", None, WARN);
         JobLogger.log("testing error method", None, ERROR);
 
+        JobLogger.logEvent("test event method", "org.ekstep.analytics", WARN)
+        JobLogger.logEvent("test event method", "org.ekstep.analytics", DEBUG)
     }
 
 }
