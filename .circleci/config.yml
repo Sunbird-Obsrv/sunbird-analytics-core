@@ -9,7 +9,9 @@ jobs:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
     - run:
         name: sunbird-analytics-core-build
-        command: mvn scoverage:report
+        command: |
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        mvn scoverage:report
     - save_cache:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
         paths: ~/.m2
@@ -21,6 +23,7 @@ jobs:
     - run:
         name: sonar
         command: |
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           mvn -X sonar:sonar -Dsonar.projectKey=project-sunbird_sunbird-analytics-core -Dsonar.organization=project-sunbird -Dsonar.exclusions=analytics-core/src/main/scala/org/ekstep/analytics/streaming/** -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/project/target/scoverage.xml
 
 workflows:
