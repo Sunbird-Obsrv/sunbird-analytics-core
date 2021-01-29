@@ -350,7 +350,7 @@
 				<!-- see http://davidb.github.com/scala-maven-plugin -->
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.2</version>
+				<version>4.4.0</version>
 				<executions>
 					<execution>
 						<goals>
@@ -358,6 +358,9 @@
 							<goal>testCompile</goal>
 						</goals>
 						<configuration>
+							<source>8</source>
+							<target>8</target>
+							<scalaVersion>${scala.maj.version}</scalaVersion>
 							<args>
 								<arg>-dependencyfile</arg>
 								<arg>${project.build.directory}/.scala_dependencies</arg>
