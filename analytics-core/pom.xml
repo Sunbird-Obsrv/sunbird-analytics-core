@@ -360,7 +360,6 @@
 						<configuration>
 							<source>8</source>
 							<target>8</target>
-							<scalaVersion>${scala.maj.version}</scalaVersion>
 							<args>
 								<arg>-dependencyfile</arg>
 								<arg>${project.build.directory}/.scala_dependencies</arg>
