@@ -13,9 +13,6 @@ jobs:
           export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
           export PATH=$JAVA_HOME/bin:$PATH
           echo $(java -version)
-          echo $JAVA_HOME
-          echo $PATH
-          echo $(update-java-alternatives -l)
           mvn scoverage:report
     - save_cache:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
