@@ -10,8 +10,8 @@ jobs:
     - run:
         name: sunbird-analytics-core-build
         command: |
-        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-        mvn scoverage:report
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          mvn scoverage:report
     - save_cache:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
         paths: ~/.m2
