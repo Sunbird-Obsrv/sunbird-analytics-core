@@ -10,7 +10,8 @@ jobs:
     - run:
         name: sunbird-analytics-core-build
         command: |
-          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+          export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+          export PATH=$PATH:$JAVA_HOME/bin
           echo $(java -version)
           echo $JAVA_HOME
           echo $PATH
@@ -27,7 +28,7 @@ jobs:
     - run:
         name: sonar
         command: |
-          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+          export JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
           mvn -X sonar:sonar -Dsonar.projectKey=project-sunbird_sunbird-analytics-core -Dsonar.organization=project-sunbird -Dsonar.exclusions=analytics-core/src/main/scala/org/ekstep/analytics/streaming/** -Dsonar.host.url=https://sonarcloud.io -Dsonar.scala.coverage.reportPaths=/home/circleci/project/target/scoverage.xml
 
 workflows:
