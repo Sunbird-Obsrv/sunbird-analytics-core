@@ -10,7 +10,7 @@ jobs:
     - run:
         name: sunbird-analytics-core-build
         command: |
-          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          export "JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")"
           export PATH=$PATH:$JAVA_HOME/bin
           echo $(java -version)
           echo $JAVA_HOME
