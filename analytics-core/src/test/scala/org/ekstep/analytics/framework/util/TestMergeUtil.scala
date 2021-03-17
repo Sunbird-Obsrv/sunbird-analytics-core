@@ -18,7 +18,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
 
     val config =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
-        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
 
@@ -35,11 +35,11 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     val mergeUtil = new MergeUtil()
     val config =
       """{"type":"azure","id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
-        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":2,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
         |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"}],"dims":["Date"]},"container":"reports",
         |"postContainer":"test-container","deltaFileAccess":true,"reportFileAccess":false}""".stripMargin
     val jsonConfig = JSONUtils.deserialize[MergeConfig](config)
-    (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService)
+      (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService)
     (mockStorageService.searchObjects _).expects(jsonConfig.container,"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv",None,None,None,"yyyy-MM-dd").returns(null)
     (mockStorageService.getPaths _).expects(jsonConfig.container, null).returns(List("src/test/resources/delta.csv"))
     (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "report_storage_key", "report_storage_secret").returns(mockStorageService)
@@ -58,7 +58,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
 
     val config =
       """{"type":"blob","id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
-        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
         |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"}],"dims":["Date"]},"container":"reports",
         |"postContainer":"test-container","deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
 
@@ -74,7 +74,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
 
     val config =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
-        |"rollupCol":"Date","rollupRange":2,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":2,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     implicit val sqlContext = new SQLContext(sc)
@@ -83,32 +83,32 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config), List("Date")).count should be(10)
     val config1 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"GEN_YEAR",
-        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config1),List("Date")).count should be(9)
     val config2 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"MONTH",
-        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config2),List("Date")).count should be(8)
     val config3 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"WEEK",
-        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config3),List("Date")).count should be(7)
 
     val config4 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"DAY",
-        |"rollupCol":"Date","rollupRange":4,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":4,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config4),List("Date")).count should be(4)
     val config5 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"None",
-        |"rollupRange":4,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupRange":4,"rollupFormat": "dd-MM-yyyy","merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config5),List("Date","State")).count should be(11)
@@ -121,7 +121,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
 
     val config =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":0,"rollupAge":"ACADEMIC_YEAR",
-        |"rollupCol":"Date","rollupRange":2,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":2,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
     implicit val sqlContext = new SQLContext(sc)

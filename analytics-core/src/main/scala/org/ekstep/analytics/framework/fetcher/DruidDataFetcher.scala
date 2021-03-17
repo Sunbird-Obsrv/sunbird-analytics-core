@@ -42,15 +42,23 @@ object DruidDataFetcher {
     val request = getDruidQuery(query)
     fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
     if (queryAsStream) {
-      executeQueryAsStream(query, request)
-
+      query.queryType.toLowerCase() match {
+        case "topn" =>
+          executeQueryAsStream(query, request).flatMap(f => processResult(query, f).asInstanceOf[List[String]])
+        case _  =>
+          executeQueryAsStream(query, request).map(f => processResult(query, f).toString)
+      }
     } else {
       val response = executeDruidQuery(query, request)
       query.queryType.toLowerCase() match {
-        case "timeseries" | "groupby" | "topn"=>
-          sc.parallelize(processResult(query, response.asInstanceOf[DruidResponseTimeseriesImpl].results))
+        case "timeseries" | "groupby" =>
+          val df = sc.parallelize(response.asInstanceOf[DruidResponseTimeseriesImpl].results)
+            df.map(result => processResult(query,result).toString)
+         case "topn" =>
+           val df = sc.parallelize(response.asInstanceOf[DruidResponseTimeseriesImpl].results)
+           df.flatMap(result => processResult(query,result).asInstanceOf[List[String]])
         case "scan" =>
-          sc.parallelize(processResult (query, response.asInstanceOf[DruidScanResponse].results.flatMap(f => f.events)))
+          sc.parallelize(response.asInstanceOf[DruidScanResponse].results.flatMap(f => f.events)).map(result => processResult(query,result).toString)
       }
     }
 
@@ -63,15 +71,15 @@ object DruidDataFetcher {
       .granularity(CommonUtil.getGranularity(query.granularity.getOrElse("all")))
       .interval(getIntervals(query))
     query.queryType.toLowerCase() match {
-      case "groupby" => {
+      case "groupby" =>
         val DQLQuery = druidQuery.agg(getAggregation(query.aggregations): _*)
           .groupBy(dims.map(f => getDimensionByType(f.`type`, f.fieldName, f.aliasName, f.outputType, f.extractionFn)): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         if (query.having.nonEmpty) DQLQuery.having(getGroupByHaving(query.having).get)
         DQLQuery.build()
-      }
-      case "topn" => {
+
+      case "topn" =>
         val DQLQuery = druidQuery.topN(getDimensionByType(dims.head.`type`, dims.head.fieldName,
           dims.head.aliasName, dims.head.outputType, dims.head.extractionFn),
           query.metric.getOrElse("count"), query.threshold.getOrElse(100).asInstanceOf[Int])
@@ -79,21 +87,20 @@ object DruidDataFetcher {
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         DQLQuery.build()
-      }
-      case "timeseries" => {
+
+      case "timeseries" =>
         val DQLQuery = druidQuery.agg(getAggregation(query.aggregations): _*)
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.postAggregation.nonEmpty) DQLQuery.postAgg(getPostAggregation(query.postAggregation).get: _*)
         DQLQuery.build()
-      }
-      case "scan" => {
+
+      case "scan" =>
         val DQLQuery = druidQuery.scan()
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.columns.nonEmpty) DQLQuery.columns(query.columns.get)
         DQLQuery.batchSize(AppConf.getConfig("druid.scan.batch.size").toInt)
-        DQLQuery.setQueryContextParam("maxQueuedBytes",AppConf.getConfig("druid.scan.batch.bytes"))
+        DQLQuery.setQueryContextParam("maxQueuedBytes", AppConf.getConfig("druid.scan.batch.bytes"))
         DQLQuery.build()
-      }
 
       case _ =>
         throw new DataFetcherException("Unknown druid query type found");
@@ -102,32 +109,32 @@ object DruidDataFetcher {
 
   def getIntervals(query: DruidQueryModel): String = {
     if (query.granularity.getOrElse("all").toUpperCase == "LATEST_INDEX") {
-        var connection : Connection = null
-        var statement : Statement = null
-        try {
-            val connProperties: Properties = CommonUtil.getPostgresConnectionUserProps(AppConf.getConfig("postgres.druid.user")
-                , AppConf.getConfig("postgres.druid.pass"))
-            val db: String = AppConf.getConfig("postgres.druid.db")
-            val url: String = AppConf.getConfig("postgres.druid.url") + s"$db"
-            val getLatestIndexQuery = s"""select segment.start, segment.end from druid_segments segment where datasource = '${query.dataSource}'  and used='t' order by start"""
-             connection = DriverManager.getConnection(url, connProperties)
-             statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-            val result: ResultSet = statement.executeQuery(getLatestIndexQuery)
-            if(result.first())
-            result.getString("start") + "/" + result.getString("end")
-            else
-                CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider)
-        }finally{
-            statement.close()
-            connection.close()
-        }
+      var connection: Connection = null
+      var statement: Statement = null
+      try {
+        val connProperties: Properties = CommonUtil.getPostgresConnectionUserProps(AppConf.getConfig("postgres.druid.user")
+          , AppConf.getConfig("postgres.druid.pass"))
+        val db: String = AppConf.getConfig("postgres.druid.db")
+        val url: String = AppConf.getConfig("postgres.druid.url") + s"$db"
+        val getLatestIndexQuery = s"""select segment.start, segment.end from druid_segments segment where datasource = '${query.dataSource}'  and used='t' order by start"""
+        connection = DriverManager.getConnection(url, connProperties)
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+        val result: ResultSet = statement.executeQuery(getLatestIndexQuery)
+        if (result.first())
+          result.getString("start") + "/" + result.getString("end")
+        else
+          CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider)
+      } finally {
+        statement.close()
+        connection.close()
+      }
     } else {
       CommonUtil.getIntervalRange(query.intervals, query.dataSource, query.intervalSlider)
     }
   }
 
-  def executeDruidQuery(model: DruidQueryModel,query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): DruidResponse = {
-    val response = if(query.dataSource.contains("rollup") || query.dataSource.contains("distinct")
+  def executeDruidQuery(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): DruidResponse = {
+    val response = if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct")
       || query.dataSource.contains("snapshot")) fc.getDruidRollUpClient().doQuery(query)
     else fc.getDruidClient().doQuery(query)
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
@@ -136,24 +143,24 @@ object DruidDataFetcher {
 
   }
 
-  def getSQLDruidQuery(model : DruidQueryModel) : DruidSQLQuery ={
-    val columns = model.sqlDimensions.get.map({f=>
-      if(f.function == None)
+  def getSQLDruidQuery(model: DruidQueryModel): DruidSQLQuery = {
+    val columns = model.sqlDimensions.get.map({ f =>
+      if (f.function.isEmpty)
         f.fieldName
       else
         f.function.get + "AS \"" + f.fieldName + "\""
 
     })
-      val intervals = CommonUtil.getIntervalRange(model.intervals, model.dataSource, model.intervalSlider)
+    val intervals = CommonUtil.getIntervalRange(model.intervals, model.dataSource, model.intervalSlider)
     val sqlString = "SELECT " + columns.mkString(",") +
       " from \"druid\".\"" + model.dataSource + "\" where " +
-      "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '"+
+      "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
       intervals.split("/").apply(1).split("T").apply(0) + "'"
 
     DruidSQLQuery(sqlString)
   }
 
-  def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[String] = {
+  def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[BaseResult] = {
 
     implicit val system = if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct") || query.dataSource.contains("snapshot"))
       fc.getDruidRollUpClient().actorSystem
@@ -167,17 +174,62 @@ object DruidDataFetcher {
       else
         fc.getDruidClient().doQueryAsStream(query)
 
-    val druidResult: Future[RDD[String]] =
+    val druidResult: Future[RDD[BaseResult]] = {
       response
         .via(new ResultAccumulator[BaseResult])
-        .map(f => processResult(model,f))
-        .map(sc.parallelize(_))
-        .toMat(Sink.fold[RDD[String], RDD[String]]((sc.emptyRDD[String]))(_ union _))(Keep.right).run()
-
-
+        .map(f => {
+          fc.inputEventsCount.add(f.asInstanceOf[List[BaseResult]].length)
+          sc.parallelize(f.asInstanceOf[List[BaseResult]])
+        })
+        .toMat(Sink.fold[RDD[BaseResult], RDD[BaseResult]](sc.emptyRDD[BaseResult])(_ union _))(Keep.right).run()
+    }
     val queryWaitTimeInMins = AppConf.getConfig("druid.query.wait.time.mins").toLong
     Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
+
+  def processResult(query: DruidQueryModel, result: BaseResult): AnyRef = {
+    query.queryType.toLowerCase match {
+      case "timeseries" | "groupby" =>
+        JSONUtils.serialize(result.asInstanceOf[DruidResult].result.asObject.get.+:("date",
+          Json.fromString(result.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
+          if (f._2.isNull)
+            f._1 -> "unknown"
+          else if ("String".equalsIgnoreCase(f._2.name))
+            f._1 -> f._2.asString.get
+          else if ("Number".equalsIgnoreCase(f._2.name)) {
+            f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2)
+          } else f._1 -> f._2
+        })
+      case "topn" =>
+        val timeMap = Map("date" -> result.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+        val test = result.asInstanceOf[DruidResult].result.asArray.get.map(data => {
+          JSONUtils.serialize(timeMap ++ data.asObject.get.toMap.map({ f =>
+            if (f._2.isNull)
+              f._1 -> "unknown"
+            else if ("String".equalsIgnoreCase(f._2.name))
+              f._1 -> f._2.asString.get
+            else if ("Number".equalsIgnoreCase(f._2.name))
+              f._1 -> f._2.asNumber.get.toBigDecimal.get
+            else f._1 -> f._2
+          }))
+        })
+         test.toList
+      case "scan" =>
+        JSONUtils.serialize(result.asInstanceOf[DruidScanResult].result.asObject.get.+:("date", Json.fromString(result.
+          timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
+          if (f._2.isNull)
+            f._1 -> "unknown"
+          else if ("String".equalsIgnoreCase(f._2.name))
+            f._1 -> f._2.asString.get
+          else if ("Number".equalsIgnoreCase(f._2.name)) {
+            f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2)
+          } else {
+            f._1 -> JSONUtils.deserialize[Map[String, Any]](JSONUtils.serialize(f._2)).get("value").get
+          }
+        })
+    }
+    }
+
 
   def executeSQLQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
 
@@ -202,67 +254,14 @@ object DruidDataFetcher {
         AppConf.getConfig("druid.scan.batch.bytes").toInt, true)))
       .via(convertStringFlow).via(new ResultAccumulator[String])
       .map(events => {
-        fc.inputEventsCount.add(events.filter(p=> !p.isEmpty).size)
+        fc.inputEventsCount.add(events.filter(p=> p.nonEmpty).length)
         sc.parallelize(events)
       })
-      .toMat(Sink.fold[RDD[String], RDD[String]]((sc.emptyRDD[String]))(_ union _))(Keep.right).run()
+      .toMat(Sink.fold[RDD[String], RDD[String]](sc.emptyRDD[String])(_ union _))(Keep.right).run()
 
     val data = Await.result(result, scala.concurrent.duration.Duration.
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
-    data.filter(f => !f.isEmpty).map(f=> processSqlResult(f))
-  }
-
-
-  def processResult(query: DruidQueryModel, result: Seq[BaseResult])(implicit fc: FrameworkContext): Seq[String] = {
-    if (result.nonEmpty) {
-      fc.inputEventsCount.add(result.size)
-      query.queryType.toLowerCase match {
-        case "timeseries" | "groupby" =>
-          val series = result.asInstanceOf[List[DruidResult]].map { f =>
-            f.result.asObject.get.+:("date", Json.fromString(f.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
-              if (f._2.isNull)
-                (f._1 -> "unknown")
-              else if ("String".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asString.get)
-              else if ("Number".equalsIgnoreCase(f._2.name)) {
-                (f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2))
-              } else (f._1 -> f._2)
-            }
-          }
-          series.map(f => JSONUtils.serialize(f))
-        case "topn" =>
-          val timeMap = Map("date" -> result.head.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-          val series = result.asInstanceOf[List[DruidResult]].map(f => f).head.result.asArray.get.map { f =>
-            val dataMap = f.asObject.get.toMap.map { f =>
-              if (f._2.isNull)
-                (f._1 -> "unknown")
-              else if ("String".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asString.get)
-              else if ("Number".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asNumber.get.toBigDecimal.get)
-              else (f._1 -> f._2)
-            }
-            timeMap ++ dataMap
-          }.toList
-          series.map(f => JSONUtils.serialize(f))
-        case "scan"=>
-          val series = result.toList.asInstanceOf[List[DruidScanResult]].map { f =>
-            f.result.asObject.get.+:("date", Json.fromString(f.timestamp.get.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).toMap.map { f =>
-              if (f._2.isNull)
-                (f._1 -> "unknown")
-              else if ("String".equalsIgnoreCase(f._2.name))
-                (f._1 -> f._2.asString.get)
-              else if ("Number".equalsIgnoreCase(f._2.name)) {
-                (f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2))
-              } else {
-                (f._1 -> JSONUtils.deserialize[Map[String,Any]](JSONUtils.serialize(f._2)).get("value").get)
-              }
-            }
-          }
-          series.map(f => JSONUtils.serialize(f))
-      }
-    } else
-      List();
+    data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
   }
 
   def processSqlResult(result: String): DruidOutput = {
@@ -311,7 +310,7 @@ object DruidDataFetcher {
     if (aggType.nonEmpty || filterFieldName.nonEmpty || filterValue.nonEmpty)
       ing.wbaa.druid.dql.AggregationOps.selectorFiltered(filterFieldName.get, getAggregationByType(AggregationType.decode(aggType.get).right.get, name, fieldName), filterValue.get.toString)
     else
-      throw new DataFetcherException("Missing fields for filter type aggregation");
+      throw new DataFetcherException("Missing fields for filter type aggregation")
   }
 
   def getFilter(filters: Option[List[DruidFilter]]): Option[FilteringExpression] = {

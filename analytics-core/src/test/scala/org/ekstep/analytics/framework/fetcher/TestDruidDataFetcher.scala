@@ -362,6 +362,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
         val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.TopN)
 
+
         implicit val mockFc = mock[FrameworkContext];
         implicit val druidConfig = mock[DruidConfig];
         val mockDruidClient = mock[DruidClient]
@@ -369,8 +370,8 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         (mockFc.getDruidClient: () => DruidClient).expects().returns(mockDruidClient)
 
         val druidResult = DruidDataFetcher.getDruidData(query).collect()
-
         druidResult.size should be (4)
+
         druidResult(0) should be ("""{"date":"2019-11-28","count":5,"producer_id":"dev.sunbird.portal"}""")
         druidResult(1) should be ("""{"date":"2019-11-28","count":1,"producer_id":"local.sunbird.desktop"}""")
         druidResult(2) should be ("""{"date":"2019-11-28","count":"unknown","producer_id":"local.sunbird.app"}""")
