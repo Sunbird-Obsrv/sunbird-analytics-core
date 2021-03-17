@@ -30,9 +30,7 @@ class MergeUtil {
           val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("deltaPath"))
           val reportDF = if (new java.io.File(filePaths("reportPath")).exists)
             sqlContext.read.options(Map("header" -> "true")).csv(filePaths("reportPath"))
-          else {
-            deltaDF
-          }
+          else deltaDF
           MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
             StorageConfig(storageType, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath"))))
         case "azure" =>
@@ -80,16 +78,12 @@ class MergeUtil {
     if (mergeConfig.rollup > 0) {
       val rollupFormat = mergeConfig.rollupFormat.getOrElse({
         if (rollupColOption.length > 1) rollupColOption.apply(1).replaceAll("%Y", "yyyy").replaceAll("%m", "MM")
-          .replaceAll("%d", "dd") else "yyyy-MM-dd"
-      })
-      println(rollupFormat)
+          .replaceAll("%d", "dd") else  "yyyy-MM-dd"
+    })
       val reportDfColumns = reportDF.columns
-
       val deltaDF = delta.withColumn(rollupCol, date_format(col(rollupCol), rollupFormat)).dropDuplicates()
         .drop(delta.columns.filter(p => !reportDfColumns.contains(p)): _*)
         .select(reportDfColumns.head, reportDfColumns.tail: _*)
-     println("the dela Df", deltaDF.show(10,false))
-      println("the report Df", reportDF.show(10,false))
       val filteredDf = mergeConfig.rollupCol.map { rollupCol =>
         val rollupColumn = """\|\|""".r.split(rollupCol).apply(0)
         reportDF.as("report").join(deltaDF.as("delta"),
@@ -154,8 +148,7 @@ class MergeUtil {
     val reportPaths = storageService.getPaths(container, keys).toArray.mkString(",")
     if (reportPaths.length > 0)
       sqlContext.read.options(Map("header" -> "true")).csv(reportPaths)
-    else
-      null
+    else null
   }
 
   def convertReportToJsonFormat(sqlContext: SQLContext, df: DataFrame): DataFrame = {

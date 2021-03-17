@@ -50,6 +50,27 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     }
   }
 
+  "MergeUtil" should "test the azure merge if report is not available" in {
+
+    implicit val mockFc = mock[FrameworkContext]
+    val mockStorageService = mock[BaseStorageService]
+    val mergeUtil = new MergeUtil()
+    val config =
+      """{"type":"azure","id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":2,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
+        |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"}],"dims":["Date"]},"container":"reports",
+        |"postContainer":"test-container","deltaFileAccess":true,"reportFileAccess":false}""".stripMargin
+    val jsonConfig = JSONUtils.deserialize[MergeConfig](config)
+    (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService)
+    (mockStorageService.searchObjects _).expects(jsonConfig.container,"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv",None,None,None,"yyyy-MM-dd").returns(null)
+    (mockStorageService.getPaths _).expects(jsonConfig.container, null).returns(List("src/test/resources/delta.csv"))
+    (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "report_storage_key", "report_storage_secret").returns(mockStorageService)
+    (mockStorageService.searchObjects _).expects(jsonConfig.postContainer.get,"apekx/daily_metrics.csv",None,None,None,"yyyy-MM-dd").returns(null)
+    (mockStorageService.getPaths _).expects(jsonConfig.postContainer.get, null).returns(List())
+    a[AzureException] should be thrownBy {
+      mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
+    }
+  }
 
   "MergeUtil" should "test the exception case" in {
 
@@ -128,6 +149,31 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/delta_rollup.csv")
     val reportDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/report_rollup.csv")
     mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config),List("Date")).count should be(1)
+
+  }
+
+  "MergeUtil" should "test the else conditions function" in {
+
+    implicit val fc = new FrameworkContext
+    val mergeUtil = new MergeUtil()
+    val fileUtil = new HadoopFileUtil();
+    val config =
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Date","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_test.csv",
+        |"deltaPath":"src/test/resources/delta_test.csv"}],
+        |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
+
+
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
+    val config1 =
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Date||%Y-%m-%d","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_test.csv",
+        |"deltaPath":"src/test/resources/delta_test.csv"}],
+        |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
+
+
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config1))
+    fileUtil.delete(sc.hadoopConfiguration, "src/test/resources/report_test.csv","src/test/resources/report_test.json")
 
   }
 
