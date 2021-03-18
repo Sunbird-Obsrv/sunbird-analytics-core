@@ -36,18 +36,19 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     val config =
       """{"type":"azure","id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
         |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":2,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
+        |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"},{"reportPath":"apekx/daily_metrics1.csv",
         |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"}],"dims":["Date"]},"container":"reports",
         |"postContainer":"test-container","deltaFileAccess":true,"reportFileAccess":false}""".stripMargin
     val jsonConfig = JSONUtils.deserialize[MergeConfig](config)
-      (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService)
-    (mockStorageService.searchObjects _).expects(jsonConfig.container,"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv",None,None,None,"yyyy-MM-dd").returns(null)
-    (mockStorageService.getPaths _).expects(jsonConfig.container, null).returns(List("src/test/resources/delta.csv"))
-    (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "report_storage_key", "report_storage_secret").returns(mockStorageService)
+      (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService).anyNumberOfTimes()
+    (mockStorageService.searchObjects _).expects(jsonConfig.container,"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv",None,None,None,"yyyy-MM-dd").returns(null).anyNumberOfTimes()
+    (mockStorageService.getPaths _).expects(jsonConfig.container, null).returns(List("src/test/resources/delta.csv")).anyNumberOfTimes()
+    (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "report_storage_key", "report_storage_secret").returns(mockStorageService).anyNumberOfTimes()
     (mockStorageService.searchObjects _).expects(jsonConfig.postContainer.get,"apekx/daily_metrics.csv",None,None,None,"yyyy-MM-dd").returns(null)
     (mockStorageService.getPaths _).expects(jsonConfig.postContainer.get, null).returns(List("src/test/resources/report.csv"))
-    a[AzureException] should be thrownBy {
-      mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
-    }
+    (mockStorageService.searchObjects _).expects(jsonConfig.postContainer.get,"apekx/daily_metrics1.csv",None,None,None,"yyyy-MM-dd").returns(null)
+    (mockStorageService.getPaths _).expects(jsonConfig.postContainer.get, null).returns(List())
+     mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
   }
 
   "MergeUtil" should "test the azure merge if report is not available" in {
@@ -67,9 +68,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "report_storage_key", "report_storage_secret").returns(mockStorageService)
     (mockStorageService.searchObjects _).expects(jsonConfig.postContainer.get,"apekx/daily_metrics.csv",None,None,None,"yyyy-MM-dd").returns(null)
     (mockStorageService.getPaths _).expects(jsonConfig.postContainer.get, null).returns(List())
-    a[AzureException] should be thrownBy {
-      mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
-    }
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
   }
 
   "MergeUtil" should "test the exception case" in {

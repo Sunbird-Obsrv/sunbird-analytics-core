@@ -11,13 +11,14 @@ import org.ekstep.analytics.framework.{FrameworkContext, MergeConfig, StorageCon
 import org.joda.time
 import org.joda.time.format.DateTimeFormat
 import org.apache.spark.sql.Row
+import org.ekstep.analytics.framework.Level.ERROR
 
 case class MergeResult(updatedReportDF: DataFrame, oldReportDF: DataFrame, storageConfig: StorageConfig)
 
 case class ReportJson(data: Map[String, Nothing], keys: List[String], tableData: List[List[String]])
 
 class MergeUtil {
-
+  implicit val className = "org.ekstep.analytics.framework.util.MergeUtil"
   def mergeFile(mergeConfig: MergeConfig)(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
     implicit val sqlContext = new SQLContext(sc)
     var reportSchema: StructType = null
@@ -41,7 +42,8 @@ class MergeUtil {
           val reportDF = if (null == reportFile) {
             sqlContext.createDataFrame(sc.emptyRDD[Row], if (null == reportSchema) {
               deltaDF.schema
-            } else reportSchema)
+            } else reportSchema
+            )
           }
           else {
             reportSchema = reportFile.schema
@@ -54,19 +56,25 @@ class MergeUtil {
           throw new Exception("Merge type unknown")
       }
       // Rename old file by appending date and store it
-      mergeResult.oldReportDF.saveToBlobStore(mergeResult.storageConfig, "csv",
-        String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
-        Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-      convertReportToJsonFormat(sqlContext, mergeResult.oldReportDF).saveToBlobStore(mergeResult.storageConfig, "json",
-        String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
-        Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+      try {
+        mergeResult.oldReportDF.saveToBlobStore(mergeResult.storageConfig, "csv",
+          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
+          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+        convertReportToJsonFormat(sqlContext, mergeResult.oldReportDF).saveToBlobStore(mergeResult.storageConfig, "json",
+          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
+          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
 
-      // Append new data to report file
-      mergeResult.updatedReportDF.saveToBlobStore(mergeResult.storageConfig, "csv", FilenameUtils.removeExtension(path.getName),
-        Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-      convertReportToJsonFormat(sqlContext, mergeResult.updatedReportDF).saveToBlobStore(mergeResult.storageConfig, "json", FilenameUtils.removeExtension(path.getName),
-        Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-
+        // Append new data to report file
+        mergeResult.updatedReportDF.saveToBlobStore(mergeResult.storageConfig, "csv", FilenameUtils.removeExtension(path.getName),
+          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+        convertReportToJsonFormat(sqlContext, mergeResult.updatedReportDF).saveToBlobStore(mergeResult.storageConfig, "json", FilenameUtils.removeExtension(path.getName),
+          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+      }catch {
+        case ex : Exception =>{
+          Console.println("Merge failed while saving to blob", ex.printStackTrace)
+          JobLogger.log(ex.getMessage, None, ERROR)
+        }
+      }
     })
   }
 
