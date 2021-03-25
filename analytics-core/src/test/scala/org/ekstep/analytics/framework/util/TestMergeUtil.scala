@@ -34,7 +34,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     val mockStorageService = mock[BaseStorageService]
     val mergeUtil = new MergeUtil()
     val config =
-      """{"type":"azure","id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+      """{"id":"daily_metrics.csv","frequency":"DAY","basePath":"/mount/data/analytics/tmp","rollup":1,"rollupAge":"ACADEMIC_YEAR",
         |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":2,"merge":{"files":[{"reportPath":"apekx/daily_metrics.csv",
         |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"},{"reportPath":"apekx/daily_metrics1.csv",
         |"deltaPath":"druid-reports/ETB-Consumption-Daily-Reports/apekx/2020-11-03.csv"}],"dims":["Date"]},"container":"reports",

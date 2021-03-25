@@ -5,13 +5,13 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.{col, unix_timestamp, _}
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.ekstep.analytics.framework.Level.INFO
+import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.ekstep.analytics.framework.{FrameworkContext, MergeConfig, StorageConfig}
 import org.joda.time
 import org.joda.time.format.DateTimeFormat
-import org.apache.spark.sql.Row
-import org.ekstep.analytics.framework.Level.ERROR
 
 case class MergeResult(updatedReportDF: DataFrame, oldReportDF: DataFrame, storageConfig: StorageConfig)
 
@@ -19,13 +19,14 @@ case class ReportJson(data: Map[String, Nothing], keys: List[String], tableData:
 
 class MergeUtil {
   implicit val className = "org.ekstep.analytics.framework.util.MergeUtil"
+  val druidDateFormat =AppConf.getConfig("druid.report.date.format")
   def mergeFile(mergeConfig: MergeConfig)(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
     implicit val sqlContext = new SQLContext(sc)
     var reportSchema: StructType = null
 
     mergeConfig.merge.files.foreach(filePaths => {
       val path = new Path(filePaths("reportPath"))
-      val storageType = mergeConfig.`type`.getOrElse("azure")
+      val storageType = mergeConfig.`type`.getOrElse(AppConf.getConfig("druid.report.default.storage"))
       val mergeResult = storageType.toLowerCase() match {
         case "local" =>
           val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("deltaPath"))
@@ -58,10 +59,10 @@ class MergeUtil {
       // Rename old file by appending date and store it
       try {
         mergeResult.oldReportDF.saveToBlobStore(mergeResult.storageConfig, "csv",
-          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
+          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat)),
           Option(Map("header" -> "true", "mode" -> "overwrite")), None)
         convertReportToJsonFormat(sqlContext, mergeResult.oldReportDF).saveToBlobStore(mergeResult.storageConfig, "json",
-          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString("yyyy-MM-dd")),
+          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat)),
           Option(Map("header" -> "true", "mode" -> "overwrite")), None)
 
         // Append new data to report file
@@ -72,7 +73,7 @@ class MergeUtil {
       }catch {
         case ex : Exception =>{
           Console.println("Merge failed while saving to blob", ex.printStackTrace)
-          JobLogger.log(ex.getMessage, None, ERROR)
+          JobLogger.log(ex.getMessage, None, INFO)
         }
       }
     })
@@ -86,7 +87,7 @@ class MergeUtil {
     if (mergeConfig.rollup > 0) {
       val rollupFormat = mergeConfig.rollupFormat.getOrElse({
         if (rollupColOption.length > 1) rollupColOption.apply(1).replaceAll("%Y", "yyyy").replaceAll("%m", "MM")
-          .replaceAll("%d", "dd") else  "yyyy-MM-dd"
+          .replaceAll("%d", "dd") else  druidDateFormat
     })
       val reportDfColumns = reportDF.columns
       val deltaDF = delta.withColumn(rollupCol, date_format(col(rollupCol), rollupFormat)).dropDuplicates()
@@ -163,7 +164,7 @@ class MergeUtil {
     import sqlContext.implicits._
     val cols = df.columns
     df.map(f => (cols, f.getValuesMap[String](cols).values.toList, f.getValuesMap[String](cols)))
-      .groupBy("_1").agg(collect_list("_2").alias("data"),
-      collect_list("_3").alias("tableData")).withColumnRenamed("_1", "keys")
+      .groupBy("_1").agg(collect_list("_2").alias("tableData"),
+      collect_list("_3").alias("data")).withColumnRenamed("_1", "keys")
   }
 }

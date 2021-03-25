@@ -258,7 +258,7 @@ case class StorageConfig(store: String, container: String, fileName: String, acc
 
 case class OnDemandJobRequest(request_id: String, request_data : String,download_urls :List[String], status: String)
 
-case class MergeConfig(`type`: Option[String] = Option("azure"), id: String, frequency: String, basePath: String, rollup: Integer, rollupAge: Option[String] = None, rollupCol: Option[String] = None,rollupFormat : Option[String] = None, rollupRange: Option[Integer] = None,
+case class MergeConfig(`type`: Option[String], id: String, frequency: String, basePath: String, rollup: Integer, rollupAge: Option[String] = None, rollupCol: Option[String] = None,rollupFormat : Option[String] = None, rollupRange: Option[Integer] = None,
                        merge: MergeFiles, container: String, postContainer: Option[String] = None, deltaFileAccess: Option[Boolean] = Option(true), reportFileAccess: Option[Boolean] = Option(true))
 case class MergeFiles(files: List[Map[String, String]], dims: List[String])
 
