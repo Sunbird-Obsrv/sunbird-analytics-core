@@ -646,11 +646,12 @@ object CommonUtil {
 
   // parse druid query interval
   def getIntervalRange(period: String, dataSource: String, intervalSlider: Int = 0): String = {
-    // LastDay, LastWeek, LastMonth, Last7Days, Last30Days
+    // LastDay, LastWeek, LastMonth, Last 2Days, Last7Days, Last30Days
     period match {
       case "LastDay"    => getDayRange(1, dataSource, intervalSlider);
       case "LastWeek"   => getWeekRange(1);
       case "LastMonth"  => getMonthRange(1);
+      case "Last2Days"  => getDayRange(2, dataSource, intervalSlider);
       case "Last7Days"  => getDayRange(7, dataSource, intervalSlider);
       case "Last30Days" => getDayRange(30, dataSource, intervalSlider);
       case _            => period;
