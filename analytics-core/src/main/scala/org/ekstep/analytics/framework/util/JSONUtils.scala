@@ -30,16 +30,10 @@ object JSONUtils {
     @throws(classOf[Exception])
     def deserialize[T: Manifest](value: String): T = mapper.readValue(value, typeReference[T]);
 
-    @throws(classOf[Exception])
-    def unescapeJSON(string: String): String = {
-        StringEscapeUtils.unescapeJava(string)
-    }
-
     private[this] def typeReference[T: Manifest] = new TypeReference[T] {
         override def getType = typeFromManifest(manifest[T])
     }
 
-    
     private[this] def typeFromManifest(m: Manifest[_]): Type = {
         if (m.typeArguments.isEmpty) { m.runtimeClass }
         // $COVERAGE-OFF$Disabling scoverage as this code is impossible to test

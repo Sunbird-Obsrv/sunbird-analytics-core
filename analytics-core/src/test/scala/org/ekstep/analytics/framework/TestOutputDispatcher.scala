@@ -9,6 +9,9 @@ import org.elasticsearch.hadoop.EsHadoopIllegalArgumentException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.sunbird.cloud.storage.BaseStorageService
+import org.ekstep.analytics.framework.dispatcher.S3Dispatcher
+import org.apache.hadoop.fs.azure.AzureException
+import org.ekstep.analytics.framework.dispatcher.ConsoleDispatcher
 
 /**
   * @author Santhosh
@@ -29,38 +32,6 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
     noException should be thrownBy {
       OutputDispatcher.dispatch(Dispatcher("console", Map()), sc.parallelize(events.take(1)));
     }
-
-    val eventsInArray = events.map { x => JSONUtils.serialize(x) }.collect
-    noException should be thrownBy {
-      OutputDispatcher.dispatch(Dispatcher("console", Map()), eventsInArray);
-    }
-  }
-
-  it should "dispatch output to s3" in {
-
-    implicit val mockFc = mock[FrameworkContext];
-    val mockStorageService = mock[BaseStorageService]
-    (mockFc.getStorageService(_: String): BaseStorageService).expects("aws").returns(mockStorageService).anyNumberOfTimes();
-    (mockStorageService.upload _).expects("dev-data-store", *, *, Option(false), None, None, None).returns(null).anyNumberOfTimes();
-    (mockStorageService.closeContext _).expects().returns().anyNumberOfTimes()
-    val output1 = Dispatcher("s3file", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> "output/test-log1.json", "filePath" -> "src/test/resources/sample_telemetry.log", "zip" -> true.asInstanceOf[AnyRef]));
-    val output2 = Dispatcher("s3file", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> "output/test-log1.json", "filePath" -> "src/test/resources/sample_telemetry.log.gz"));
-    val output3 = Dispatcher("s3file", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> "output/test-log2.json"));
-    noException should be thrownBy {
-      OutputDispatcher.dispatch(output1, events);
-      OutputDispatcher.dispatch(output2, events);
-      OutputDispatcher.dispatch(output3, events);
-    }
-
-    val output4 = Dispatcher("s3", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> "output/test-log1.json", "filePath" -> "src/test/resources/sample_telemetry.log", "zip" -> true.asInstanceOf[AnyRef]));
-    val output5 = Dispatcher("s3", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> "output/test-log1.json", "filePath" -> "src/test/resources/sample_telemetry.log.gz"));
-    val output6 = Dispatcher("s3", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> "output/test-log2.json"));
-    val eventRDDString = events.map(f => JSONUtils.serialize(f)).collect();
-    //noException should be thrownBy {
-    OutputDispatcher.dispatch(output4, eventRDDString);
-    OutputDispatcher.dispatch(output5, eventRDDString);
-    OutputDispatcher.dispatch(output6, eventRDDString);
-    //}
 
   }
 
@@ -103,20 +74,32 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
 
     // Invoke S3 dispatcher without required fields ('bucket','key')
     a[DispatcherException] should be thrownBy {
-      OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("zip" -> true.asInstanceOf[AnyRef])), events);
-      OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("bucket" -> Option("test"))), events);
-      OutputDispatcher.dispatch(Dispatcher("s3File", Map[String, AnyRef]("zip" -> true.asInstanceOf[AnyRef])), events);
-      OutputDispatcher.dispatch(Dispatcher("s3File", Map[String, AnyRef]("bucket" -> Option("test"))), events);
+      OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("key" -> "testKey")), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("bucket" -> "testBucket")), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("s3", null, null), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("file", "test", null), events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      OutputDispatcher.dispatch(null.asInstanceOf[StorageConfig], events);
+    }
+    
+    a[DispatcherException] should be thrownBy {
+      ConsoleDispatcher.dispatch(events.map(f => JSONUtils.serialize(f)), StorageConfig("file", "test", null));
     }
 
     // Invoke dispatch with null dispatcher
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(null.asInstanceOf[Dispatcher], events);
-    }
-
-    val eventsInArray = events.map { x => JSONUtils.serialize(x) }.collect
-    a[DispatcherException] should be thrownBy {
-      OutputDispatcher.dispatch(null.asInstanceOf[Dispatcher], eventsInArray);
     }
 
     // Invoke dispatch with None dispatchers
@@ -136,7 +119,6 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
       OutputDispatcher.dispatch(Option(Array(Dispatcher("console", Map("printEvent" -> false.asInstanceOf[AnyRef])))), noEvents);
     }
 
-    OutputDispatcher.dispatch(Dispatcher("console", Map("printEvent" -> false.asInstanceOf[AnyRef])), Array[String]());
   }
 
   it should "execute test cases related to script dispatcher" in {
@@ -155,52 +137,57 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
     val f = new File("src/test/resources/test_output.log");
     f.exists() should be(true)
     CommonUtil.deleteFile("src/test/resources/test_output.log");
+    
+    OutputDispatcher.dispatch(StorageConfig("local", null, "src/test/resources/test_output.log"), events);
+    val f2 = new File("src/test/resources/test_output.log");
+    f2.exists() should be(true)
+    CommonUtil.deleteFile("src/test/resources/test_output.log");
   }
-
-  it should "dispatch output to azure" in {
-
-    implicit val mockFc = mock[FrameworkContext];
-    val mockStorageService = mock[BaseStorageService]
-    (mockFc.getStorageService(_: String): BaseStorageService).expects("azure").returns(mockStorageService).anyNumberOfTimes();
-    (mockStorageService.upload _).expects("dev-data-store", *, *, Option(false), None, None, None).returns(null).anyNumberOfTimes();
-    (mockStorageService.closeContext _).expects().returns().anyNumberOfTimes()
-    val date = System.currentTimeMillis()
-    val output1 = Dispatcher("azure", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> s"output/test-dispatcher1-$date.json", "zip" -> true.asInstanceOf[AnyRef]));
-    val output2 = Dispatcher("azure", Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> s"output/test-dispatcher2-$date.json", "filePath" -> "src/test/resources/sample_telemetry.log"));
-    val strData = events.map(f => JSONUtils.serialize(f))
-
-    noException should be thrownBy {
-      OutputDispatcher.dispatch(output2, strData.collect());
-    }
-
-  }
-
-  it should "dispatch directory to azure" in {
-
-    implicit val mockFc = mock[FrameworkContext];
-    val mockStorageService = mock[BaseStorageService]
-    (mockFc.getStorageService(_: String): BaseStorageService).expects("azure").returns(mockStorageService).anyNumberOfTimes();
-    (mockStorageService.upload _).expects("dev-data-store", *, *, Option(true), *, Option(3), *).returns("").anyNumberOfTimes();
-    (mockStorageService.closeContext _).expects().returns().anyNumberOfTimes()
-    //noException should be thrownBy {
-    AzureDispatcher.dispatchDirectory(Map[String, AnyRef]("bucket" -> "dev-data-store", "key" -> s"output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"));
-    //}
-  }
-
+  
   it should "give DispatcherException if azure config is missing " in {
 
     implicit val fc = new FrameworkContext();
+    val eventArr = events.map(f => JSONUtils.serialize(f)).cache();
+    
     the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatchDirectory(Map[String, AnyRef]("key" -> s"output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"));
-    } should have message "'local file path', 'bucket' & 'key' parameters are required to upload directory to azure"
-
+      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), eventArr);
+    } should have message "'bucket' & 'key' parameters are required to send output to azure"
+    
     the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> s"output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), events.map(f => JSONUtils.serialize(f)));
+      AzureDispatcher.dispatch(Map[String, AnyRef]("bucket" -> "test-bucket", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), eventArr);
+    } should have message "'bucket' & 'key' parameters are required to send output to azure"
+    
+    the[DispatcherException] thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", "test-bucket", null), eventArr);
+    } should have message "'bucket' & 'key' parameters are required to send output to azure"
+    
+    the[DispatcherException] thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", null, "output/test-directory/"), eventArr);
     } should have message "'bucket' & 'key' parameters are required to send output to azure"
 
-    the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatch(events.map(f => JSONUtils.serialize(f)).collect(), Map[String, AnyRef]("key" -> s"output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"));
-    } should have message "'bucket' & 'key' parameters are required to send output to azure"
+  }
+
+
+  it should "dispatch output to S3/Azure" in {
+
+    implicit val fc = new FrameworkContext();
+
+    a[AzureException] should be thrownBy {
+      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
+    }
+    
+    a[AzureException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key", Option("azure_storage_key")), events.map(f => JSONUtils.serialize(f)));
+    }
+    
+    a[AzureException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key"), events.map(f => JSONUtils.serialize(f)));
+    }
+    
+    a[IllegalArgumentException] should be thrownBy {
+      S3Dispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
+    }
+
   }
 
   it should "dispatch output to elastic-search" in {
