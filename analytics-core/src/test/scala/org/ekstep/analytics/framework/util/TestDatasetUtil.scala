@@ -2,12 +2,12 @@ package org.ekstep.analytics.framework.util
 
 import org.ekstep.analytics.framework._
 import org.joda.time.LocalDate
-import java.io.File
 
+import java.io.File
 import org.joda.time.DateTime
+
 import java.util.Date
 import java.text.SimpleDateFormat
-
 import org.apache.hadoop.fs.Path
 
 import scala.collection.mutable.ListBuffer
@@ -19,6 +19,8 @@ import org.apache.hadoop.fs.azure.AzureException
 import org.apache.hadoop.fs.s3.S3Exception
 import org.apache.spark.sql.functions.col
 
+import java.nio.file.Paths
+case class DruidSummary(Date:String,row1: String, time_spent: Double, count: Long)
 class TestDatasetUtil extends BaseSpec {
 
     "DatasetUtil" should "test the dataset extensions" in {
@@ -26,9 +28,10 @@ class TestDatasetUtil extends BaseSpec {
       val fileUtil = new HadoopFileUtil();
       val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
-      
+      val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1);
       import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
+      val df1 = sparkSession.createDataFrame(rdd1);
       df.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
       
       val rdd2 = sparkSession.sparkContext.textFile("src/test/resources/test-report/env1.csv", 1).collect();
@@ -39,8 +42,17 @@ class TestDatasetUtil extends BaseSpec {
       val rdd3 = sparkSession.sparkContext.textFile("src/test/resources/test-report2.csv", 1).collect();
       rdd3.head should be ("env1,22.1,3")
       rdd3.last should be ("env1,32.1,4")
-      
-      fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2", "src/test/resources/test-report2.csv");
+
+
+      df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report3", Option(Map("header" -> "true")),
+        Option(Seq("Date")),None,Option(true));
+
+      a[AzureException] should be thrownBy {
+        df1.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")),None,Option(true));
+      }
+
+      fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
+        , "src/test/resources/test-report2.csv", "src/test/resources/test-report3/2020-01-11.zip");
       sparkSession.stop();
     }
     
