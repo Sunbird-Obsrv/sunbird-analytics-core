@@ -97,8 +97,8 @@ class DatasetExt(df: Dataset[Row]) {
           case "local" => fileUtil.copy(f._2.replace(format, "zip"), f._2, conf)
           case _ => storageService.get.upload(storageConfig.container, (filePrefix + f._2).replace(format, "zip"),
             f._2.replace(format, "zip"), Some(false), Some(0), Some(3), None)
-            fileUtil.delete(conf, filePrefix + f._2)
         }
+        fileUtil.delete(conf, filePrefix + f._2)
       }
     })
     fileUtil.delete(conf, filePrefix + srcPath)
