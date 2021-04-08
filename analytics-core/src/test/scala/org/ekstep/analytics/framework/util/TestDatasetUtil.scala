@@ -1,37 +1,23 @@
 package org.ekstep.analytics.framework.util
 
-import org.ekstep.analytics.framework._
-import org.joda.time.LocalDate
-
-import java.io.File
-import org.joda.time.DateTime
-
-import java.util.Date
-import java.text.SimpleDateFormat
 import org.apache.hadoop.fs.Path
-
-import scala.collection.mutable.ListBuffer
-import org.joda.time.format.DateTimeFormat
-import org.ekstep.analytics.framework.Period._
-import org.apache.spark.sql.Encoders
-import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.apache.hadoop.fs.azure.AzureException
 import org.apache.hadoop.fs.s3.S3Exception
-import org.apache.spark.sql.functions.col
+import org.ekstep.analytics.framework._
+import org.ekstep.analytics.framework.util.DatasetUtil.extensions
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.Matchers
+import org.sunbird.cloud.storage.BaseStorageService
 
-import java.nio.file.Paths
 case class DruidSummary(Date:String,row1: String, time_spent: Double, count: Long)
-class TestDatasetUtil extends BaseSpec {
+class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
 
     "DatasetUtil" should "test the dataset extensions" in {
       
       val fileUtil = new HadoopFileUtil();
       val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
-      val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1);
-      import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
-      val df1 = sparkSession.createDataFrame(rdd1);
       df.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
       
       val rdd2 = sparkSession.sparkContext.textFile("src/test/resources/test-report/env1.csv", 1).collect();
@@ -43,24 +29,44 @@ class TestDatasetUtil extends BaseSpec {
       rdd3.head should be ("env1,22.1,3")
       rdd3.last should be ("env1,32.1,4")
 
-
-      df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report3", Option(Map("header" -> "true")),
-        Option(Seq("Date")),None,Option(true));
-
-      a[AzureException] should be thrownBy {
-        df1.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")),None,Option(true));
-      }
-
       fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
         , "src/test/resources/test-report2.csv", "src/test/resources/test-report3/2020-01-11.zip");
       sparkSession.stop();
     }
+  "DatasetUtil" should "test the zip functionality" in {
+
+    val fileUtil = new HadoopFileUtil();
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+
+    val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1);
+    val df1 = sparkSession.createDataFrame(rdd1);
+
+    val rdd = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-12","env1", 22.1, 3), DruidSummary("2020-01-12","env2", 20.1, 3)), 1);
+    val df = sparkSession.createDataFrame(rdd);
+
+    df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report3", Option(Map("header" -> "true")),
+      Option(Seq("Date")),None,Option(true))
+    val rdd2 = sparkSession.sparkContext.textFile("src/test/resources/test-report3/2020-01-11.zip", 1).collect();
+
+
+    a[AzureException] should be thrownBy {
+      df1.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv",
+        "test-report", Option(Map("header" -> "true")), Option(Seq("env")),None,Option(true))
+    }
+    a[Exception] should be thrownBy {
+      df.copyMergeFile(Seq("Date"), "", "src/test/resources/test-report3/_tmp",
+        "src/test/resources/test-report3", sparkSession.sparkContext.hadoopConfiguration, "csv",
+        Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mock[BaseStorageService]), Option(true))
+    }
+    fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
+      , "src/test/resources/test-report2.csv", "src/test/resources/test-report3/2020-01-11.zip");
+    sparkSession.stop();
+  }
     
     it should "test exception branches" in {
       
       val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
-      
       import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
       a[AzureException] should be thrownBy {
