@@ -116,7 +116,7 @@ object DruidDataFetcher {
           , AppConf.getConfig("postgres.druid.pass"))
         val db: String = AppConf.getConfig("postgres.druid.db")
         val url: String = AppConf.getConfig("postgres.druid.url") + s"$db"
-        val getLatestIndexQuery = s"""select segment.start, segment.end from druid_segments segment where datasource = '${query.dataSource}'  and used='t' order by start"""
+        val getLatestIndexQuery = s"""select segment.start, segment.end from druid_segments segment where datasource = '${query.dataSource}'  and used='t' order by start desc"""
         connection = DriverManager.getConnection(url, connProperties)
         statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
         val result: ResultSet = statement.executeQuery(getLatestIndexQuery)
