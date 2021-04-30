@@ -26,6 +26,7 @@ class MergeUtil {
 
     mergeConfig.merge.files.foreach(filePaths => {
       val path = new Path(filePaths("reportPath"))
+      val postContainer= mergeConfig.postContainer.getOrElse(AppConf.getConfig("druid.report.default.container"))
       val storageType = mergeConfig.`type`.getOrElse(AppConf.getConfig("druid.report.default.storage"))
       val mergeResult = storageType.toLowerCase() match {
         case "local" =>
@@ -39,7 +40,7 @@ class MergeUtil {
           val deltaDF = fetchBlobFile(filePaths("deltaPath"),
             mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
           val reportFile = fetchBlobFile(filePaths("reportPath"), mergeConfig.reportFileAccess.getOrElse(true),
-            mergeConfig.postContainer.getOrElse("reports"))
+            postContainer)
           val reportDF = if (null == reportFile) {
             sqlContext.createDataFrame(sc.emptyRDD[Row], if (null == reportSchema) {
               deltaDF.schema
@@ -51,7 +52,7 @@ class MergeUtil {
             reportFile
           }
           MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
-            StorageConfig(storageType, mergeConfig.postContainer.get, path.getParent.getName))
+            StorageConfig(storageType, postContainer, path.getParent.getName))
 
         case _ =>
           throw new Exception("Merge type unknown")
@@ -163,7 +164,7 @@ class MergeUtil {
   def convertReportToJsonFormat(sqlContext: SQLContext, df: DataFrame): DataFrame = {
     import sqlContext.implicits._
     val cols = df.columns
-    df.map(f => (cols, f.getValuesMap[String](cols).values.toList, f.getValuesMap[String](cols)))
+    df.map(f => (f.getValuesMap[String](cols).keys.toSeq, f.getValuesMap[String](cols).values.toSeq, f.getValuesMap[String](cols)))
       .groupBy("_1").agg(collect_list("_2").alias("tableData"),
       collect_list("_3").alias("data")).withColumnRenamed("_1", "keys")
   }
