@@ -63,7 +63,7 @@ class DatasetExt(df: Dataset[Row]) {
     val finalDir = getFinalDir(file, reportId);
 
     val dims = partitioningColumns.getOrElse(Seq())
-    val headersList = columnOrder.getOrElse(List()) ++ dims
+    var headersList = columnOrder.getOrElse(List())
     fileUtil.delete(conf, filePrefix + tempDir)
     val opts = options.getOrElse(Map());
     val files = if (dims.nonEmpty) {
@@ -75,6 +75,7 @@ class DatasetExt(df: Dataset[Row]) {
         copyMergeFile(dims, filePrefix, tempDir, finalDir, conf, format, opts, storageConfig, None, None, Some(headersList))
     } else {
       if (headersList.size > 0) {
+        headersList = headersList ++ dims
         df.repartition(1).select(headersList.head, headersList.tail: _*).write.format(format).options(opts).save(filePrefix + tempDir)
       }
       else
@@ -93,9 +94,11 @@ class DatasetExt(df: Dataset[Row]) {
                     columnOrder :Option[List[String]]= Some(List.empty[String]))= {
     fileUtil.delete(conf, filePrefix + srcPath)
     val map = df.select(dims.map(f => col(f)): _*).distinct().collect().map(f => filePaths(dims, f, format, srcPath, desPath)).toMap
-    val headersList = columnOrder.getOrElse(List())
-    if(headersList.size>0)
-      df.repartition(1).select(headersList.head,headersList.tail:_*).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
+    var headersList = columnOrder.getOrElse(List())
+    if(headersList.size>0) {
+      headersList = headersList ++ dims
+      df.repartition(1).select(headersList.head, headersList.tail: _*).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
+    }
     else
       df.repartition(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
     map.foreach(f => {
