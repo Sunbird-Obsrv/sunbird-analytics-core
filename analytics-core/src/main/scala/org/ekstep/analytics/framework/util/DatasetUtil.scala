@@ -35,8 +35,9 @@ class DatasetExt(df: Dataset[Row]) {
     (Paths.get(tempDir, dimPaths.mkString("/")).toString(), Paths.get(finalDir, paths.mkString("/")) + "." + format)
   }
 
-  def saveToBlobStore(storageConfig: StorageConfig, format: String, reportId: String, options: Option[Map[String, String]], partitioningColumns: Option[Seq[String]],
-                      storageService: Option[BaseStorageService] = None, zip: Option[Boolean] = Option(false)): List[String] = {
+  def saveToBlobStore(storageConfig: StorageConfig, format: String, reportId: String, options: Option[Map[String, String]],
+                      partitioningColumns: Option[Seq[String]], storageService: Option[BaseStorageService] = None,
+                      zip: Option[Boolean] = Option(false), columnOrder:Option[List[String]] =Option(List())): List[String] = {
 
     val conf = df.sparkSession.sparkContext.hadoopConfiguration;
 
@@ -61,8 +62,8 @@ class DatasetExt(df: Dataset[Row]) {
     val tempDir = getTempDir(file, reportId);
     val finalDir = getFinalDir(file, reportId);
 
-    val dims = partitioningColumns.getOrElse(Seq());
-
+    val dims = partitioningColumns.getOrElse(Seq())
+    val headersList = columnOrder.getOrElse(List()) ++ dims
     fileUtil.delete(conf, filePrefix + tempDir)
     val opts = options.getOrElse(Map());
     val files = if (dims.nonEmpty) {
@@ -71,9 +72,13 @@ class DatasetExt(df: Dataset[Row]) {
           getFinalDir(storageConfig.fileName, reportId), conf, format, opts, storageConfig, storageService, zip)
       }
       else
-        copyMergeFile(dims, filePrefix, tempDir, finalDir, conf, format, opts, storageConfig)
+        copyMergeFile(dims, filePrefix, tempDir, finalDir, conf, format, opts, storageConfig, None, None, Some(headersList))
     } else {
-      df.repartition(1).write.format(format).options(opts).save(filePrefix + tempDir);
+      if (headersList.size > 0) {
+        df.repartition(1).select(headersList.head, headersList.tail: _*).write.format(format).options(opts).save(filePrefix + tempDir)
+      }
+      else
+        df.repartition(1).write.format(format).options(opts).save(filePrefix + tempDir)
       fileUtil.delete(conf, filePrefix + finalDir + "." + format)
       fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);
       List(filePrefix + finalDir + "." + format)
@@ -84,10 +89,15 @@ class DatasetExt(df: Dataset[Row]) {
 
   def copyMergeFile(dims: Seq[String], filePrefix: String, srcPath: String, desPath: String, conf: Configuration,
                     format: String, opts: Map[String, String], storageConfig: StorageConfig,
-                    storageService: Option[BaseStorageService] = None, zip: Option[Boolean] = Some(false)): List[String] = {
+                    storageService: Option[BaseStorageService] = None, zip: Option[Boolean] = Some(false),
+                    columnOrder :Option[List[String]]= Some(List.empty[String]))= {
     fileUtil.delete(conf, filePrefix + srcPath)
     val map = df.select(dims.map(f => col(f)): _*).distinct().collect().map(f => filePaths(dims, f, format, srcPath, desPath)).toMap
-    df.repartition(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
+    val headersList = columnOrder.getOrElse(List())
+    if(headersList.size>0)
+      df.repartition(1).select(headersList.head,headersList.tail:_*).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
+    else
+      df.repartition(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
     map.foreach(f => {
       fileUtil.delete(conf, filePrefix + f._2)
       fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true)

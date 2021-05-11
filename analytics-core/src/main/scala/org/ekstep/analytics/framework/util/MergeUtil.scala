@@ -25,17 +25,24 @@ class MergeUtil {
     var reportSchema: StructType = null
 
     mergeConfig.merge.files.foreach(filePaths => {
+      val isPrivate = mergeConfig.reportFileAccess.getOrElse(true)
+      val storageKey= if(isPrivate) "azure_storage_key" else "druid_storage_account_key"
+      val storageSecret= if(isPrivate) "azure_storage_secret" else "druid_storage_account_secret"
       val path = new Path(filePaths("reportPath"))
       val postContainer= mergeConfig.postContainer.getOrElse(AppConf.getConfig("druid.report.default.container"))
       val storageType = mergeConfig.`type`.getOrElse(AppConf.getConfig("druid.report.default.storage"))
+      var columnOrder = mergeConfig.columnOrder.getOrElse(List())
+      if(!mergeConfig.dateRequired.getOrElse(true))
+        columnOrder = columnOrder.filter(p=> !p.equals("Date"))
       val mergeResult = storageType.toLowerCase() match {
         case "local" =>
-          val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("deltaPath"))
+          val deltaDF = sqlContext.read.options(Map("header" -> "true","scientific" ->"false")).csv(filePaths("deltaPath"))
           val reportDF = if (new java.io.File(filePaths("reportPath")).exists)
-            sqlContext.read.options(Map("header" -> "true")).csv(filePaths("reportPath"))
+            sqlContext.read.options(Map("header" -> "true","scientific" ->"false")).csv(filePaths("reportPath"))
           else deltaDF
           MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
-            StorageConfig(storageType, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath"))))
+            StorageConfig(storageType, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath")),
+              Option(storageKey),Option(storageSecret)))
         case "azure" =>
           val deltaDF = fetchBlobFile(filePaths("deltaPath"),
             mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
@@ -52,34 +59,37 @@ class MergeUtil {
             reportFile
           }
           MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
-            StorageConfig(storageType, postContainer, path.getParent.getName))
+            StorageConfig(storageType, postContainer, path.getParent.getName,Option(storageKey),Option(storageSecret)))
 
         case _ =>
           throw new Exception("Merge type unknown")
       }
       // Rename old file by appending date and store it
       try {
-        mergeResult.oldReportDF.saveToBlobStore(mergeResult.storageConfig, "csv",
-          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat)),
-          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-        convertReportToJsonFormat(sqlContext, mergeResult.oldReportDF).saveToBlobStore(mergeResult.storageConfig, "json",
-          String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat)),
-          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-
+        val backupFilePrefix =String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat))
+        saveReport(mergeResult.oldReportDF,mergeResult, backupFilePrefix,"csv",true,Some(columnOrder))
+        saveReport(convertReportToJsonFormat(sqlContext,mergeResult.oldReportDF,columnOrder),mergeResult, backupFilePrefix,"json",true)
         // Append new data to report file
-        mergeResult.updatedReportDF.saveToBlobStore(mergeResult.storageConfig, "csv", FilenameUtils.removeExtension(path.getName),
-          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
-        convertReportToJsonFormat(sqlContext, mergeResult.updatedReportDF).saveToBlobStore(mergeResult.storageConfig, "json", FilenameUtils.removeExtension(path.getName),
-          Option(Map("header" -> "true", "mode" -> "overwrite")), None)
+        saveReport(mergeResult.updatedReportDF,mergeResult, FilenameUtils.removeExtension(path.getName),"csv",
+          false,Some(columnOrder))
+        saveReport(convertReportToJsonFormat(sqlContext,mergeResult.updatedReportDF,columnOrder),
+          mergeResult, FilenameUtils.removeExtension(path.getName),"json",false)
       }catch {
-        case ex : Exception =>{
-          Console.println("Merge failed while saving to blob", ex.printStackTrace)
+        case ex : Exception =>
+          Console.println("Merge failed while saving to blob", ex.printStackTrace())
           JobLogger.log(ex.getMessage, None, INFO)
-        }
       }
     })
   }
 
+  def saveReport(df:DataFrame,mergeResult: MergeResult,fileName:String,format: String,backup:Boolean,
+                 columnOrder: Option[List[String]] = Some(List())): Unit =
+  {
+    df.saveToBlobStore(StorageConfig(mergeResult.storageConfig.store,
+      mergeResult.storageConfig.container, if(backup) "backups/"+mergeResult.storageConfig.fileName
+      else mergeResult.storageConfig.fileName,mergeResult.storageConfig.accountKey,mergeResult.storageConfig.secretKey), format,
+      fileName, Option(Map("header" -> "true", "mode" -> "overwrite")), None,None,None,columnOrder)
+  }
 
   def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeConfig, dims: List[String]): DataFrame = {
     val rollupColOption = """\|\|""".r.split(mergeConfig.rollupCol.getOrElse("Date"))
@@ -89,9 +99,9 @@ class MergeUtil {
       val rollupFormat = mergeConfig.rollupFormat.getOrElse({
         if (rollupColOption.length > 1) rollupColOption.apply(1).replaceAll("%Y", "yyyy").replaceAll("%m", "MM")
           .replaceAll("%d", "dd") else  druidDateFormat
-    })
+      })
       val reportDfColumns = reportDF.columns
-      val deltaDF = delta.withColumn(rollupCol, date_format(col(rollupCol), rollupFormat)).dropDuplicates()
+      val deltaDF = delta.withColumn(rollupCol, date_format(col("Date"), rollupFormat)).dropDuplicates()
         .drop(delta.columns.filter(p => !reportDfColumns.contains(p)): _*)
         .select(reportDfColumns.head, reportDfColumns.tail: _*)
       val filteredDf = mergeConfig.rollupCol.map { rollupCol =>
@@ -138,32 +148,32 @@ class MergeUtil {
       case "WEEK" =>
         endDate.withDayOfWeek(1).minusWeeks(rollupRange)
       case "DAY" =>
-        endDate.minusDays(rollupRange.toInt)
+        endDate.minusDays(rollupRange)
       case _ =>
         new time.DateTime(1970, 1, 1, 0, 0, 0)
     }
     reportDF.filter(p => DateTimeFormat.forPattern(rollupFormat)
-      .parseDateTime(p.getAs[String]("Date"))
-      .getMillis >= startDate.asInstanceOf[time.DateTime].getMillis)
+      .parseDateTime(p.getAs[String](rollupCol))
+      .getMillis >= startDate.getMillis)
   }
 
   def fetchBlobFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
 
-    val storageService =
-      if (isPrivate)
-        fc.getStorageService("azure", "azure_storage_key", "azure_storage_secret")
-      else
-        fc.getStorageService("azure", "report_storage_key", "report_storage_secret")
+    val storageService = if (isPrivate)
+      fc.getStorageService("azure", "azure_storage_key", "azure_storage_secret")
+    else {
+      fc.getStorageService("azure", "druid_storage_account_key", "druid_storage_account_secret")
+    }
     val keys = storageService.searchObjects(container, filePath)
     val reportPaths = storageService.getPaths(container, keys).toArray.mkString(",")
-    if (reportPaths.length > 0)
-      sqlContext.read.options(Map("header" -> "true")).csv(reportPaths)
+    if (reportPaths.nonEmpty)
+      sqlContext.read.options(Map("header" -> "true","scientific" ->"false")).csv(reportPaths)
     else null
   }
 
-  def convertReportToJsonFormat(sqlContext: SQLContext, df: DataFrame): DataFrame = {
+  def convertReportToJsonFormat(sqlContext: SQLContext, df: DataFrame,columnOrder:List[String]): DataFrame = {
     import sqlContext.implicits._
-    val cols = df.columns
+    val cols = if(columnOrder.size>0) columnOrder.toArray else df.columns
     df.map(f => (f.getValuesMap[String](cols).keys.toSeq, f.getValuesMap[String](cols).values.toSeq, f.getValuesMap[String](cols)))
       .groupBy("_1").agg(collect_list("_2").alias("tableData"),
       collect_list("_3").alias("data")).withColumnRenamed("_1", "keys")

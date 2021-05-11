@@ -27,6 +27,29 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
 
   }
 
+  "MergeUtil" should "test the column order in the merge function" in {
+
+    implicit val fc = new FrameworkContext
+    val mergeUtil = new MergeUtil()
+
+    val config =
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Date","rollupFormat": "yyyy-MM-dd","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_order.csv",
+        |"deltaPath":"src/test/resources/delta.csv"}],
+        |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true,
+        |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"]}""".stripMargin
+
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
+
+    val config1 =
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Date","rollupFormat": "yyyy-MM-dd","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_date.csv",
+        |"deltaPath":"src/test/resources/delta.csv"}],
+        |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true,
+        |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"],"dateRequired":false}""".stripMargin
+
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config1))
+  }
 
   "MergeUtil" should "test the azure merge function" in {
 
