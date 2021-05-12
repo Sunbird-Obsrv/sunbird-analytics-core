@@ -49,6 +49,15 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
         |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"],"dateRequired":false,"metricLabels":["Number of Successful QR Scans"]}""".stripMargin
 
     mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config1))
+
+    val config2 =
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Data as of Last Sunday(test)","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_weekly.csv",
+        |"deltaPath":"src/test/resources/delta.csv"}],
+        |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true,
+        |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"],"dateRequired":false,"metricLabels":["Number of Successful QR Scans"]}""".stripMargin
+
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config2))
   }
 
   "MergeUtil" should "test the azure merge function" in {

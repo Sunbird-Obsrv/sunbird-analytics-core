@@ -23,7 +23,8 @@ class MergeUtil {
   def mergeFile(mergeConfig: MergeConfig)(implicit sc: SparkContext, fc: FrameworkContext): Unit = {
     implicit val sqlContext = new SQLContext(sc)
     var reportSchema: StructType = null
-
+    val rollupColOption = """\|\|""".r.split(mergeConfig.rollupCol.getOrElse("Date"))
+    val rollupCol = rollupColOption.apply(0)
     mergeConfig.merge.files.foreach(filePaths => {
       val isPrivate = mergeConfig.reportFileAccess.getOrElse(true)
       val storageKey= if(isPrivate) "azure_storage_key" else "druid_storage_account_key"
@@ -33,7 +34,7 @@ class MergeUtil {
       val postContainer= mergeConfig.postContainer.getOrElse(AppConf.getConfig("druid.report.default.container"))
       val storageType = mergeConfig.`type`.getOrElse(AppConf.getConfig("druid.report.default.storage"))
       var columnOrder = mergeConfig.columnOrder.getOrElse(List())
-      if(!mergeConfig.dateRequired.getOrElse(true))
+      if(!mergeConfig.dateRequired.getOrElse(true) || !rollupCol.equals("Date"))
         columnOrder = columnOrder.filter(p=> !p.equals("Date"))
       val mergeResult = storageType.toLowerCase() match {
         case "local" =>
@@ -67,8 +68,10 @@ class MergeUtil {
       }
       // Rename old file by appending date and store it
       try {
+       if(!rollupCol.equals("Date"))
+         columnOrder = columnOrder ++ List(rollupCol)
         val backupFilePrefix =String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat))
-        saveReport(mergeResult.oldReportDF,mergeResult, backupFilePrefix,"csv",true,Some(columnOrder))
+        saveReport(mergeResult.oldReportDF,mergeResult, backupFilePrefix,"csv",true)
         saveReport(convertReportToJsonFormat(sqlContext,mergeResult.oldReportDF,columnOrder,metricLabels),mergeResult, backupFilePrefix,"json",true)
         // Append new data to report file
         saveReport(mergeResult.updatedReportDF,mergeResult, FilenameUtils.removeExtension(path.getName),"csv",
@@ -95,12 +98,11 @@ class MergeUtil {
   def mergeReport(delta: DataFrame, reportDF: DataFrame, mergeConfig: MergeConfig, dims: List[String]): DataFrame = {
     val rollupColOption = """\|\|""".r.split(mergeConfig.rollupCol.getOrElse("Date"))
     val rollupCol = rollupColOption.apply(0)
-
+    val rollupFormat = mergeConfig.rollupFormat.getOrElse({
+      if (rollupColOption.length > 1) rollupColOption.apply(1).replaceAll("%Y", "yyyy").replaceAll("%m", "MM")
+        .replaceAll("%d", "dd") else  druidDateFormat
+    })
     if (mergeConfig.rollup > 0) {
-      val rollupFormat = mergeConfig.rollupFormat.getOrElse({
-        if (rollupColOption.length > 1) rollupColOption.apply(1).replaceAll("%Y", "yyyy").replaceAll("%m", "MM")
-          .replaceAll("%d", "dd") else  druidDateFormat
-      })
       val reportDfColumns = reportDF.columns
       val deltaDF = delta.withColumn(rollupCol, date_format(col("Date"), rollupFormat)).dropDuplicates()
         .drop(delta.columns.filter(p => !reportDfColumns.contains(p)): _*)
@@ -119,7 +121,7 @@ class MergeUtil {
       rollupReport(finalDf, mergeConfig, rollupCol, rollupFormat).orderBy(unix_timestamp(col(rollupCol), rollupFormat))
     }
     else
-      delta
+      delta.withColumn(rollupCol, date_format(col("Date"), rollupFormat))
   }
 
   def rollupReport(reportDF: DataFrame, mergeConfig: MergeConfig, rollupCol: String, rollupFormat: String): DataFrame = {
