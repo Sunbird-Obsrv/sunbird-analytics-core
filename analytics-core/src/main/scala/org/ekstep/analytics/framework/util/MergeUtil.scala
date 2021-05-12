@@ -87,7 +87,7 @@ class MergeUtil {
                  columnOrder: Option[List[String]] = Some(List())): Unit =
   {
     df.saveToBlobStore(StorageConfig(mergeResult.storageConfig.store,
-      mergeResult.storageConfig.container, if(backup) "backups/"+mergeResult.storageConfig.fileName
+      mergeResult.storageConfig.container, if(backup) "report-backups/"+mergeResult.storageConfig.fileName
       else mergeResult.storageConfig.fileName,mergeResult.storageConfig.accountKey,mergeResult.storageConfig.secretKey), format,
       fileName, Option(Map("header" -> "true", "mode" -> "overwrite")), None,None,None,columnOrder)
   }

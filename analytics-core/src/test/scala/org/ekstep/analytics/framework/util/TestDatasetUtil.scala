@@ -29,8 +29,12 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
       rdd3.head should be ("env1,22.1,3")
       rdd3.last should be ("env1,32.1,4")
 
-      df.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report3", None, None,None,None,Some(List("time_spent","env","count")))
-      val rdd4 = sparkSession.sparkContext.textFile("src/test/resources/test-report3.csv", 1).collect();
+      val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1)
+      val df1 = sparkSession.createDataFrame(rdd1);
+
+      df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report3", None,
+        Option(Seq("Date")),None,None,Some(List("time_spent","row1","count")))
+      val rdd4 = sparkSession.sparkContext.textFile("src/test/resources/test-g/2020-01-11.csv", 1).collect();
       rdd4.head should be ("22.1,env1,3")
 
       fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
