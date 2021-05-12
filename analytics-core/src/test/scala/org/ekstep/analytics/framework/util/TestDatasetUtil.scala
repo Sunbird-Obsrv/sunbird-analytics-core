@@ -34,7 +34,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
 
       df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report3", None,
         Option(Seq("Date")),None,None,Some(List("time_spent","row1","count")))
-      val rdd4 = sparkSession.sparkContext.textFile("src/test/resources/test-g/2020-01-11.csv", 1).collect();
+      val rdd4 = sparkSession.sparkContext.textFile("src/test/resources/test-report3/2020-01-11.csv", 1).collect();
       rdd4.head should be ("22.1,env1,3")
 
       fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
