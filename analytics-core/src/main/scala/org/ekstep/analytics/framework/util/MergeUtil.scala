@@ -28,6 +28,7 @@ class MergeUtil {
       val isPrivate = mergeConfig.reportFileAccess.getOrElse(true)
       val storageKey= if(isPrivate) "azure_storage_key" else "druid_storage_account_key"
       val storageSecret= if(isPrivate) "azure_storage_secret" else "druid_storage_account_secret"
+      val metricLabels= mergeConfig.metricLabels.getOrElse(List())
       val path = new Path(filePaths("reportPath"))
       val postContainer= mergeConfig.postContainer.getOrElse(AppConf.getConfig("druid.report.default.container"))
       val storageType = mergeConfig.`type`.getOrElse(AppConf.getConfig("druid.report.default.storage"))
@@ -38,7 +39,7 @@ class MergeUtil {
         case "local" =>
           val deltaDF = sqlContext.read.options(Map("header" -> "true","scientific" ->"false")).csv(filePaths("deltaPath"))
           val reportDF = if (new java.io.File(filePaths("reportPath")).exists)
-            sqlContext.read.options(Map("header" -> "true","scientific" ->"false")).csv(filePaths("reportPath"))
+            sqlContext.read.options(Map("header" -> "true")).csv(filePaths("reportPath"))
           else deltaDF
           MergeResult(mergeReport(deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
             StorageConfig(storageType, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath")),
@@ -68,11 +69,11 @@ class MergeUtil {
       try {
         val backupFilePrefix =String.format("%s-%s", FilenameUtils.removeExtension(path.getName), new time.DateTime().toString(druidDateFormat))
         saveReport(mergeResult.oldReportDF,mergeResult, backupFilePrefix,"csv",true,Some(columnOrder))
-        saveReport(convertReportToJsonFormat(sqlContext,mergeResult.oldReportDF,columnOrder),mergeResult, backupFilePrefix,"json",true)
+        saveReport(convertReportToJsonFormat(sqlContext,mergeResult.oldReportDF,columnOrder,metricLabels),mergeResult, backupFilePrefix,"json",true)
         // Append new data to report file
         saveReport(mergeResult.updatedReportDF,mergeResult, FilenameUtils.removeExtension(path.getName),"csv",
           false,Some(columnOrder))
-        saveReport(convertReportToJsonFormat(sqlContext,mergeResult.updatedReportDF,columnOrder),
+        saveReport(convertReportToJsonFormat(sqlContext,mergeResult.updatedReportDF,columnOrder,metricLabels),
           mergeResult, FilenameUtils.removeExtension(path.getName),"json",false)
       }catch {
         case ex : Exception =>
@@ -171,11 +172,13 @@ class MergeUtil {
     else null
   }
 
-  def convertReportToJsonFormat(sqlContext: SQLContext, df: DataFrame,columnOrder:List[String]): DataFrame = {
+  def convertReportToJsonFormat(sqlContext: SQLContext, df: DataFrame,columnOrder:List[String],metricLabels:List[String]): DataFrame = {
     import sqlContext.implicits._
     val cols = if(columnOrder.size>0) columnOrder.toArray else df.columns
-    df.map(f => (f.getValuesMap[String](cols).keys.toSeq, f.getValuesMap[String](cols).values.toSeq, f.getValuesMap[String](cols)))
-      .groupBy("_1").agg(collect_list("_2").alias("tableData"),
+    df.map(row =>{
+      val dataMap = cols.map(col => (col,if(metricLabels.contains(col)) {BigDecimal(row.getAs[String](col)).toString()
+      } else row.getAs[String](col))).toMap
+      (cols, cols.map(col=> dataMap.get(col)), dataMap)}).groupBy("_1").agg(collect_list("_2").alias("tableData"),
       collect_list("_3").alias("data")).withColumnRenamed("_1", "keys")
   }
 }

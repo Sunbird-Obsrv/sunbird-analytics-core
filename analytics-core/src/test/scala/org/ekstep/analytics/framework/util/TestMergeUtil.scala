@@ -33,20 +33,20 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     val mergeUtil = new MergeUtil()
 
     val config =
-      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":0,"rollupAge":"ACADEMIC_YEAR",
         |"rollupCol":"Date","rollupFormat": "yyyy-MM-dd","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_order.csv",
-        |"deltaPath":"src/test/resources/delta.csv"}],
+        |"deltaPath":"src/test/resources/delta_order.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true,
         |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"]}""".stripMargin
 
     mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
 
     val config1 =
-      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"ACADEMIC_YEAR",
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":0,"rollupAge":"ACADEMIC_YEAR",
         |"rollupCol":"Date","rollupFormat": "yyyy-MM-dd","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_date.csv",
-        |"deltaPath":"src/test/resources/delta.csv"}],
+        |"deltaPath":"src/test/resources/delta_order.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true,
-        |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"],"dateRequired":false}""".stripMargin
+        |"columnOrder":["Date","Producer","State","Number of Successful QR Scans"],"dateRequired":false,"metricLabels":["Number of Successful QR Scans"]}""".stripMargin
 
     mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config1))
   }

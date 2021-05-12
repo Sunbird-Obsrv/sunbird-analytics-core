@@ -262,7 +262,9 @@ case class MergeConfig(`type`: Option[String], id: String, frequency: String, ba
                        rollupCol: Option[String] = None, rollupFormat : Option[String] = None, rollupRange: Option[Integer] = None,
                        merge: MergeFiles, container: String, postContainer: Option[String] = None,
                        deltaFileAccess: Option[Boolean] = Option(true), reportFileAccess: Option[Boolean] = Option(true),
-                       dateRequired:Option[Boolean] = Option(true), columnOrder:Option[List[String]] =Option(List()))
+                       dateRequired:Option[Boolean] = Option(true), columnOrder:Option[List[String]] =Option(List()),
+                       metricLabels :Option[List[String]] =Option(List()))
+
 case class MergeFiles(files: List[Map[String, String]], dims: List[String])
 
 @scala.beans.BeanInfo
