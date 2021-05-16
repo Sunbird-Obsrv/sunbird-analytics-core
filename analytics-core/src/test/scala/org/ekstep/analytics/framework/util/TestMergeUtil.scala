@@ -1,7 +1,6 @@
 package org.ekstep.analytics.framework.util
 
 import java.util.Date
-
 import org.apache.hadoop.fs.azure.AzureException
 import org.apache.spark.sql.SQLContext
 import org.ekstep.analytics.framework._
@@ -132,38 +131,41 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     implicit val sqlContext = new SQLContext(sc)
     val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/delta_rollup.csv")
     val reportDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/report_rollup.csv")
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config), List("Date")).count should be(10)
+    val configMap  =JSONUtils.deserialize[MergeConfig](config)
+    val rollupCol= configMap.rollupCol.getOrElse("Date")
+    val rollupFormat= configMap.rollupCol.getOrElse("dd-MM-yyyy")
+    mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config), List("Date")).count should be(10)
     val config1 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"GEN_YEAR",
         |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config1),List("Date")).count should be(9)
+    mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config1),List("Date")).count should be(9)
     val config2 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"MONTH",
         |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config2),List("Date")).count should be(8)
+    mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config2),List("Date")).count should be(8)
     val config3 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"WEEK",
         |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config3),List("Date")).count should be(7)
+    mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config3),List("Date")).count should be(7)
 
     val config4 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"DAY",
         |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":4,"merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config4),List("Date")).count should be(4)
+    mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config4),List("Date")).count should be(4)
     val config5 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"None",
         |"rollupRange":4,"rollupFormat": "dd-MM-yyyy","merge":{"files":[{"reportPath":"src/test/resources/report.csv",
         |"deltaPath":"src/test/resources/delta.csv"}],
         |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config5),List("Date","State")).count should be(11)
+    mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config5),List("Date","State")).count should be(11)
   }
 
   "MergeUtil" should "test without rollup condition" in {
@@ -179,7 +181,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     implicit val sqlContext = new SQLContext(sc)
     val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/delta_rollup.csv")
     val reportDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/report_rollup.csv")
-    mergeUtil.mergeReport(deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config),List("Date")).count should be(1)
+    mergeUtil.mergeReport("Date","dd-MM-yyyy",deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config),List("Date")).count should be(1)
 
   }
 
