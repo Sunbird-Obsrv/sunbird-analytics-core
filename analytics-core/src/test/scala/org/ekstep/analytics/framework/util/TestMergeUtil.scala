@@ -133,7 +133,7 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
     val reportDF = sqlContext.read.options(Map("header" -> "true")).csv("src/test/resources/report_rollup.csv")
     val configMap  =JSONUtils.deserialize[MergeConfig](config)
     val rollupCol= configMap.rollupCol.getOrElse("Date")
-    val rollupFormat= configMap.rollupCol.getOrElse("dd-MM-yyyy")
+    val rollupFormat= configMap.rollupFormat.getOrElse("dd-MM-yyyy")
     mergeUtil.mergeReport(rollupCol,rollupFormat,deltaDF,reportDF,JSONUtils.deserialize[MergeConfig](config), List("Date")).count should be(10)
     val config1 =
       """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":1,"rollupAge":"GEN_YEAR",
