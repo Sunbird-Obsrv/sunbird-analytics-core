@@ -26,6 +26,22 @@ class TestMergeUtil extends SparkSpec with Matchers with MockFactory {
 
   }
 
+  "MergeUtil" should "test the merge without date function" in {
+
+    implicit val fc = new FrameworkContext
+    val mergeUtil = new MergeUtil()
+
+    val config =
+      """{"type":"local","id":"consumption_usage_metrics","frequency":"DAY","basePath":"","rollup":0,"rollupAge":"ACADEMIC_YEAR",
+        |"rollupCol":"Date","rollupFormat": "dd-MM-yyyy","rollupRange":1,"merge":{"files":[{"reportPath":"src/test/resources/report_withoutdate.csv",
+        |"deltaPath":"src/test/resources/delta_withoutdate.csv"}],
+        |"dims":["Date"]},"container":"test-container","postContainer":null,"deltaFileAccess":true,"reportFileAccess":true}""".stripMargin
+
+
+    mergeUtil.mergeFile(JSONUtils.deserialize[MergeConfig](config))
+
+  }
+
   "MergeUtil" should "test the column order in the merge function" in {
 
     implicit val fc = new FrameworkContext
