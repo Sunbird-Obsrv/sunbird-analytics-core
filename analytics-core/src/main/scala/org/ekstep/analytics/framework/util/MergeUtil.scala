@@ -41,8 +41,9 @@ class MergeUtil {
         columnOrder = columnOrder.filter(p=> !p.equals("Date"))
       val mergeResult = storageType.toLowerCase() match {
         case "local" =>
-          val deltaDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("deltaPath"))
-            .withColumn(rollupCol, date_format(col("Date"), rollupFormat)).dropDuplicates()
+          var deltaDF = sqlContext.read.options(Map("header" -> "true")).csv(filePaths("deltaPath"))
+          deltaDF = if(deltaDF.columns.contains("Date")) deltaDF.withColumn(rollupCol, date_format(col("Date"), rollupFormat))
+            .dropDuplicates() else deltaDF
           val reportDF = if (new java.io.File(filePaths("reportPath")).exists)
             sqlContext.read.options(Map("header" -> "true")).csv(filePaths("reportPath"))
           else deltaDF
@@ -51,9 +52,10 @@ class MergeUtil {
           MergeResult(mergeReport(rollupCol,rollupFormat,deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
             StorageConfig(storageType, null, FilenameUtils.getFullPathNoEndSeparator(filePaths("reportPath"))))
         case "azure" =>
-          val deltaDF = fetchBlobFile(filePaths("deltaPath"),
+          var deltaDF = fetchBlobFile(filePaths("deltaPath"),
             mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
-            .withColumn(rollupCol, date_format(col("Date"), rollupFormat)).dropDuplicates()
+            deltaDF = if(deltaDF.columns.contains("Date")) deltaDF.withColumn(rollupCol, date_format(col("Date"), rollupFormat))
+              .dropDuplicates() else deltaDF
           val reportFile = fetchBlobFile(filePaths("reportPath"), mergeConfig.reportFileAccess.getOrElse(true),
             postContainer)
           val reportDF = if (null == reportFile) {
