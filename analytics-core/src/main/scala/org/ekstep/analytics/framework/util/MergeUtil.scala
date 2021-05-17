@@ -36,7 +36,9 @@ class MergeUtil {
       val path = new Path(filePaths("reportPath"))
       val postContainer= mergeConfig.postContainer.getOrElse(AppConf.getConfig("druid.report.default.container"))
       val storageType = mergeConfig.`type`.getOrElse(AppConf.getConfig("druid.report.default.storage"))
-      var columnOrder = (List(rollupCol) ++ mergeConfig.columnOrder.getOrElse(List())).distinct
+      var columnOrder = mergeConfig.columnOrder.getOrElse(List())
+      if(columnOrder.size > 0)
+        columnOrder = (List(rollupCol)++ columnOrder).distinct
       if(!mergeConfig.dateRequired.getOrElse(true) || !rollupCol.equals("Date"))
         columnOrder = columnOrder.filter(p=> !p.equals("Date"))
       val mergeResult = storageType.toLowerCase() match {
