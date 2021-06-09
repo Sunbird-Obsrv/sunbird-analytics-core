@@ -66,4 +66,24 @@ class HadoopFileUtil {
       if (deleteSource) srcFS.delete(srcDir, true) else true
     } else false
   }
+
+  /**
+    * Get a hadoop source folder/file size in bytes
+    */
+  def size(file: String, conf: Configuration) : Long = {
+
+    val path = new Path(file);
+    path.getFileSystem(conf).getContentSummary(path).getLength
+  }
+
+  /**
+    * Get size in bytes for multiple files.
+    */
+  def size(conf: Configuration, files: String*) : Seq[(String, Long)] = {
+
+    for(file <- files) yield {
+      val path = new Path(file);
+      (file, path.getFileSystem(conf).getContentSummary(path).getLength)
+    }
+  }
 }
