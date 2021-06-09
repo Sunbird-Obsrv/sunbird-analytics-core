@@ -29,6 +29,16 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
       rdd3.head should be ("env1,22.1,3")
       rdd3.last should be ("env1,32.1,4")
 
+      // get file size
+      val size = fileUtil.size("src/test/resources/test-report2.csv", sparkSession.sparkContext.hadoopConfiguration)
+      size should be (36)
+
+      // get multiple files size
+      val filesWithSize = fileUtil.size(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report/env1.csv", "src/test/resources/test-report/env2.csv", "src/test/resources/test-report2.csv")
+      filesWithSize.size should be (3)
+      filesWithSize.head._1 should be ("src/test/resources/test-report/env1.csv")
+      filesWithSize.head._2 should be (31)
+
       val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1)
       val df1 = sparkSession.createDataFrame(rdd1);
 
