@@ -74,10 +74,10 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     a[Exception] should be thrownBy {
       df.copyMergeFile(Seq("Date"), "", "src/test/resources/test-report3/_tmp",
         "src/test/resources/test-report3", sparkSession.sparkContext.hadoopConfiguration, "csv",
-        Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mock[BaseStorageService]), Option(true))
+        Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mock[BaseStorageService]), Option(true),None,None)
     }
     fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
-      , "src/test/resources/test-report2.csv", "src/test/resources/test-report3/2020-01-11.zip");
+      , "src/test/resources/test-report2.csv","src/test/resources/test-report3/2020-01-11.zip");
     sparkSession.stop();
   }
     

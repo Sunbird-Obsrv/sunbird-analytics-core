@@ -6,6 +6,7 @@ import org.apache.spark.sql.{Dataset, Row}
 import org.ekstep.analytics.framework.StorageConfig
 import org.sunbird.cloud.storage.BaseStorageService
 import org.apache.hadoop.conf.Configuration
+import org.ekstep.analytics.framework.conf.AppConf
 
 import java.io.File
 import java.nio.file.Paths
@@ -37,7 +38,7 @@ class DatasetExt(df: Dataset[Row]) {
 
   def saveToBlobStore(storageConfig: StorageConfig, format: String, reportId: String, options: Option[Map[String, String]],
                       partitioningColumns: Option[Seq[String]], storageService: Option[BaseStorageService] = None,
-                      zip: Option[Boolean] = Option(false), columnOrder:Option[List[String]] =Option(List())): List[String] = {
+                      zip: Option[Boolean] = Option(false), columnOrder: Option[List[String]] = Option(List())): List[String] = {
 
     val conf = df.sparkSession.sparkContext.hadoopConfiguration;
 
@@ -68,11 +69,10 @@ class DatasetExt(df: Dataset[Row]) {
     val opts = options.getOrElse(Map());
     val files = if (dims.nonEmpty) {
       if (zip.getOrElse(false)) {
-        copyMergeFile(dims, "", getTempDir(storageConfig.fileName, reportId),
-          getFinalDir(storageConfig.fileName, reportId), conf, format, opts, storageConfig, storageService, zip)
+        copyMergeFile(dims, filePrefix, tempDir, finalDir, conf, format, opts, storageConfig, storageService, zip, None, Some(file))
       }
       else
-        copyMergeFile(dims, filePrefix, tempDir, finalDir, conf, format, opts, storageConfig, None, None, Some(headersList))
+        copyMergeFile(dims, filePrefix, tempDir, finalDir, conf, format, opts, storageConfig, None, None, Some(headersList), None)
     } else {
       if (headersList.size > 0) {
         headersList = headersList ++ dims
@@ -91,25 +91,35 @@ class DatasetExt(df: Dataset[Row]) {
   def copyMergeFile(dims: Seq[String], filePrefix: String, srcPath: String, desPath: String, conf: Configuration,
                     format: String, opts: Map[String, String], storageConfig: StorageConfig,
                     storageService: Option[BaseStorageService] = None, zip: Option[Boolean] = Some(false),
-                    columnOrder :Option[List[String]]= Some(List.empty[String]))= {
+                    columnOrder: Option[List[String]] = Some(List.empty[String]), filePath: Option[String]) = {
     fileUtil.delete(conf, filePrefix + srcPath)
     val map = df.select(dims.map(f => col(f)): _*).distinct().collect().map(f => filePaths(dims, f, format, srcPath, desPath)).toMap
     var headersList = columnOrder.getOrElse(List())
-    if(headersList.size>0) {
+    if (headersList.size > 0) {
       headersList = headersList ++ dims
       df.repartition(1).select(headersList.head, headersList.tail: _*).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
-    }
-    else
+    } else {
       df.repartition(1).write.format(format).options(opts).partitionBy(dims: _*).save(filePrefix + srcPath)
+    }
     map.foreach(f => {
       fileUtil.delete(conf, filePrefix + f._2)
       fileUtil.copyMerge(filePrefix + f._1, filePrefix + f._2, conf, true)
       if (zip.getOrElse(false)) {
-        new ZipFile((filePrefix + f._2).replace(format, "zip")).addFile(new File(filePrefix + f._2))
         storageConfig.store.toLowerCase() match {
-          case "local" => fileUtil.copy(f._2.replace(format, "zip"), f._2, conf)
-          case _ => storageService.get.upload(storageConfig.container, (filePrefix + f._2).replace(format, "zip"),
-            f._2.replace(format, "zip"), Some(false), Some(0), Some(3), None)
+          case "local" =>
+            new ZipFile((filePrefix + f._2).replace(format, "zip")).addFile(new File(filePrefix + f._2))
+            fileUtil.copy(f._2.replace(format, "zip"), f._2, conf)
+          case _ =>
+            val fileName = Paths.get(filePrefix + f._2).getFileName.toString
+            val reportPath = f._2.replace(filePath.get, "")
+            val tmpDir = AppConf.getConfig("spark_output_temp_dir") + reportPath.replace(fileName, "")
+            val localPath = tmpDir + fileName
+            storageService.get.download(storageConfig.container, reportPath, tmpDir, Some(false))
+            val zipFile = new ZipFile(localPath.replace(format, "zip"))
+            zipFile.addFile(new File(localPath))
+            storageService.get.upload(storageConfig.container, localPath.replace(format, "zip"),
+              reportPath.replace(format, "zip"), Some(false), Some(0), Some(3), None)
+            fileUtil.delete(conf, tmpDir)
         }
         fileUtil.delete(conf, filePrefix + f._2)
       }
