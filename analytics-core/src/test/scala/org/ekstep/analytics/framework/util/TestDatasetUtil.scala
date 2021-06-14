@@ -71,13 +71,16 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
       df1.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv",
         "test-report", Option(Map("header" -> "true")), Option(Seq("env")),None,Option(true))
     }
-    a[Exception] should be thrownBy {
+    val mockBaseStorageService = mock[BaseStorageService]
+    (mockBaseStorageService.download _).expects("test-container", "test-report3/2020-01-12.csv","src/test/resources/test-report3/", Some(false)).once()
+    (mockBaseStorageService.upload _).expects("test-container", "src/test/resources/test-report3/2020-01-12.zip",
+      "test-report3/2020-01-12.zip", Some(false), Some(0), Some(3), None).once()
       df.copyMergeFile(Seq("Date"), "", "src/test/resources/test-report3/_tmp",
         "src/test/resources/test-report3", sparkSession.sparkContext.hadoopConfiguration, "csv",
-        Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mock[BaseStorageService]), Option(true))
-    }
+        Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mockBaseStorageService), Option(true),None,Some("src/test/resources/"))
+
     fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2","src/test/resources/test-report3"
-      , "src/test/resources/test-report2.csv", "src/test/resources/test-report3/2020-01-11.zip");
+      , "src/test/resources/test-report2.csv","src/test/resources/test-report3/2020-01-11.zip");
     sparkSession.stop();
   }
     
