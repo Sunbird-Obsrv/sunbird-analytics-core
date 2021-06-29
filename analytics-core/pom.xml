@@ -12,8 +12,8 @@
 	</parent>
 
 	<properties>
-		<maven.compiler.source>1.7</maven.compiler.source>
-		<maven.compiler.target>1.7</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
 	</properties>
@@ -24,11 +24,13 @@
 			<name>In Project Repo</name>
 			<url>file://${project.basedir}/lib</url>
 		</repository>
-<!--		<repository>-->
-<!--			<id>ing-bank</id>-->
-<!--			<name>Ing-bank Repo</name>-->
-<!--			<url>https://dl.bintray.com/ing-bank/maven-releases/</url>-->
-<!--		</repository>-->
+		<!--
+		<repository>
+			<id>ing-bank</id>
+			<name>Ing-bank Repo</name>
+			<url>https://dl.bintray.com/ing-bank/maven-releases/</url>
+		</repository>
+		-->
 		<repository>
 			<id>jcenter-repo</id>
 			<name>Jcenter Repo</name>
@@ -78,21 +80,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-streaming-kafka_${scala.maj.version}</artifactId>
-			<version>1.6.2</version>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.kafka</groupId>
-		    			<artifactId>kafka_2.11</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>com.thoughtworks.paranamer</groupId>
 			<artifactId>paranamer</artifactId>
-			<version>2.2.1</version>
+			<version>${paranamer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>joda-time</groupId>
@@ -164,12 +154,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-			<version>2.7.8</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>net.java.dev.jets3t</groupId>
 			<artifactId>jets3t</artifactId>
 			<version>0.9.4</version>
@@ -186,7 +170,6 @@
 			<version>1.1.4</version>
 			<scope>provided</scope>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.11 -->
 		<dependency>
 		    <groupId>org.apache.kafka</groupId>
 		    <artifactId>kafka_${scala.maj.version}</artifactId>
@@ -219,8 +202,8 @@
 		<!-- https://mvnrepository.com/artifact/org.sunbird/cloud-store-sdk -->
 		<dependency>
 			<groupId>org.sunbird</groupId>
-			<artifactId>cloud-store-sdk</artifactId>
-			<version>1.2.6</version>
+			<artifactId>cloud-store-sdk_2.12</artifactId>
+			<version>1.2.9</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.microsoft.azure</groupId>
@@ -244,7 +227,13 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.7.8</version>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
 		<dependency>
@@ -255,7 +244,7 @@
 		<!-- https://mvnrepository.com/artifact/com.typesafe.scala-logging/scala-logging -->
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging_2.11</artifactId>
+			<artifactId>scala-logging_${scala.maj.version}</artifactId>
 			<version>3.6.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/ing.wbaa.druid/scruid -->
@@ -264,60 +253,60 @@
 			<artifactId>scruid_${scala.maj.version}</artifactId>
 			<version>2.4.0</version>
 			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/scruid_2.11-2.4.0.jar</systemPath>
+			<systemPath>${project.basedir}/lib/scruid_2.12-2.4.0.jar</systemPath>
 		</dependency>
 		             <!-- Scruid dependency starts -->
 		<!-- https://mvnrepository.com/artifact/io.circe/circe-core -->
 		<dependency>
 			<groupId>io.circe</groupId>
-			<artifactId>circe-core_2.11</artifactId>
-			<version>0.11.2</version>
+			<artifactId>circe-core_${scala.maj.version}</artifactId>
+			<version>${circe.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/io.circe/circe-parser -->
 		<dependency>
 			<groupId>io.circe</groupId>
-			<artifactId>circe-parser_2.11</artifactId>
-			<version>0.11.2</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.circe/circe-generic -->
+			<artifactId>circe-parser_${scala.maj.version}</artifactId>
+			<version>${circe.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/io.circe/circe-generic -->
 		<dependency>
 			<groupId>io.circe</groupId>
-			<artifactId>circe-generic_2.11</artifactId>
-			<version>0.11.2</version>
+			<artifactId>circe-generic_${scala.maj.version}</artifactId>
+			<version>${circe.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-stream-json -->
 		<dependency>
 			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-stream-json_2.11</artifactId>
-			<version>0.4.0</version>
+			<artifactId>akka-stream-json_${scala.maj.version}</artifactId>
+			<version>${mdedetrich.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-http-json -->
 		<dependency>
 			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-http-json_2.11</artifactId>
-			<version>0.4.0</version>
+			<artifactId>akka-http-json_${scala.maj.version}</artifactId>
+			<version>${mdedetrich.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-stream-circe -->
 		<dependency>
 			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-stream-circe_2.11</artifactId>
-			<version>0.4.0</version>
+			<artifactId>akka-stream-circe_${scala.maj.version}</artifactId>
+			<version>${mdedetrich.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-http-circe -->
 		<dependency>
 			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-http-circe_2.11</artifactId>
-			<version>0.4.0</version>
+			<artifactId>akka-http-circe_${scala.maj.version}</artifactId>
+			<version>${mdedetrich.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-http -->
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http_2.11</artifactId>
-			<version>10.1.9</version>
+			<artifactId>akka-http_${scala.maj.version}</artifactId>
+			<version>10.1.12</version>
 		</dependency>
 		<dependency>
 			<groupId>io.circe</groupId>
-			<artifactId>circe-java8_2.11</artifactId>
+			<artifactId>circe-java8_${scala.maj.version}</artifactId>
 			<version>0.11.1</version>
 		</dependency>
 		<!-- Scruid dependency ends -->
