@@ -69,8 +69,8 @@ object BatchJobDriver {
             fc.outputEventsCount.reset();
             val endDate = config.search.queries.getOrElse(Array(Query())).last.endDate
             // $COVERAGE-ON$
-            val modelName = if(config.modelParams.nonEmpty && config.modelParams.get.get("modelName").nonEmpty)
-                config.modelParams.get.get("modelName").get.asInstanceOf[String]
+            val modelName = if(config.modelParams.nonEmpty && config.modelParams.get.get("reportConfig").nonEmpty)
+                config.modelParams.get.get("reportConfig").get.asInstanceOf[Map[String, AnyRef]].get("id").get.asInstanceOf[String]
             else model.name
             JobContext.jobName = modelName
             JobLogger.start("Started processing of " + modelName, Option(Map("config" -> config, "model" -> model.name, "date" -> endDate)));
