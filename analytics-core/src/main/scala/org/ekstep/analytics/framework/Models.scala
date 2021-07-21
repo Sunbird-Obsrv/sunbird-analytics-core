@@ -193,7 +193,7 @@ case class Actor(id: String, `type`: String)
 @scala.beans.BeanInfo
 case class V3PData(id: String, ver: Option[String] = None, pid: Option[String] = None, model: Option[String] = None)
 @scala.beans.BeanInfo
-case class Question(id: String, maxscore: Int, exlength: Int, params: Array[Map[String, AnyRef]], uri: String, desc: String, title: String, mmc: Array[String], mc: Array[String])
+case class Question(id: String, maxscore: Int, exlength: Int, params: Array[Map[String, AnyRef]], uri: String, desc: String, title: String, mmc: Array[String], mc: Array[String], `type`: String)
 @scala.beans.BeanInfo
 case class V3CData(id: String, `type`: String)
 @scala.beans.BeanInfo
