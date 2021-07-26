@@ -160,6 +160,45 @@ object DruidDataFetcher {
     DruidSQLQuery(sqlString)
   }
 
+  def getSQLJoinsONStr(joinOn: Option[List[DruidSQLJoinsON]]): String = {
+    if (joinOn.nonEmpty) {
+      val onStrings = joinOn.get.map { f =>
+        " ON " + f.left + " = " + f.right
+      }
+      onStrings.mkString(" AND ")
+    } else ""
+  }
+
+  def getSQLJoinQuery(model: DruidQueryModel): DruidSQLQuery = {
+    val sqlStrQueries = model.sqlQueries.get.queries.map{query =>
+      val columns = query.dims.map({ f =>
+        if (f.function.isEmpty)
+          f.fieldName
+        else
+          f.function.get + " AS \"" + f.fieldName + "\""
+      })
+      val filterStr = if(query.filters.nonEmpty) "AND " + getSQLFilter(query.filters) else ""
+      val limitStr = if(query.limit.nonEmpty) " LIMIT " + query.limit.get else ""
+      val onStr = if(query.joinOn.nonEmpty) getSQLJoinsONStr(query.joinOn) else ""
+      val intervals = CommonUtil.getIntervalRange(model.intervals, query.dataSource.getOrElse(model.dataSource), model.intervalSlider)
+      val sqlString = "(SELECT " + columns.mkString(",") +
+        " from \"druid\".\"" + query.dataSource.getOrElse(model.dataSource) + "\" where " +
+        "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
+        intervals.split("/").apply(1).split("T").apply(0) + "' " + filterStr + limitStr + ") AS " + query.alias.getOrElse("") + onStr
+      sqlString
+    }
+
+    val sqlString = sqlStrQueries.mkString("\n INNER JOIN \n")
+    val finalQueryDims = model.sqlQueries.get.finalDims.map({ f =>
+      if (f.function.isEmpty)
+        f.fieldName
+      else
+        f.function.get + " AS \"" + f.fieldName + "\""
+    })
+    val finalQueryStr = "SELECT " + finalQueryDims.mkString(",") + " FROM " + sqlString
+    DruidSQLQuery(finalQueryStr)
+  }
+
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[BaseResult] = {
 
     implicit val system = if (query.dataSource.contains("rollup") || query.dataSource.contains("distinct") || query.dataSource.contains("snapshot"))
@@ -233,7 +272,7 @@ object DruidDataFetcher {
 
   def executeSQLQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
 
-    val druidQuery = getSQLDruidQuery(model)
+    val druidQuery = if(model.sqlQueries.nonEmpty) getSQLJoinQuery(model) else getSQLDruidQuery(model)
     fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
     implicit val system = fc.getDruidRollUpClient().actorSystem
     implicit val materializer = ActorMaterializer()
@@ -263,7 +302,7 @@ object DruidDataFetcher {
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
     data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
   }
-
+  
   def processSqlResult(result: String): DruidOutput = {
 
     val finalResult = JSONUtils.deserialize[Map[String,Any]](result)
@@ -339,6 +378,25 @@ object DruidDataFetcher {
       case "like"               => Dim(dimension) like values.head.asInstanceOf[String]
       case "greaterthan"        => Dim(dimension).between(values.head.asInstanceOf[Number].doubleValue(), Integer.MAX_VALUE, true, false)
       case "lessthan"           => Dim(dimension).between(0, values.head.asInstanceOf[Number].doubleValue(), false, true)
+      case _                    => throw new Exception("Unsupported filter type")
+    }
+  }
+
+  def getSQLFilter(filters: Option[List[DruidFilter]]): String = {
+
+    if (filters.nonEmpty) {
+      val filterStrings = filters.get.map { f =>
+        val values = if (f.values.isEmpty && f.value.isEmpty) List() else if (f.values.isEmpty) List(f.value.get) else f.values.get
+        getFilterSQLStringByType(f.`type`, f.dimension, values)
+      }
+      filterStrings.mkString(" AND ")
+    } else ""
+  }
+
+  def getFilterSQLStringByType(filterType: String, dimension: String, values: List[AnyRef]): String = {
+    filterType.toLowerCase match {
+      case "equals"             => s"$dimension = '${values.head.asInstanceOf[String]}'"
+      case "notequals"          => s"$dimension != '${values.head.asInstanceOf[String]}'"
       case _                    => throw new Exception("Unsupported filter type")
     }
   }
