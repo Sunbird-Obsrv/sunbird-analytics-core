@@ -462,7 +462,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             Option(List(Aggregation(Option("count"), "count", "count"))),
             Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
                 Option(List(ExtractFn("registeredlookup", "channel")))))),
-            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None,None, Option("count"))
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None,None, None, Option("count"))
 
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
         druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel,Some(false),None)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
@@ -566,7 +566,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             Option(List(Aggregation(Option("count"), "count", "count"))),
             Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
                 Option(List(ExtractFn("registeredlookup", "channel")))))),
-            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None,None, Option("count"))
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None,None, None, Option("count"))
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
 
         val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
@@ -732,5 +732,38 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidQuery1 = DruidDataFetcher.getDruidQuery(query1)
         druidQuery1.toDebugString.contains("2019-11-01") should be (true)
 
+    }
+
+    it should "test sql join query " in {
+
+      val sqlQueryModel = DruidQueryModel("sql", "summary-rollup-syncts", "2021-01-01T00:00:00+00:00/2021-01-02T00:00:00+00:00", Option("all"),
+        None, None, None, None, None, None, None, Option(DruidSQLConfig(List(DruidSQLDimension("completed_count", Option("count(c1.\"unique_devices\")"))),
+          List(DruidSQLQueryConfig(List(DruidSQLDimension("date", Option("TIME_FORMAT(__time, 'yyyy-MM-dd')")),
+            DruidSQLDimension("unique_devices", None),
+            DruidSQLDimension("derived_loc_state", None)), Option("c1"), Option("summary-distinct-counts"), Option(List(DruidFilter("equals", "object_id", Option("do_3131551468603555841406")), DruidFilter("equals", "derived_loc_state", Option("Bihar")))), Option(2)),
+            DruidSQLQueryConfig(List(DruidSQLDimension("date", Option("TIME_FORMAT(__time, 'yyyy-MM-dd')")),
+              DruidSQLDimension("derived_loc_state", None)), Option("c2"), Option("summary-rollup-syncts"), Option(List(DruidFilter("equals", "object_id", Option("do_3131551468603555841406")), DruidFilter("equals", "derived_loc_state", Option("Bihar")))), Option(2), Option(List(DruidSQLJoinsON("\"c1\".\"derived_loc_state\"", "\"c2\".\"derived_loc_state\""))))))))
+
+
+      implicit val mockFc = mock[FrameworkContext];
+      implicit val druidConfig = mock[DruidConfig];
+
+
+      val mockAKkaUtil = mock[AkkaHttpClient]
+      val url = String.format("%s://%s:%s%s%s", "http",AppConf.getConfig("druid.rollup.host"),
+        AppConf.getConfig("druid.rollup.port"),AppConf.getConfig("druid.url"),"sql")
+      val request = HttpRequest(method = HttpMethods.POST,
+        uri = url,
+        entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(DruidDataFetcher.getSQLJoinQuery(sqlQueryModel))))
+      val stripString =
+        """{"completed_count":4}""".stripMargin
+      val mockDruidClient = mock[DruidClient]
+      (mockDruidClient.actorSystem _).expects().returning(ActorSystem("TestQuery")).anyNumberOfTimes()
+      (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient).anyNumberOfTimes();
+      (mockAKkaUtil.sendRequest(_: HttpRequest)(_: ActorSystem))
+        .expects(request,mockDruidClient.actorSystem)
+        .returns(Future.successful(HttpResponse(entity = HttpEntity(ByteString(stripString))))).anyNumberOfTimes();
+      val response = DruidDataFetcher.executeSQLQuery(sqlQueryModel, mockAKkaUtil)
+      response.count() should be (1)
     }
 }
