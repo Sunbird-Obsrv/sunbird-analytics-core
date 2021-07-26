@@ -195,7 +195,8 @@ object DruidDataFetcher {
       else
         f.function.get + " AS \"" + f.fieldName + "\""
     })
-    val finalQueryStr = "SELECT " + finalQueryDims.mkString(",") + " FROM " + sqlString
+    val groupByStr = if(model.sqlQueries.get.groupByDims.nonEmpty) "\n GROUP BY " + model.sqlQueries.get.groupByDims.get.mkString(",") else ""
+    val finalQueryStr = "SELECT " + finalQueryDims.mkString(",") + " FROM " + sqlString + groupByStr
     DruidSQLQuery(finalQueryStr)
   }
 

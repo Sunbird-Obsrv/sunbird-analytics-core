@@ -94,7 +94,7 @@ case class DruidSQLQueryConfig(dims: List[DruidSQLDimension], alias: Option[Stri
                                joinOn: Option[List[DruidSQLJoinsON]] = None)
 
 @scala.beans.BeanInfo
-case class DruidSQLConfig(finalDims: List[DruidSQLDimension], queries: List[DruidSQLQueryConfig])
+case class DruidSQLConfig(finalDims: List[DruidSQLDimension], queries: List[DruidSQLQueryConfig], groupByDims: Option[List[String]] = None)
 
 @scala.beans.BeanInfo
 case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[List[ExtractFn]] = None)
