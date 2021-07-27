@@ -108,6 +108,7 @@ object CommonUtil {
       .set("spark.memory.storageFraction", AppConf.getConfig("spark.storage_fraction"))
       .set("spark.sql.extensions", "com.datastax.spark.connector.CassandraSparkExtensions")
       .set("directJoinSetting", "on")
+      .set("spark.sql.legacy.timeParserPolicy", "LEGACY")
 
     val master = conf.getOption("spark.master")
     // $COVERAGE-OFF$ Disabling scoverage as the below code cannot be covered as they depend on environment variables
