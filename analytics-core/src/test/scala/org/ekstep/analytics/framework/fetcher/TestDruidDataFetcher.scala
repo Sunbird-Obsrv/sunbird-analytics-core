@@ -153,12 +153,18 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         DruidDataFetcher.getFilter(Option(List(DruidFilter("in", "eid", None, None)))).get.asFilter.toString() should be ("AndFilter(List(InFilter(eid,List(),None)))")
         DruidDataFetcher.getFilter(Option(List(DruidFilter("in", "eid", Option("START"), None)))).get.asFilter.toString() should be ("AndFilter(List(InFilter(eid,List(START),None)))")
 
-      val notEqualsSQLExpr = DruidDataFetcher.getFilterSQLStringByType("notequals", "field", List("xyz"))
-//      val lessThanSQLExpr = DruidDataFetcher.getFilterSQLStringByType("lessthan", "field", List(1000.asInstanceOf[AnyRef]))
-
-      a[Exception] should be thrownBy {
-        DruidDataFetcher.getFilterSQLStringByType("test", "field", List(1000.asInstanceOf[AnyRef]))
-      }
+        val notEqualsSQLExpr = DruidDataFetcher.getFilterSQLStringByType("notequals", "field", List("xyz"))
+        val isnullSQLExpr = DruidDataFetcher.getFilterSQLStringByType("isnull", "field", List(""))
+        val isnotnullSQLExpr = DruidDataFetcher.getFilterSQLStringByType("isnotnull", "field", List(""))
+        val inSQLExpr = DruidDataFetcher.getFilterSQLStringByType("in", "field", List("xyz", "abc"))
+        val notinSQLExpr = DruidDataFetcher.getFilterSQLStringByType("notin", "field", List("xyz"))
+        val likeSQLExpr = DruidDataFetcher.getFilterSQLStringByType("like", "field", List("xyz"))
+        val greaterthanSQLExpr = DruidDataFetcher.getFilterSQLStringByType("greaterthan", "field", List(1000.asInstanceOf[AnyRef]))
+        val lessThanSQLExpr = DruidDataFetcher.getFilterSQLStringByType("lessthan", "field", List(1000.asInstanceOf[AnyRef]))
+        inSQLExpr should be ("field IN ('xyz','abc')")
+        a[Exception] should be thrownBy {
+          DruidDataFetcher.getFilterSQLStringByType("test", "field", List(1000.asInstanceOf[AnyRef]))
+        }
     }
 
     it should "check for getGroupByHaving methods" in {
