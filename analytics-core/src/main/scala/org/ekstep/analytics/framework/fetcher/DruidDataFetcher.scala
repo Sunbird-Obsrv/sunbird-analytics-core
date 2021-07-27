@@ -181,11 +181,16 @@ object DruidDataFetcher {
       val limitStr = if(query.limit.nonEmpty) " LIMIT " + query.limit.get else ""
       val onStr = if(query.joinOn.nonEmpty) getSQLJoinsONStr(query.joinOn) else ""
       val intervals = CommonUtil.getIntervalRange(model.intervals, query.dataSource.getOrElse(model.dataSource), model.intervalSlider)
-      val sqlString = "(SELECT " + columns.mkString(",") +
-        " from \"druid\".\"" + query.dataSource.getOrElse(model.dataSource) + "\" where " +
-        "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
-        intervals.split("/").apply(1).split("T").apply(0) + "' " + filterStr + limitStr + ") AS " + query.alias.getOrElse("") + onStr
-      sqlString
+      if (intervals.isEmpty) {
+        throw new Exception("Query interval cannot be empty")
+      }
+      else {
+        val sqlString = "(SELECT " + columns.mkString(",") +
+          " from \"druid\".\"" + query.dataSource.getOrElse(model.dataSource) + "\" where " +
+          "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
+          intervals.split("/").apply(1).split("T").apply(0) + "' " + filterStr + limitStr + ") AS " + query.alias.getOrElse("") + onStr
+        sqlString
+      }
     }
 
     val sqlString = sqlStrQueries.mkString("\n INNER JOIN \n")
