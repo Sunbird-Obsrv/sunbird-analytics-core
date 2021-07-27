@@ -829,7 +829,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
           None, None, None, None, None, None, None, Option(DruidSQLConfig(List(DruidSQLDimension("completed_count", Option("count(c1.\"unique_devices\")"))),
             List(DruidSQLQueryConfig(List(DruidSQLDimension("date", Option("TIME_FORMAT(__time, 'yyyy-MM-dd')")),
               DruidSQLDimension("unique_devices", None),
-              DruidSQLDimension("derived_loc_state", None)), Option("c1"), Option("summary-distinct-counts"), Option(List(DruidFilter("equals", "object_id", Option("do_3131551468603555841406")), DruidFilter("equals", "derived_loc_state", Option("Bihar")))), Option(2)),
+              DruidSQLDimension("derived_loc_state", None)), Option("c1"), Option("summary-distinct-counts"), None, Option(2)),
               DruidSQLQueryConfig(List(DruidSQLDimension("date", Option("TIME_FORMAT(__time, 'yyyy-MM-dd')")),
                 DruidSQLDimension("derived_loc_state", None)), Option("c2"), Option("summary-rollup-syncts"), None, Option(2), None)))))
 
