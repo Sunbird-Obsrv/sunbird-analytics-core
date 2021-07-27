@@ -160,13 +160,11 @@ object DruidDataFetcher {
     DruidSQLQuery(sqlString)
   }
 
-  def getSQLJoinsONStr(joinOn: Option[List[DruidSQLJoinsON]]): String = {
-    if (joinOn.nonEmpty) {
-      val onStrings = joinOn.get.map { f =>
+  def getSQLJoinsONStr(joinOn: List[DruidSQLJoinsON]): String = {
+      val onStrings = joinOn.map { f =>
         " ON " + f.left + " = " + f.right
       }
       onStrings.mkString(" AND ")
-    } else ""
   }
 
   def getSQLJoinQuery(model: DruidQueryModel): DruidSQLQuery = {
@@ -177,9 +175,9 @@ object DruidDataFetcher {
         else
           f.function.get + " AS \"" + f.fieldName + "\""
       })
-      val filterStr = if(query.filters.nonEmpty) "AND " + getSQLFilter(query.filters) else ""
+      val filterStr = if(query.filters.nonEmpty) "AND " + getSQLFilter(query.filters.get) else ""
       val limitStr = if(query.limit.nonEmpty) " LIMIT " + query.limit.get else ""
-      val onStr = if(query.joinOn.nonEmpty) getSQLJoinsONStr(query.joinOn) else ""
+      val onStr = if(query.joinOn.nonEmpty) getSQLJoinsONStr(query.joinOn.get) else ""
       val intervals = CommonUtil.getIntervalRange(model.intervals, query.dataSource.getOrElse(model.dataSource), model.intervalSlider)
       if (intervals.isEmpty) {
         throw new Exception("Query interval cannot be empty")
@@ -388,15 +386,12 @@ object DruidDataFetcher {
     }
   }
 
-  def getSQLFilter(filters: Option[List[DruidFilter]]): String = {
-
-    if (filters.nonEmpty) {
-      val filterStrings = filters.get.map { f =>
+  def getSQLFilter(filters: List[DruidFilter]): String = {
+      val filterStrings = filters.map { f =>
         val values = if (f.values.isEmpty && f.value.isEmpty) List() else if (f.values.isEmpty) List(f.value.get) else f.values.get
         getFilterSQLStringByType(f.`type`, f.dimension, values)
       }
       filterStrings.mkString(" AND ")
-    } else ""
   }
 
   def getFilterSQLStringByType(filterType: String, dimension: String, values: List[AnyRef]): String = {
