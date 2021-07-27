@@ -398,6 +398,13 @@ object DruidDataFetcher {
     filterType.toLowerCase match {
       case "equals"             => s"$dimension = '${values.head.asInstanceOf[String]}'"
       case "notequals"          => s"$dimension != '${values.head.asInstanceOf[String]}'"
+      case "isnull"             => s"$dimension IS NULL"
+      case "isnotnull"          => s"$dimension IS NOT NULL"
+      case "in"                 => dimension + " IN (" + values.asInstanceOf[List[String]].map("'" + _  + "'").mkString(",") + ")"
+      case "notin"              => dimension + " NOT IN (" + values.asInstanceOf[List[String]].map("'" + _  + "'").mkString(",") + ")"
+      case "like"               => s"$dimension LIKE ${values.head.asInstanceOf[String]}"
+      case "greaterthan"        => s"$dimension > '${values.head.asInstanceOf[Number].doubleValue()}'"
+      case "lessthan"           => s"$dimension < '${values.head.asInstanceOf[Number].doubleValue()}'"
       case _                    => throw new Exception("Unsupported filter type")
     }
   }
