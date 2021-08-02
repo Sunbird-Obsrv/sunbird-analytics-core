@@ -269,39 +269,7 @@ object DruidDataFetcher {
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
     data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
   }
-
-  def executeSQLQueryTest(druidQuery: DruidSQLQuery, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
-
-    fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
-    implicit val system = fc.getDruidRollUpClient().actorSystem
-    implicit val materializer = ActorMaterializer()
-    implicit val ec: ExecutionContextExecutor = system.dispatcher
-    val url = String.format("%s://%s:%s%s%s", "http", AppConf.getConfig("druid.rollup.host"),
-      AppConf.getConfig("druid.rollup.port"), AppConf.getConfig("druid.url"), "sql")
-    val request = HttpRequest(method = HttpMethods.POST,
-      uri = url,
-      entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(druidQuery)))
-    val responseFuture: Future[HttpResponse] = client.sendRequest(request)
-
-    val convertStringFlow =
-      Flow[ByteString].map(s => s.utf8String.trim)
-
-    val result = Source.fromFuture[HttpResponse](responseFuture)
-      .flatMapConcat(response => response.entity.withoutSizeLimit()
-        .dataBytes.via(Framing.delimiter(ByteString("\n"),
-        AppConf.getConfig("druid.scan.batch.bytes").toInt, true)))
-      .via(convertStringFlow).via(new ResultAccumulator[String])
-      .map(events => {
-        fc.inputEventsCount.add(events.filter(p=> p.nonEmpty).length)
-        sc.parallelize(events)
-      })
-      .toMat(Sink.fold[RDD[String], RDD[String]](sc.emptyRDD[String])(_ union _))(Keep.right).run()
-
-    val data = Await.result(result, scala.concurrent.duration.Duration.
-      apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
-    data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
-  }
-
+  
   def processSqlResult(result: String): DruidOutput = {
 
     val finalResult = JSONUtils.deserialize[Map[String,Any]](result)
