@@ -144,63 +144,26 @@ object DruidDataFetcher {
   }
 
   def getSQLDruidQuery(model: DruidQueryModel): DruidSQLQuery = {
-    val columns = model.sqlDimensions.get.map({ f =>
-      if (f.function.isEmpty)
-        f.fieldName
-      else
-        f.function.get + "AS \"" + f.fieldName + "\""
-
-    })
     val intervals = CommonUtil.getIntervalRange(model.intervals, model.dataSource, model.intervalSlider)
-    val sqlString = "SELECT " + columns.mkString(",") +
-      " from \"druid\".\"" + model.dataSource + "\" where " +
-      "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
-      intervals.split("/").apply(1).split("T").apply(0) + "'"
-
-    DruidSQLQuery(sqlString)
-  }
-
-  def getSQLJoinsONStr(joinOn: List[DruidSQLJoinsON]): String = {
-      val onStrings = joinOn.map { f =>
-        " ON " + f.left + " = " + f.right
-      }
-      onStrings.mkString(" AND ")
-  }
-
-  def getSQLJoinQuery(model: DruidQueryModel): DruidSQLQuery = {
-    val sqlStrQueries = model.sqlQueries.get.queries.map{query =>
-      val columns = query.dims.map({ f =>
+    val from = intervals.split("/").apply(0).split("T").apply(0)
+    val to = intervals.split("/").apply(1).split("T").apply(0)
+    if(model.sqlQueryStr.nonEmpty) {
+      val queryStr = model.sqlQueryStr.get.format(from, to)
+      DruidSQLQuery(queryStr)
+    } else {
+      val columns = model.sqlDimensions.get.map({ f =>
         if (f.function.isEmpty)
           f.fieldName
         else
-          f.function.get + " AS \"" + f.fieldName + "\""
-      })
-      val filterStr = if(query.filters.nonEmpty) "AND " + getSQLFilter(query.filters.get) else ""
-      val limitStr = if(query.limit.nonEmpty) " LIMIT " + query.limit.get else ""
-      val onStr = if(query.joinOn.nonEmpty) getSQLJoinsONStr(query.joinOn.get) else ""
-      val intervals = CommonUtil.getIntervalRange(model.intervals, query.dataSource.getOrElse(model.dataSource), model.intervalSlider)
-      if (intervals.isEmpty) {
-        throw new Exception("Query interval cannot be empty")
-      }
-      else {
-        val sqlString = "(SELECT " + columns.mkString(",") +
-          " from \"druid\".\"" + query.dataSource.getOrElse(model.dataSource) + "\" where " +
-          "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
-          intervals.split("/").apply(1).split("T").apply(0) + "' " + filterStr + limitStr + ") AS " + query.alias.getOrElse("") + onStr
-        sqlString
-      }
-    }
+          f.function.get + "AS \"" + f.fieldName + "\""
 
-    val sqlString = sqlStrQueries.mkString("\n INNER JOIN \n")
-    val finalQueryDims = model.sqlQueries.get.finalDims.map({ f =>
-      if (f.function.isEmpty)
-        f.fieldName
-      else
-        f.function.get + " AS \"" + f.fieldName + "\""
-    })
-    val groupByStr = if(model.sqlQueries.get.groupByDims.nonEmpty) "\n GROUP BY " + model.sqlQueries.get.groupByDims.get.mkString(",") else ""
-    val finalQueryStr = "SELECT " + finalQueryDims.mkString(",") + " FROM " + sqlString + groupByStr
-    DruidSQLQuery(finalQueryStr)
+      })
+      val sqlString = "SELECT " + columns.mkString(",") +
+        " from \"druid\".\"" + model.dataSource + "\" where " +
+        "__time >= '" + from + "' AND  __time < '" + to + "'"
+
+      DruidSQLQuery(sqlString)
+    }
   }
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[BaseResult] = {
@@ -276,7 +239,7 @@ object DruidDataFetcher {
 
   def executeSQLQuery(model: DruidQueryModel, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
 
-    val druidQuery = if(model.sqlQueries.nonEmpty) getSQLJoinQuery(model) else getSQLDruidQuery(model)
+    val druidQuery = getSQLDruidQuery(model)
     fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
     implicit val system = fc.getDruidRollUpClient().actorSystem
     implicit val materializer = ActorMaterializer()
@@ -306,7 +269,39 @@ object DruidDataFetcher {
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
     data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
   }
-  
+
+  def executeSQLQueryTest(druidQuery: DruidSQLQuery, client: AkkaHttpClient)(implicit sc: SparkContext, fc: FrameworkContext): RDD[DruidOutput] = {
+
+    fc.inputEventsCount = sc.longAccumulator("DruidDataCount")
+    implicit val system = fc.getDruidRollUpClient().actorSystem
+    implicit val materializer = ActorMaterializer()
+    implicit val ec: ExecutionContextExecutor = system.dispatcher
+    val url = String.format("%s://%s:%s%s%s", "http", AppConf.getConfig("druid.rollup.host"),
+      AppConf.getConfig("druid.rollup.port"), AppConf.getConfig("druid.url"), "sql")
+    val request = HttpRequest(method = HttpMethods.POST,
+      uri = url,
+      entity = HttpEntity(ContentTypes.`application/json`, JSONUtils.serialize(druidQuery)))
+    val responseFuture: Future[HttpResponse] = client.sendRequest(request)
+
+    val convertStringFlow =
+      Flow[ByteString].map(s => s.utf8String.trim)
+
+    val result = Source.fromFuture[HttpResponse](responseFuture)
+      .flatMapConcat(response => response.entity.withoutSizeLimit()
+        .dataBytes.via(Framing.delimiter(ByteString("\n"),
+        AppConf.getConfig("druid.scan.batch.bytes").toInt, true)))
+      .via(convertStringFlow).via(new ResultAccumulator[String])
+      .map(events => {
+        fc.inputEventsCount.add(events.filter(p=> p.nonEmpty).length)
+        sc.parallelize(events)
+      })
+      .toMat(Sink.fold[RDD[String], RDD[String]](sc.emptyRDD[String])(_ union _))(Keep.right).run()
+
+    val data = Await.result(result, scala.concurrent.duration.Duration.
+      apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
+    data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
+  }
+
   def processSqlResult(result: String): DruidOutput = {
 
     val finalResult = JSONUtils.deserialize[Map[String,Any]](result)
@@ -382,29 +377,6 @@ object DruidDataFetcher {
       case "like"               => Dim(dimension) like values.head.asInstanceOf[String]
       case "greaterthan"        => Dim(dimension).between(values.head.asInstanceOf[Number].doubleValue(), Integer.MAX_VALUE, true, false)
       case "lessthan"           => Dim(dimension).between(0, values.head.asInstanceOf[Number].doubleValue(), false, true)
-      case _                    => throw new Exception("Unsupported filter type")
-    }
-  }
-
-  def getSQLFilter(filters: List[DruidFilter]): String = {
-      val filterStrings = filters.map { f =>
-        val values = if (f.values.isEmpty && f.value.isEmpty) List() else if (f.values.isEmpty) List(f.value.get) else f.values.get
-        getFilterSQLStringByType(f.`type`, f.dimension, values)
-      }
-      filterStrings.mkString(" AND ")
-  }
-
-  def getFilterSQLStringByType(filterType: String, dimension: String, values: List[AnyRef]): String = {
-    filterType.toLowerCase match {
-      case "equals"             => s"$dimension = '${values.head.asInstanceOf[String]}'"
-      case "notequals"          => s"$dimension != '${values.head.asInstanceOf[String]}'"
-      case "isnull"             => s"$dimension IS NULL"
-      case "isnotnull"          => s"$dimension IS NOT NULL"
-      case "in"                 => dimension + " IN (" + values.asInstanceOf[List[String]].map("'" + _  + "'").mkString(",") + ")"
-      case "notin"              => dimension + " NOT IN (" + values.asInstanceOf[List[String]].map("'" + _  + "'").mkString(",") + ")"
-      case "like"               => s"$dimension LIKE ${values.head.asInstanceOf[String]}"
-      case "greaterthan"        => s"$dimension > '${values.head.asInstanceOf[Number].doubleValue()}'"
-      case "lessthan"           => s"$dimension < '${values.head.asInstanceOf[Number].doubleValue()}'"
       case _                    => throw new Exception("Unsupported filter type")
     }
   }
