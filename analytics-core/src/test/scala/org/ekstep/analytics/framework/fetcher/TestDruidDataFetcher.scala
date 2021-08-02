@@ -463,7 +463,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             Option(List(Aggregation(Option("count"), "count", "count"))),
             Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
                 Option(List(ExtractFn("registeredlookup", "channel")))))),
-            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None,None, None, None, Option("count"))
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None, None,None,None, None, Option("count"))
 
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
         druidQuery.toString should be("TopNQuery(ExtractionDimension(dialcode_channel,Some(dialcode_slug),None,RegisteredLookupExtractionFn(channel,Some(false),None)),100,count,List(CountAggregation(count)),List(2020-03-12T00:00:00+00:00/2020-05-12T00:00:00+00:00),All,Some(AndFilter(List(SelectFilter(dialcode_channel,Some(012315809814749184151),None)))),List(),Map())")
@@ -567,7 +567,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
             Option(List(Aggregation(Option("count"), "count", "count"))),
             Option(List(DruidDimension("dialcode_channel", Option("dialcode_slug"), Option("extraction"), None,
                 Option(List(ExtractFn("registeredlookup", "channel")))))),
-            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None,None, None, None, Option("count"))
+            Option(List(DruidFilter("equals", "dialcode_channel", Option("012315809814749184151")))), None, None,None, None,None, None, Option("count"))
         val druidQuery = DruidDataFetcher.getDruidQuery(query)
 
         val json = """[{"date":"2020-03-13","count":9,"dialcode_slug":"Andaman & Nicobar Islands"}]"""
