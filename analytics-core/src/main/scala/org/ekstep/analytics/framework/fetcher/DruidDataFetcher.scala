@@ -144,20 +144,26 @@ object DruidDataFetcher {
   }
 
   def getSQLDruidQuery(model: DruidQueryModel): DruidSQLQuery = {
-    val columns = model.sqlDimensions.get.map({ f =>
-      if (f.function.isEmpty)
-        f.fieldName
-      else
-        f.function.get + "AS \"" + f.fieldName + "\""
-
-    })
     val intervals = CommonUtil.getIntervalRange(model.intervals, model.dataSource, model.intervalSlider)
-    val sqlString = "SELECT " + columns.mkString(",") +
-      " from \"druid\".\"" + model.dataSource + "\" where " +
-      "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
-      intervals.split("/").apply(1).split("T").apply(0) + "'"
+    val from = intervals.split("/").apply(0).split("T").apply(0)
+    val to = intervals.split("/").apply(1).split("T").apply(0)
+    if(model.sqlQueryStr.nonEmpty) {
+      val queryStr = model.sqlQueryStr.get.format(from, to)
+      DruidSQLQuery(queryStr)
+    } else {
+      val columns = model.sqlDimensions.get.map({ f =>
+        if (f.function.isEmpty)
+          f.fieldName
+        else
+          f.function.get + "AS \"" + f.fieldName + "\""
 
-    DruidSQLQuery(sqlString)
+      })
+      val sqlString = "SELECT " + columns.mkString(",") +
+        " from \"druid\".\"" + model.dataSource + "\" where " +
+        "__time >= '" + from + "' AND  __time < '" + to + "'"
+
+      DruidSQLQuery(sqlString)
+    }
   }
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[BaseResult] = {
@@ -263,7 +269,7 @@ object DruidDataFetcher {
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
     data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
   }
-
+  
   def processSqlResult(result: String): DruidOutput = {
 
     val finalResult = JSONUtils.deserialize[Map[String,Any]](result)
