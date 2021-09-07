@@ -123,7 +123,7 @@ object CommonUtil {
     if (sparkCassandraConnectionHost.nonEmpty) {
       conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
       conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.getOrElse("QUORUM"))
-      conf.set("spark.cassandra.output.consistency.level", Option(writeConsistencyLevel).getOrElse("QUORUM"))
+      conf.set("spark.cassandra.output.consistency.level", writeConsistencyLevel)
       println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
     }
 
