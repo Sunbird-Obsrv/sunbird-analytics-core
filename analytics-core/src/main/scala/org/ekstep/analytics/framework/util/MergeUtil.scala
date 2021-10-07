@@ -91,8 +91,8 @@ class MergeUtil {
 
       }catch {
         case ex : Exception =>
-          Console.println("Merge failed while saving to blob", ex.printStackTrace())
-          JobLogger.log(ex.getMessage, None, INFO)
+          Console.println(mergeConfig.id + " Merge failed while saving to blob: ", ex.printStackTrace())
+          JobLogger.log(mergeConfig.id + " report merge failed with error : " +ex.getMessage, None, INFO)
       }
     })
   }
