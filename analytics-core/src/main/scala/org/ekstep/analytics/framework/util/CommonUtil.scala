@@ -748,4 +748,19 @@ object CommonUtil {
     connProperties.setProperty("password", pass)
     connProperties
   }
+
+  def getArchivalBlobUrl(store: String, filePath: String, bucket:String, batchId: Any, year: Any, weekNum: Any, format: String): String = {
+    store match {
+      case "local" =>
+        filePath + s"${batchId}/${year}-${weekNum}-*.${format}"
+      // $COVERAGE-OFF$ for azure testing
+      case "azure" =>
+        val file: String = s"${filePath}${batchId}/${year}-${weekNum}-*.${format}"
+        getAzureFile(bucket,file)
+      case "s3" =>
+        val file: String = s"${filePath}${batchId}/${year}-${weekNum}-*.${format}"
+        getS3File(bucket, file)
+      // $COVERAGE-ON$
+    }
+  }
 }
