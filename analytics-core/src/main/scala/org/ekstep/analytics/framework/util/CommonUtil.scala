@@ -759,6 +759,11 @@ object CommonUtil {
       case "s3" =>
         val file: String = s"${filePath}${batchId}/${year}-${weekNum}-*.${format}"
         getS3File(bucket, file)
+      // $COVERAGE-OFF$ for azure testing
+      case "gcp" =>
+        //TODO - Need to support the S3 As well.
+        throw new Exception("gcp is currently not supported.")
+      // $COVERAGE-ON$  
     }
   }
 }
