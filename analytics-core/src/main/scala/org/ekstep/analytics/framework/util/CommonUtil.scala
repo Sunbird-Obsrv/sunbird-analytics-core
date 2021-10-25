@@ -761,9 +761,9 @@ object CommonUtil {
         getS3File(bucket, file)
       // $COVERAGE-OFF$ for azure testing
       case "gcp" =>
-        //TODO - Need to support the S3 As well.
+        //TODO - Need to support the GCP As well.
         throw new Exception("gcp is currently not supported.")
-      // $COVERAGE-ON$  
+      // $COVERAGE-ON$
     }
   }
 }
