@@ -324,7 +324,16 @@ class TestCommonUtil extends BaseSpec {
     val copiedFile = fileUtil.copy("src/test/resources/sample_telemetry.log", "src/test/resources/sample_telemetry.json", sc.hadoopConfiguration)
     sc.textFile(copiedFile, 1).count() should be (7437)
     fileUtil.delete(sc.hadoopConfiguration, copiedFile)
-    
+
+    val localUrl = CommonUtil.getArchivalBlobUrl("local", "src/test/resources/", "local", "batch-001", "2021", "21", "csv.gz")
+    localUrl should be ("src/test/resources/batch-001/2021-21-*.csv.gz")
+
+    val azureUrl = CommonUtil.getArchivalBlobUrl("azure", "report/archival-data/", "telemetry-data-store", "batch-001", "2021", "21", "csv.gz")
+    azureUrl should be ("wasb://telemetry-data-store@azure-test-key.blob.core.windows.net/report/archival-data/batch-001/2021-21-*.csv.gz")
+
+    val s3Url = CommonUtil.getArchivalBlobUrl("s3", "report/archival-data/", "telemetry-data-store", "batch-001", "2021", "21", "csv.gz")
+    s3Url should be ("s3n://telemetry-data-store/report/archival-data/batch-001/2021-21-*.csv.gz")
+
     sc.stop()
   }
 
