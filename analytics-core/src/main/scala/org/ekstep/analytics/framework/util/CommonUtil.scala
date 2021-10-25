@@ -748,8 +748,8 @@ object CommonUtil {
     connProperties.setProperty("password", pass)
     connProperties
   }
-
-  def getArchivalBlobUrl(store: String, filePath: String, bucket:String, batchId: Any, year: Any, weekNum: Any, format: String): String = {
+  
+  def getArchivalBlobUrl(store: String, filePath: String, bucket:String, batchId: String, year: Any, weekNum: String, format: String): String = {
     store match {
       case "local" =>
         filePath + s"${batchId}/${year}-${weekNum}-*.${format}"
