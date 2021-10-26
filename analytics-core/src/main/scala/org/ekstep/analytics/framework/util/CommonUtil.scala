@@ -749,16 +749,14 @@ object CommonUtil {
     connProperties
   }
 
-  def getArchivalBlobUrl(store: String, filePath: String, bucket:String, batchId: String, year: Any, weekNum: String, format: String): String = {
+  def getBlobUrl(store: String, filePath: String, bucket:String): String = {
     store match {
       case "local" =>
-        filePath + s"${batchId}/${year}-${weekNum}-*.${format}"
+        filePath
       case "azure" =>
-        val file: String = s"${filePath}${batchId}/${year}-${weekNum}-*.${format}"
-        getAzureFile(bucket,file)
+        getAzureFile(bucket,filePath)
       case "s3" =>
-        val file: String = s"${filePath}${batchId}/${year}-${weekNum}-*.${format}"
-        getS3File(bucket, file)
+        getS3File(bucket, filePath)
       // $COVERAGE-OFF$ for azure testing
       case "gcp" =>
         //TODO - Need to support the GCP As well.

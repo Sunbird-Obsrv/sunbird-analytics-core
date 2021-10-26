@@ -325,13 +325,13 @@ class TestCommonUtil extends BaseSpec {
     sc.textFile(copiedFile, 1).count() should be (7437)
     fileUtil.delete(sc.hadoopConfiguration, copiedFile)
 
-    val localUrl = CommonUtil.getArchivalBlobUrl("local", "src/test/resources/", "local", "batch-001", "2021", "21", "csv.gz")
+    val localUrl = CommonUtil.getBlobUrl("local", "src/test/resources/batch-001/2021-21-*.csv.gz", "local")
     localUrl should be ("src/test/resources/batch-001/2021-21-*.csv.gz")
 
-    val azureUrl = CommonUtil.getArchivalBlobUrl("azure", "report/archival-data/", "telemetry-data-store", "batch-001", "2021", "21", "csv.gz")
+    val azureUrl = CommonUtil.getBlobUrl("azure", "report/archival-data/batch-001/2021-21-*.csv.gz", "telemetry-data-store")
     azureUrl should be ("wasb://telemetry-data-store@azure-test-key.blob.core.windows.net/report/archival-data/batch-001/2021-21-*.csv.gz")
 
-    val s3Url = CommonUtil.getArchivalBlobUrl("s3", "report/archival-data/", "telemetry-data-store", "batch-001", "2021", "21", "csv.gz")
+    val s3Url = CommonUtil.getBlobUrl("s3", "report/archival-data/batch-001/2021-21-*.csv.gz", "telemetry-data-store")
     s3Url should be ("s3n://telemetry-data-store/report/archival-data/batch-001/2021-21-*.csv.gz")
 
     sc.stop()
