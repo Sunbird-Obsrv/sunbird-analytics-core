@@ -748,4 +748,20 @@ object CommonUtil {
     connProperties.setProperty("password", pass)
     connProperties
   }
+
+  def getBlobUrl(store: String, filePath: String, bucket:String): String = {
+    store match {
+      case "local" =>
+        filePath
+      case "azure" =>
+        getAzureFile(bucket,filePath)
+      case "s3" =>
+        getS3File(bucket, filePath)
+      // $COVERAGE-OFF$ for azure testing
+      case "gcp" =>
+        //TODO - Need to support the GCP As well.
+        throw new Exception("gcp is currently not supported.")
+      // $COVERAGE-ON$
+    }
+  }
 }
