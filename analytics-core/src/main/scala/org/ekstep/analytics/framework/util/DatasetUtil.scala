@@ -126,7 +126,12 @@ class DatasetExt(df: Dataset[Row]) {
       }
     })
     fileUtil.delete(conf, filePrefix + srcPath)
-    map.map(f => filePrefix + f._2).toList
+    map.map{f =>
+      if(zip.getOrElse(false))
+        (filePrefix + f._2).replace(format, "zip")
+      else
+        (filePrefix + f._2)
+    }.toList
   }
 
 }
