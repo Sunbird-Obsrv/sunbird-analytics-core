@@ -412,4 +412,11 @@ class TestCommonUtil extends BaseSpec {
     eventListener.event should be("Test Event")
   }
 
+  it should "Check for round double implementations" in {
+    val doubleVal = CommonUtil.roundDouble(3969513467.0, 2)
+    doubleVal should be(3.969513467E9)
+    val bigDecimalVal = CommonUtil.roundToBigDecimal(3969513467.0, 2)
+    bigDecimalVal should be(3969513467.00)
+  }
+
 }
