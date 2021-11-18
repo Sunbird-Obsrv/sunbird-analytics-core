@@ -466,6 +466,7 @@ object CommonUtil {
   def roundDouble(value: Double, precision: Int): Double = {
     BigDecimal(value).setScale(precision, BigDecimal.RoundingMode.HALF_UP).toDouble;
   }
+
   def roundToBigDecimal(value: Double, precision: Int): BigDecimal = {
     BigDecimal(value).setScale(precision, BigDecimal.RoundingMode.HALF_UP);
   }
