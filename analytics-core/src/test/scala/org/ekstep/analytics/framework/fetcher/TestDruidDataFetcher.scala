@@ -270,7 +270,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidResult = DruidDataFetcher.getDruidData(query).collect
 
         druidResult.size should be (1)
-        druidResult.head should be ("""{"total_scans":9007.00,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+        druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
     }
 
     it should "fetch the data from druid using timeseries query type" in {
@@ -298,7 +298,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         var druidResult = DruidDataFetcher.getDruidData(query).collect
 
         druidResult.size should be (1)
-        druidResult.head should be ("""{"total_scans":9007.00,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+        druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
 
         json = """
           {
@@ -409,7 +409,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidResult = DruidDataFetcher.getDruidData(query).collect()
 
         druidResult.size should be (1)
-        druidResult.head should be ("""{"total_scans":9007.00,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+        druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
     }
 
     it should "fetch data for groupBy dimensions with extraction fn" in {
@@ -433,7 +433,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidResult = DruidDataFetcher.getDruidData(qrScans).collect()
 
         druidResult.size should be (1)
-        druidResult.head should be ("""{"total_scans":7257.00,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}""")
+        druidResult.head should be ("""{"total_scans":7257.0,"district":"Anantapur","state":"Andhra Pradesh","date":"2020-03-01"}""")
     }
 
     "TesthLL" should "fetch data for groupBy dimension with HLLAggregator" in {
@@ -455,7 +455,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         val druidResult = DruidDataFetcher.getDruidData(districtMonthly).collect()
         druidResult.size should be (1)
-        druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_unique_devices":1.00,"Count":9.00,"date":"2020-03-01","district":"Ahmednagar"}""")
+        druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_unique_devices":1.0,"Count":9.0,"date":"2020-03-01","district":"Ahmednagar"}""")
     }
 
     "TestFetcher" should "fetch data for TopN dimension with Lookup" in {
@@ -509,7 +509,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         val druidResult = DruidDataFetcher.getDruidData(lookupQuery).collect()
         druidResult.size should be (1)
-        druidResult.head should be ("""{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.00,"date":"2020-03-01"}""")
+        druidResult.head should be ("""{"district_slug":"Andamans","state_slug":"Andaman & Nicobar Islands","count":138.0,"date":"2020-03-01"}""")
     }
 
     it should "fetch data for filtered aggregation" in {
@@ -531,7 +531,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         val druidResult = DruidDataFetcher.getDruidData(scansQuery).collect()
         druidResult.size should be (1)
-        druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_failed_scans":10.00,"date":"2020-03-01","district":"Ahmednagar"}""")
+        druidResult.head should be ("""{"state":"Andaman & Nicobar Islands","total_failed_scans":10.0,"date":"2020-03-01","district":"Ahmednagar"}""")
     }
 
     it should "give result for stream query" in {
@@ -559,7 +559,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidResult = DruidDataFetcher.getDruidData(query,true).collect()
 
         druidResult.size should be (1)
-        druidResult.head should be ("""{"total_scans":9007.00,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+        druidResult.head should be ("""{"total_scans":9007.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
     }
 
     it should "give result for stream topn query" in {
@@ -613,7 +613,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         val druidResult = DruidDataFetcher.getDruidData(query,true).collect()
 
         druidResult.size should be (3)
-        druidResult.head should be ("""{"__time":1583971200000.00,"derived_loc_state":"unknown","derived_loc_district":"unknown","date":"2020-03-12"}""")
+        druidResult.head should be ("""{"__time":1583971200000.0,"derived_loc_state":"unknown","derived_loc_district":"unknown","date":"2020-03-12"}""")
 
     }
 
@@ -638,7 +638,7 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         druidResult.size should be (1)
         druidResult.head should be (
-            """{"created_for":"unknown","derived_loc_state":"unknown","__time":1583971200000.00,"date":"2020-03-12","derived_loc_district":"unknown","active":true}""".stripMargin)
+            """{"created_for":"unknown","derived_loc_state":"unknown","__time":1583971200000.0,"date":"2020-03-12","derived_loc_district":"unknown","active":true}""".stripMargin)
 
     }
 
