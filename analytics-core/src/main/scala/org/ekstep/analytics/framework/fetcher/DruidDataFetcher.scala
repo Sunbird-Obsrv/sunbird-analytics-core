@@ -203,7 +203,7 @@ object DruidDataFetcher {
           else if ("String".equalsIgnoreCase(f._2.name))
             f._1 -> f._2.asString.get
           else if ("Number".equalsIgnoreCase(f._2.name)) {
-            f._1 -> CommonUtil.roundToBigDecimal(f._2.asNumber.get.toDouble, 2)
+            f._1 -> CommonUtil.roundToBigDecimal(f._2.asNumber.get.toDouble, 1)
           } else f._1 -> f._2
         })
       case "topn" =>
@@ -228,7 +228,7 @@ object DruidDataFetcher {
           else if ("String".equalsIgnoreCase(f._2.name))
             f._1 -> f._2.asString.get
           else if ("Number".equalsIgnoreCase(f._2.name)) {
-            f._1 -> CommonUtil.roundToBigDecimal(f._2.asNumber.get.toDouble, 2)
+            f._1 -> CommonUtil.roundToBigDecimal(f._2.asNumber.get.toDouble, 1)
           } else {
             f._1 -> JSONUtils.deserialize[Map[String, Any]](JSONUtils.serialize(f._2)).get("value").get
           }
