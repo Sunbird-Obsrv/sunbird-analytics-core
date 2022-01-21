@@ -10,8 +10,6 @@ jobs:
     - run:
         name: sunbird-analytics-core-build
         command: |
-#          export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
-#          export PATH=$JAVA_HOME/bin:$PATH
           java -version
           echo $(java -version)
           mvn scoverage:report
