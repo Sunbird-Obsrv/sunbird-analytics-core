@@ -58,17 +58,17 @@
 					<artifactId>jets3t</artifactId>
 					<groupId>net.java.dev.jets3t</groupId>
 				</exclusion>
-<!--				<exclusion>-->
-<!--					<groupId>org.apache.xbean</groupId>-->
-<!--					<artifactId>xbean-asm6-shaded</artifactId>-->
-<!--				</exclusion>-->
+				<exclusion>
+					<groupId>org.apache.xbean</groupId>
+					<artifactId>xbean-asm6-shaded</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.apache.xbean</groupId>-->
-<!--			<artifactId>xbean-asm6-shaded</artifactId>-->
-<!--			<version>4.10</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>org.apache.xbean</groupId>
+			<artifactId>xbean-asm6-shaded</artifactId>
+			<version>4.10</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-sql_${scala.maj.version}</artifactId>
@@ -377,7 +377,7 @@
 							<args>
 								<arg>-dependencyfile</arg>
 								<arg>${project.build.directory}/.scala_dependencies</arg>
-<!--								<arg>-nobootcp</arg>-->
+								<arg>-nobootcp</arg>
 							</args>
 						</configuration>
 					</execution>
