@@ -12,6 +12,8 @@
 	</parent>
 
 	<properties>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
 	</properties>
@@ -370,6 +372,8 @@
 							<goal>testCompile</goal>
 						</goals>
 						<configuration>
+							<source>8</source>
+							<target>8</target>
 							<args>
 								<arg>-dependencyfile</arg>
 								<arg>${project.build.directory}/.scala_dependencies</arg>
