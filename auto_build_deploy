@@ -21,7 +21,10 @@ node('build-slave') {
         
         stage('Build') {
             sh '''
-                export JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
+                wget "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz"
+                tar -xf openjdk-11.0.2_linux-x64_bin.tar.gz
+                cp -r ./jdk-11.0.2 /usr/lib/jvm/
+                export JAVA_HOME=/usr/lib/jvm/jdk-11.0.2
                 export PATH=$JAVA_HOME/bin:$PATH
                 echo $(java -version) 
                 mvn clean install -DskipTests
