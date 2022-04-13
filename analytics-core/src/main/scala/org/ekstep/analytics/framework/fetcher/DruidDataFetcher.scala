@@ -193,6 +193,13 @@ object DruidDataFetcher {
     Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
+  def getNumericColumnValue(value: Double): AnyRef = {
+    // Coverting BigDecimal to String if it has more than 8 digits (length of 10 as roundToBigDecimal will add . & 0)
+    // since it is converted to scientific format while writing the data frame
+    val numValue = CommonUtil.roundToBigDecimal(value, 1)
+    if (numValue.toString().length > 10) numValue.toString() else numValue
+  }
+
   def processResult(query: DruidQueryModel, result: BaseResult): AnyRef = {
     query.queryType.toLowerCase match {
       case "timeseries" | "groupby" =>
@@ -203,7 +210,7 @@ object DruidDataFetcher {
           else if ("String".equalsIgnoreCase(f._2.name))
             f._1 -> f._2.asString.get
           else if ("Number".equalsIgnoreCase(f._2.name)) {
-            f._1 -> CommonUtil.roundToBigDecimal(f._2.asNumber.get.toDouble, 1)
+            f._1 -> getNumericColumnValue(f._2.asNumber.get.toDouble)
           } else f._1 -> f._2
         })
       case "topn" =>
@@ -214,8 +221,9 @@ object DruidDataFetcher {
               f._1 -> "unknown"
             else if ("String".equalsIgnoreCase(f._2.name))
               f._1 -> f._2.asString.get
-            else if ("Number".equalsIgnoreCase(f._2.name))
-              f._1 -> f._2.asNumber.get.toBigDecimal.get
+            else if ("Number".equalsIgnoreCase(f._2.name)) {
+              f._1 -> getNumericColumnValue(f._2.asNumber.get.toDouble)
+            }
             else f._1 -> f._2
           }))
         })
@@ -228,7 +236,7 @@ object DruidDataFetcher {
           else if ("String".equalsIgnoreCase(f._2.name))
             f._1 -> f._2.asString.get
           else if ("Number".equalsIgnoreCase(f._2.name)) {
-            f._1 -> CommonUtil.roundToBigDecimal(f._2.asNumber.get.toDouble, 1)
+            f._1 -> getNumericColumnValue(f._2.asNumber.get.toDouble)
           } else {
             f._1 -> JSONUtils.deserialize[Map[String, Any]](JSONUtils.serialize(f._2)).get("value").get
           }

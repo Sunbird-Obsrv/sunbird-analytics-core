@@ -789,5 +789,36 @@ class TestDruidDataFetcher extends SparkSpec with Matchers with MockFactory {
         }
     }
 
+    it should "test for scientific notation format for BigDecimal values" in {
+
+      val query = DruidQueryModel("groupBy", "telemetry-rollup-events", "2019-11-01/2019-11-02", Option("all"), Option(List(Aggregation(Option("count"), "count", ""),Aggregation(Option("total_duration"), "doubleSum", "edata_duration"))), Option(List(DruidDimension("context_pdata_id", Option("producer_id")), DruidDimension("context_pdata_pid", Option("producer_pid")))), Option(List(DruidFilter("in", "eid", None, Option(List("START", "END"))))), Option(DruidHavingFilter("lessThan", "doubleSum", 20.asInstanceOf[AnyRef])), Option(List(PostAggregation("arithmetic", "Addition", PostAggregationFields("field", ""), "+"))))
+      val druidQuery = DruidDataFetcher.getDruidQuery(query)
+      druidQuery.toString() should be ("GroupByQuery(List(CountAggregation(count), DoubleSumAggregation(total_duration,edata_duration)),List(2019-11-01/2019-11-02),Some(AndFilter(List(InFilter(eid,List(START, END),None)))),List(DefaultDimension(context_pdata_id,Some(producer_id),None), DefaultDimension(context_pdata_pid,Some(producer_pid),None)),All,Some(LessThanHaving(doubleSum,20.0)),None,List(ArithmeticPostAggregation(Addition,PLUS,List(FieldAccessPostAggregation(field,None), FieldAccessPostAggregation(,None)),Some(FloatingPoint))),Map())")
+
+      val json: String = """
+            {
+                "total_scans" : 1.20905875E+08,
+                "total_count" : 1209058,
+                "producer_id" : "dev.sunbird.learning.platform"
+            }
+          """
+      val doc: Json = parse(json).getOrElse(Json.Null);
+      val results = List(DruidResult.apply(Some(ZonedDateTime.of(2019, 11, 28, 17, 0, 0, 0, ZoneOffset.UTC)), doc));
+      val druidResponse = DruidResponseTimeseriesImpl.apply(results, QueryType.GroupBy)
+
+      implicit val mockFc = mock[FrameworkContext];
+      implicit val druidConfig = mock[DruidConfig];
+      val mockDruidClient = mock[DruidClient]
+      (mockDruidClient.doQuery[DruidResponse](_:DruidQuery)(_:DruidConfig)).expects(druidQuery, *).returns(Future(druidResponse))
+      (mockFc.getDruidRollUpClient: () => DruidClient).expects().returns(mockDruidClient);
+
+      val druidResult = DruidDataFetcher.getDruidData(query).collect()
+
+      druidResult.size should be (1)
+      // total_scans will be converted to string as it has more than 8 digits
+      // total_count will be numeric value
+      druidResult.head should be ("""{"total_scans":"120905875.0","total_count":1209058.0,"producer_id":"dev.sunbird.learning.platform","date":"2019-11-28"}""")
+    }
+
 
 }
