@@ -154,5 +154,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     rdd4.head should be("time_spent,count")
     rdd4.last should be("140905875.0,4")
 
+    sparkSession.stop();
+
   }
 }
