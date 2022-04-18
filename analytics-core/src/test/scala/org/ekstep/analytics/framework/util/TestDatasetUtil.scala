@@ -9,6 +9,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.sunbird.cloud.storage.BaseStorageService
 
+import java.io.Serializable
+
+case class EnvTestSummary(env: String, time_spent: String, count: Long) extends Serializable {}
 case class DruidSummary(Date:String,row1: String, time_spent: Double, count: Long)
 class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
 
@@ -125,6 +128,32 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     srcDir.delete(new Path("src/test/resources/test-report/_tmp/env=env1"), true)
     fileUtil.delete(sparkSession.sparkContext.hadoopConfiguration, "src/test/resources/test-report", "src/test/resources/test-report2", "src/test/resources/test-report2.csv");
     fileUtil.copyMerge("" + "src/test/resources/test-report/_tmp/env=env1", "src/test/resources/test-report/env2.csv", sparkSession.sparkContext.hadoopConfiguration, false);
+    sparkSession.stop();
+
+  }
+
+  it should "test the dataset saveToBlobStore with scientific notation format" in {
+
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val rdd1 = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 1209058.0, 3), EnvSummary("env2", 1.20905875E+08, 3), EnvSummary("env1", 140905875.0, 4)), 1);
+    val df1 = sparkSession.createDataFrame(rdd1);
+    df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report-exponential", Option(Map("header" -> "true")), Option(Seq("env")));
+
+    // Check for numeric value with more than 8 digits, writing to file in scientific notation format
+    val rdd2 = sparkSession.sparkContext.textFile("src/test/resources/test-report-exponential/env1.csv", 1).collect();
+    rdd2.head should be("time_spent,count")
+    rdd2.toList(1) should be("1209058.0,3")
+    rdd2.last should be("1.40905875E8,4")
+
+    val rdd3 = sparkSession.sparkContext.parallelize(Seq(EnvTestSummary("env1", "1209058.0", 3), EnvTestSummary("env2", "1.20905875E+08", 3), EnvTestSummary("env1", "140905875.0", 4)), 1);
+    val df3 = sparkSession.createDataFrame(rdd3);
+    df3.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report-exponential2", Option(Map("header" -> "true")), Option(Seq("env")));
+
+    // Check for numeric value with more than 8 digits as String data type, writing to file in normal decimal format
+    val rdd4 = sparkSession.sparkContext.textFile("src/test/resources/test-report-exponential2/env1.csv", 1).collect();
+    rdd4.head should be("time_spent,count")
+    rdd4.last should be("140905875.0,4")
+
     sparkSession.stop();
 
   }
