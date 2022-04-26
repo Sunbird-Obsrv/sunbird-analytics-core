@@ -152,6 +152,11 @@ object CommonUtil {
     JobLogger.log("Configuring S3 AccessKey& SecrateKey to SparkContext")
     sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getAwsKey());
     sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getAwsSecret());
+
+    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint")
+    if (!"".equalsIgnoreCase(storageEndpoint)) {
+      sc.hadoopConfiguration.set("fs.s3n.endpoint", storageEndpoint)
+    }
   }
 
   def setAzureConf(sc: SparkContext) = {
