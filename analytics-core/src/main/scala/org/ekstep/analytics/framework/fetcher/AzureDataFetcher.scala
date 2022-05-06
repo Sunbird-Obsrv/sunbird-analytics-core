@@ -34,7 +34,7 @@ object AzureDataFetcher {
     }
 
     private def getBucket(bucket: Option[String]) : String = {
-        bucket.getOrElse("prod-data-store");
+        bucket.getOrElse("telemetry-data-store");
     }
 
     private def getPrefix(prefix: Option[String]) : String = {
