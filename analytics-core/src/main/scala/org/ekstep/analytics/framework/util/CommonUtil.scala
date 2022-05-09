@@ -100,7 +100,7 @@ object CommonUtil {
   def getSparkSession(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
                       sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None,
                       sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None,
-                      sparkRedisPort: Option[AnyRef] = Option("6379")): SparkSession = {
+                      sparkRedisPort: Option[AnyRef] = Option("6379"), writeConsistencyLevel: String = "QUORUM"): SparkSession = {
     JobLogger.log("Initializing SparkSession")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
@@ -123,9 +123,8 @@ object CommonUtil {
 
     if (sparkCassandraConnectionHost.nonEmpty) {
       conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
-      if (readConsistencyLevel.nonEmpty) {
-        conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.get)
-      }
+      conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.getOrElse("QUORUM"))
+      conf.set("spark.cassandra.output.consistency.level", writeConsistencyLevel)
       println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
     }
 
@@ -154,6 +153,11 @@ object CommonUtil {
     JobLogger.log("Configuring S3 AccessKey& SecrateKey to SparkContext")
     sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getAwsKey());
     sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getAwsSecret());
+
+    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint")
+    if (!"".equalsIgnoreCase(storageEndpoint)) {
+      sc.hadoopConfiguration.set("fs.s3n.endpoint", storageEndpoint)
+    }
   }
 
   def setAzureConf(sc: SparkContext) = {
@@ -469,6 +473,10 @@ object CommonUtil {
     BigDecimal(value).setScale(precision, BigDecimal.RoundingMode.HALF_UP).toDouble;
   }
 
+  def roundToBigDecimal(value: Double, precision: Int): BigDecimal = {
+    BigDecimal(value).setScale(precision, BigDecimal.RoundingMode.HALF_UP);
+  }
+
   def getDefaultAppChannelIds(): (String, String) = {
     (AppConf.getConfig("default.consumption.app.id"), AppConf.getConfig("default.channel.id"))
   }
@@ -749,5 +757,21 @@ object CommonUtil {
     connProperties.setProperty("user", user)
     connProperties.setProperty("password", pass)
     connProperties
+  }
+
+  def getBlobUrl(store: String, filePath: String, bucket:String): String = {
+    store match {
+      case "local" =>
+        filePath
+      case "azure" =>
+        getAzureFile(bucket,filePath)
+      case "s3" =>
+        getS3File(bucket, filePath)
+      // $COVERAGE-OFF$ for azure testing
+      case "gcp" =>
+        //TODO - Need to support the GCP As well.
+        throw new Exception("gcp is currently not supported.")
+      // $COVERAGE-ON$
+    }
   }
 }

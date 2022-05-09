@@ -144,20 +144,26 @@ object DruidDataFetcher {
   }
 
   def getSQLDruidQuery(model: DruidQueryModel): DruidSQLQuery = {
-    val columns = model.sqlDimensions.get.map({ f =>
-      if (f.function.isEmpty)
-        f.fieldName
-      else
-        f.function.get + "AS \"" + f.fieldName + "\""
-
-    })
     val intervals = CommonUtil.getIntervalRange(model.intervals, model.dataSource, model.intervalSlider)
-    val sqlString = "SELECT " + columns.mkString(",") +
-      " from \"druid\".\"" + model.dataSource + "\" where " +
-      "__time >= '" + intervals.split("/").apply(0).split("T").apply(0) + "' AND  __time < '" +
-      intervals.split("/").apply(1).split("T").apply(0) + "'"
+    val from = intervals.split("/").apply(0).split("T").apply(0)
+    val to = intervals.split("/").apply(1).split("T").apply(0)
+    if(model.sqlQueryStr.nonEmpty) {
+      val queryStr = model.sqlQueryStr.get.format(from, to)
+      DruidSQLQuery(queryStr)
+    } else {
+      val columns = model.sqlDimensions.get.map({ f =>
+        if (f.function.isEmpty)
+          f.fieldName
+        else
+          f.function.get + "AS \"" + f.fieldName + "\""
 
-    DruidSQLQuery(sqlString)
+      })
+      val sqlString = "SELECT " + columns.mkString(",") +
+        " from \"druid\".\"" + model.dataSource + "\" where " +
+        "__time >= '" + from + "' AND  __time < '" + to + "'"
+
+      DruidSQLQuery(sqlString)
+    }
   }
 
   def executeQueryAsStream(model: DruidQueryModel, query: DruidNativeQuery)(implicit sc: SparkContext, fc: FrameworkContext): RDD[BaseResult] = {
@@ -187,6 +193,13 @@ object DruidDataFetcher {
     Await.result(druidResult, scala.concurrent.duration.Duration.apply(queryWaitTimeInMins, "minute"))
   }
 
+  def getNumericColumnValue(value: Double): AnyRef = {
+    // Coverting BigDecimal to String if it has more than 8 digits (length of 10 as roundToBigDecimal will add . & 0)
+    // since it is converted to scientific format while writing the data frame
+    val numValue = CommonUtil.roundToBigDecimal(value, 1)
+    if (numValue.toString().length > 10) numValue.toString() else numValue
+  }
+
   def processResult(query: DruidQueryModel, result: BaseResult): AnyRef = {
     query.queryType.toLowerCase match {
       case "timeseries" | "groupby" =>
@@ -197,7 +210,7 @@ object DruidDataFetcher {
           else if ("String".equalsIgnoreCase(f._2.name))
             f._1 -> f._2.asString.get
           else if ("Number".equalsIgnoreCase(f._2.name)) {
-            f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2)
+            f._1 -> getNumericColumnValue(f._2.asNumber.get.toDouble)
           } else f._1 -> f._2
         })
       case "topn" =>
@@ -208,8 +221,9 @@ object DruidDataFetcher {
               f._1 -> "unknown"
             else if ("String".equalsIgnoreCase(f._2.name))
               f._1 -> f._2.asString.get
-            else if ("Number".equalsIgnoreCase(f._2.name))
-              f._1 -> f._2.asNumber.get.toBigDecimal.get
+            else if ("Number".equalsIgnoreCase(f._2.name)) {
+              f._1 -> getNumericColumnValue(f._2.asNumber.get.toDouble)
+            }
             else f._1 -> f._2
           }))
         })
@@ -222,7 +236,7 @@ object DruidDataFetcher {
           else if ("String".equalsIgnoreCase(f._2.name))
             f._1 -> f._2.asString.get
           else if ("Number".equalsIgnoreCase(f._2.name)) {
-            f._1 -> CommonUtil.roundDouble(f._2.asNumber.get.toDouble, 2)
+            f._1 -> getNumericColumnValue(f._2.asNumber.get.toDouble)
           } else {
             f._1 -> JSONUtils.deserialize[Map[String, Any]](JSONUtils.serialize(f._2)).get("value").get
           }
@@ -263,7 +277,7 @@ object DruidDataFetcher {
       apply(AppConf.getConfig("druid.query.wait.time.mins").toLong, "minute"))
     data.filter(f => f.nonEmpty).map(f=> processSqlResult(f))
   }
-
+  
   def processSqlResult(result: String): DruidOutput = {
 
     val finalResult = JSONUtils.deserialize[Map[String,Any]](result)

@@ -324,7 +324,16 @@ class TestCommonUtil extends BaseSpec {
     val copiedFile = fileUtil.copy("src/test/resources/sample_telemetry.log", "src/test/resources/sample_telemetry.json", sc.hadoopConfiguration)
     sc.textFile(copiedFile, 1).count() should be (7437)
     fileUtil.delete(sc.hadoopConfiguration, copiedFile)
-    
+
+    val localUrl = CommonUtil.getBlobUrl("local", "src/test/resources/batch-001/2021-21-*.csv.gz", "local")
+    localUrl should be ("src/test/resources/batch-001/2021-21-*.csv.gz")
+
+    val azureUrl = CommonUtil.getBlobUrl("azure", "report/archival-data/batch-001/2021-21-*.csv.gz", "telemetry-data-store")
+    azureUrl should be ("wasb://telemetry-data-store@azure-test-key.blob.core.windows.net/report/archival-data/batch-001/2021-21-*.csv.gz")
+
+    val s3Url = CommonUtil.getBlobUrl("s3", "report/archival-data/batch-001/2021-21-*.csv.gz", "telemetry-data-store")
+    s3Url should be ("s3n://telemetry-data-store/report/archival-data/batch-001/2021-21-*.csv.gz")
+
     sc.stop()
   }
 
@@ -401,6 +410,13 @@ class TestCommonUtil extends BaseSpec {
     EventBusUtil.register(eventListener)
     EventBusUtil.dipatchEvent("Test Event");
     eventListener.event should be("Test Event")
+  }
+
+  it should "Check for round double implementations" in {
+    val doubleVal = CommonUtil.roundDouble(3969513467.0, 2)
+    doubleVal should be(3.969513467E9)
+    val bigDecimalVal = CommonUtil.roundToBigDecimal(3969513467.0, 1)
+    bigDecimalVal should be(3969513467.0)
   }
 
 }

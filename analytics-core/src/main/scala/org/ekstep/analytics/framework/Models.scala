@@ -77,7 +77,7 @@ case class JobConfig(search: Fetcher, filters: Option[Array[Filter]], sort: Opti
 
 //Druid Query Models
 @scala.beans.BeanInfo
-case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, columns: Option[List[String]] = None,sqlDimensions: Option[List[DruidSQLDimension]] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"), intervalSlider: Int = 0)
+case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, columns: Option[List[String]] = None, sqlDimensions: Option[List[DruidSQLDimension]] = None, sqlQueryStr: Option[String] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"), intervalSlider: Int = 0)
 
 @scala.beans.BeanInfo
 case class DruidSQLQuery(query: String, resultFormat : String = "objectLines", header:Boolean =true )
@@ -212,7 +212,7 @@ case class ShareItems(id: String, `type`: String, ver: String, params: List[Map[
 @scala.beans.BeanInfo
 class V3EData(val datatype: String, val `type`: String, val dspec: Map[String, AnyRef], val uaspec: Map[String, String], val loc: String, val mode: String, val duration: Long, val pageid: String,
               val subtype: String, val uri: String, val visits: List[Visit], val id: String, val target: Map[String, AnyRef],
-              val plugin: Map[String, AnyRef], val extra: Map[String, AnyRef], val item: Question, val pass: String, val score: Int, val resvalues: Array[Map[String, AnyRef]], 
+              val plugin: Map[String, AnyRef], val extra: AnyRef, val item: Question, val pass: String, val score: Int, val resvalues: Array[Map[String, AnyRef]],
               val values: AnyRef, val rating: Double, val comments: String, val dir: String, val items: List[ShareItems], val props : List[String], 
               val state: String, val prevstate: String, val err: AnyRef, val errtype: String, val stacktrace: String, val `object`: Map[String, AnyRef],
               val level: String, val message: String, val params: List[Map[String, AnyRef]], val summary: List[Map[String, AnyRef]], val index: Int, val `class`: String, val status: String, val query: String, val data: Option[AnyRef], val sort: Option[AnyRef], val correlationid: Option[String], val topn: List[AnyRef], val filters: Option[AnyRef] = None, val size: Int = 0) extends Serializable {}

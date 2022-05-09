@@ -38,7 +38,7 @@ class DatasetExt(df: Dataset[Row]) {
 
   def saveToBlobStore(storageConfig: StorageConfig, format: String, reportId: String, options: Option[Map[String, String]],
                       partitioningColumns: Option[Seq[String]], storageService: Option[BaseStorageService] = None,
-                      zip: Option[Boolean] = Option(false), columnOrder: Option[List[String]] = Option(List())): List[String] = {
+                      zip: Option[Boolean] = Option(false), columnOrder: Option[List[String]] = Option(List()), fileExt:Option[String] = None): List[String] = {
 
     val conf = df.sparkSession.sparkContext.hadoopConfiguration;
 
@@ -78,11 +78,12 @@ class DatasetExt(df: Dataset[Row]) {
         headersList = headersList ++ dims
         df.repartition(1).select(headersList.head, headersList.tail: _*).write.format(format).options(opts).save(filePrefix + tempDir)
       }
-      else
+      else {
         df.repartition(1).write.format(format).options(opts).save(filePrefix + tempDir)
-      fileUtil.delete(conf, filePrefix + finalDir + "." + format)
-      fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + format, conf, true);
-      List(filePrefix + finalDir + "." + format)
+      }
+      fileUtil.delete(conf, filePrefix + finalDir + "." + fileExt.getOrElse(format))
+      fileUtil.copyMerge(filePrefix + tempDir, filePrefix + finalDir + "." + fileExt.getOrElse(format), conf, true);
+      List(filePrefix + finalDir + "." + fileExt.getOrElse(format))
     }
     fileUtil.delete(conf, filePrefix + tempDir)
     files
@@ -125,7 +126,12 @@ class DatasetExt(df: Dataset[Row]) {
       }
     })
     fileUtil.delete(conf, filePrefix + srcPath)
-    map.map(f => filePrefix + f._2).toList
+    map.map{f =>
+      if(zip.getOrElse(false))
+        (filePrefix + f._2).replace(format, "zip")
+      else
+        (filePrefix + f._2)
+    }.toList
   }
 
 }
