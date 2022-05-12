@@ -32,11 +32,6 @@
 		</repository>
 		-->
 		<repository>
-			<id>sunbird-staging</id>
-			<name>sunbird-staging Repo</name>
-			<url>https://oss.sonatype.org/content/repositories/orgsunbird-1144</url>
-		</repository>
-		<repository>
 			<id>jcenter-repo</id>
 			<name>Jcenter Repo</name>
 			<url>https://jcenter.bintray.com/</url>
