@@ -10,11 +10,11 @@ import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink, Source}
 import akka.util.ByteString
-import ing.wbaa.druid._
-import ing.wbaa.druid.definitions._
-import ing.wbaa.druid.dql.DSL._
-import ing.wbaa.druid.dql.Dim
-import ing.wbaa.druid.dql.expressions.{AggregationExpression, FilteringExpression, PostAggregationExpression}
+import com.ing.wbaa.druid._
+import com.ing.wbaa.druid.definitions._
+import com.ing.wbaa.druid.dql.DSL._
+import com.ing.wbaa.druid.dql.Dim
+import com.ing.wbaa.druid.dql.expressions.{AggregationExpression, FilteringExpression, PostAggregationExpression}
 import io.circe.Json
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -313,8 +313,8 @@ object DruidDataFetcher {
       case AggregationType.DoubleLast  => doubleLast(Dim(fieldName)) as name.getOrElse(s"${AggregationType.DoubleLast.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.LongLast    => longLast(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongLast.toString.toLowerCase()}_${fieldName.toLowerCase()}")
       case AggregationType.LongFirst   => longFirst(Dim(fieldName)) as name.getOrElse(s"${AggregationType.LongFirst.toString.toLowerCase()}_${fieldName.toLowerCase()}")
-      case AggregationType.Javascript  => ing.wbaa.druid.dql.AggregationOps.javascript(name.getOrElse(""), Iterable(fieldName), fnAggregate.get, fnCombine.get, fnReset.get)
-      case AggregationType.HLLSketchMerge => ing.wbaa.druid.dql.AggregationOps.hllAggregator(fieldName, name.getOrElse(s"${AggregationType.HLLSketchMerge.toString.toLowerCase()}_${fieldName.toLowerCase()}"), lgk.getOrElse(12), tgtHllType.getOrElse("HLL_4"), round.getOrElse(true))
+      case AggregationType.Javascript  => com.ing.wbaa.druid.dql.AggregationOps.javascript(name.getOrElse(""), Iterable(fieldName), fnAggregate.get, fnCombine.get, fnReset.get)
+      case AggregationType.HLLSketchMerge => com.ing.wbaa.druid.dql.AggregationOps.hllAggregator(fieldName, name.getOrElse(s"${AggregationType.HLLSketchMerge.toString.toLowerCase()}_${fieldName.toLowerCase()}"), lgk.getOrElse(12), tgtHllType.getOrElse("HLL_4"), round.getOrElse(true))
       case AggregationType.Filtered    => getFilteredAggregationByType(filterAggType, name, fieldName, filterFieldName, filterValue)
       //      case _                           => throw new Exception("Unsupported aggregation type")
     }
@@ -322,7 +322,7 @@ object DruidDataFetcher {
 
   def getFilteredAggregationByType(aggType: Option[String], name: Option[String], fieldName: String, filterFieldName: Option[String], filterValue: Option[AnyRef]): AggregationExpression = {
     if (aggType.nonEmpty || filterFieldName.nonEmpty || filterValue.nonEmpty)
-      ing.wbaa.druid.dql.AggregationOps.selectorFiltered(filterFieldName.get, getAggregationByType(AggregationType.decode(aggType.get).right.get, name, fieldName), filterValue.get.toString)
+      com.ing.wbaa.druid.dql.AggregationOps.selectorFiltered(filterFieldName.get, getAggregationByType(AggregationType.decode(aggType.get).right.get, name, fieldName), filterValue.get.toString)
     else
       throw new DataFetcherException("Missing fields for filter type aggregation")
   }

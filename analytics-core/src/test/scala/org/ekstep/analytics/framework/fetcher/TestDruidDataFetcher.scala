@@ -6,9 +6,9 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.syntax.either._
-import ing.wbaa.druid._
-import ing.wbaa.druid.client.DruidClient
-import ing.wbaa.druid.definitions.{AggregationType, PostAggregationType}
+import com.ing.wbaa.druid._
+import com.ing.wbaa.druid.client.DruidClient
+import com.ing.wbaa.druid.definitions.{AggregationType, PostAggregationType}
 import io.circe._
 import io.circe.parser._
 import org.ekstep.analytics.framework._

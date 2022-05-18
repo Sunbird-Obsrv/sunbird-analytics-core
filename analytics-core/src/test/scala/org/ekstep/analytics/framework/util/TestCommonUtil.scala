@@ -12,7 +12,7 @@ import scala.collection.mutable.ListBuffer
 import org.joda.time.format.DateTimeFormat
 import org.ekstep.analytics.framework.Period._
 import org.joda.time.DateTimeUtils
-import ing.wbaa.druid.definitions.GranularityType
+import com.ing.wbaa.druid.definitions.GranularityType
 import com.google.common.eventbus.Subscribe
 import org.ekstep.analytics.framework.conf.AppConf
 
