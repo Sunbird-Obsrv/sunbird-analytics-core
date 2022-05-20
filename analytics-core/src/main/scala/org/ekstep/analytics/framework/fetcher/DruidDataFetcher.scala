@@ -99,7 +99,7 @@ object DruidDataFetcher {
         if (query.filters.nonEmpty) DQLQuery.where(getFilter(query.filters).get)
         if (query.columns.nonEmpty) DQLQuery.columns(query.columns.get)
         DQLQuery.batchSize(AppConf.getConfig("druid.scan.batch.size").toInt)
-        DQLQuery.setQueryContextParam("maxQueuedBytes", AppConf.getConfig("druid.scan.batch.bytes"))
+//        DQLQuery.setQueryContextParam("maxQueuedBytes", AppConf.getConfig("druid.scan.batch.bytes"))
         DQLQuery.build()
 
       case _ =>
