@@ -1,7 +1,7 @@
 package org.ekstep.analytics.framework
 
-import ing.wbaa.druid.{DruidConfig, QueryHost}
-import ing.wbaa.druid.client.DruidClient
+import com.ing.wbaa.druid.{DruidConfig, QueryHost}
+import com.ing.wbaa.druid.client.DruidClient
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.StructType
 import org.sunbird.cloud.storage.BaseStorageService
