@@ -24,6 +24,9 @@ node('build-slave') {
         
         stage('Build') {
             sh '''
+                export JAVA_HOME=/usr/lib/jvm/jdk-11.0.2
+                export PATH=$JAVA_HOME/bin:$PATH
+                echo $(java -version)
                 mvn clean install -DskipTests
                 '''
         }
