@@ -31,6 +31,8 @@ object DispatcherFactory {
                 AzureDispatcher;
             case "elasticsearch" =>
                 ESDispatcher;
+            case "gcloud" =>
+                GcloudDispatcher;
             case _ =>
                 throw new DispatcherException("Unknown output dispatcher destination found");
         }
@@ -45,6 +47,8 @@ object DispatcherFactory {
                 FileDispatcher;
             case "azure" =>
                 AzureDispatcher;
+            case "gcloud" =>
+                GcloudDispatcher;
             case _ =>
                 throw new DispatcherException("Unknown output dispatcher destination found");
         }

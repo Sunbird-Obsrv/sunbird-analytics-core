@@ -6,7 +6,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.ekstep.analytics.framework.Level.INFO
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetcher, S3DataFetcher, CephS3DataFetcher}
+import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetcher, S3DataFetcher, CephS3DataFetcher, GcloudDataFetcher}
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, JobLogger}
 
 /**
@@ -34,6 +34,9 @@ object DataFetcher {
             case "azure" =>
                 JobLogger.log("Fetching the batch data from AZURE")
                 AzureDataFetcher.getObjectKeys(search.queries.get);
+            case "gcloud" =>
+                JobLogger.log("Fetching the batch data from Google Cloud")
+                GcloudDataFetcher.getObjectKeys(search.queries.get);
             case "local" =>
                 JobLogger.log("Fetching the batch data from Local file")
                 search.queries.get.map { x => x.file.getOrElse(null) }.filterNot { x => x == null };
