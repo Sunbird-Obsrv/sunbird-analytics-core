@@ -162,4 +162,20 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
         keys5.head should be ("https://sunbirddevprivate.blob.core.windows.net/dev-data-store/raw/2020-06-10-0-1591845501666.json.gz")
     }
 
+
+    it should "fetch data from Google Cloud" in {
+
+        implicit val mockFc = mock[FrameworkContext];
+        val mockStorageService = mock[BaseStorageService]
+        mockFc.inputEventsCount = sc.longAccumulator("Count");
+        (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("gcloud", "gcloud_client_key", "gcloud_private_secret").returns(mockStorageService);
+        (mockStorageService.searchObjects _).expects("test-obsrv-data-store", "unique/raw/", Option("2022-08-09"), Option("2022-08-09"), None, "yyyy-MM-dd").returns(null);
+        (mockStorageService.getPaths _).expects("test-obsrv-data-store", null).returns(List("src/test/resources/sample_telemetry_2.log"))
+        val queries = Option(Array(
+            Query(Option("test-obsrv-data-store"), Option("unique/raw/"), Option("2022-08-09"), Option("2022-08-09"))
+        ));
+        val rdd = DataFetcher.fetchBatchData[V3Event](Fetcher("gcloud", None, queries));
+        rdd.count should be (19)
+    }
+
 }

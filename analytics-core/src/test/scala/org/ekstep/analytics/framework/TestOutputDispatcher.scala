@@ -188,6 +188,9 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
       S3Dispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
     }
 
+    a[IOException] should be thrownBy {
+      OutputDispatcher.dispatch(StorageConfig("gcloud", "test-obsrv-data-store", "test_key/test_data.json"), events.map(f => JSONUtils.serialize(f)));
+    }
   }
 
   it should "dispatch output to elastic-search" in {

@@ -47,6 +47,8 @@ class DatasetExt(df: Dataset[Row]) {
         CommonUtil.getS3FileWithoutPrefix(storageConfig.container, storageConfig.fileName);
       case "azure" =>
         CommonUtil.getAzureFileWithoutPrefix(storageConfig.container, storageConfig.fileName, storageConfig.accountKey.getOrElse("azure_storage_key"))
+      case "gcloud" =>
+        CommonUtil.getGCloudFileWithoutPrefix(storageConfig.container, storageConfig.fileName);
       case _ =>
         storageConfig.fileName
     }
@@ -56,6 +58,8 @@ class DatasetExt(df: Dataset[Row]) {
         "s3n://"
       case "azure" =>
         "wasb://"
+      case "gcloud" =>
+        "gs://"
       case _ =>
         ""
     }

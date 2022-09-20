@@ -93,6 +93,7 @@ object CommonUtil {
     val sc = new SparkContext(conf)
     setS3Conf(sc)
     setAzureConf(sc)
+    setGcloudConf(sc)
     JobLogger.log("Spark Context initialized")
     sc
   }
@@ -145,6 +146,7 @@ object CommonUtil {
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
     setS3Conf(sparkSession.sparkContext)
     setAzureConf(sparkSession.sparkContext)
+    setGcloudConf(sparkSession.sparkContext)
     JobLogger.log("SparkSession initialized")
     sparkSession
   }
@@ -166,6 +168,14 @@ object CommonUtil {
     sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
     sc.hadoopConfiguration.set("fs.azure.account.key." + accName + ".blob.core.windows.net", accKey)
     sc.hadoopConfiguration.set("fs.azure.account.keyprovider." + accName + ".blob.core.windows.net", "org.apache.hadoop.fs.azure.SimpleKeyProvider")
+  }
+
+  def setGcloudConf(sc: SparkContext) = {
+    sc.hadoopConfiguration.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem")
+    sc.hadoopConfiguration.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS")
+    sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
+    sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
+    sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
   }
 
   def closeSparkContext()(implicit sc: SparkContext) {
@@ -737,6 +747,14 @@ object CommonUtil {
     bucket + "@" + AppConf.getConfig(storageKey) + ".blob.core.windows.net/" + file;
   }
 
+  def getGCloudFile(bucket: String, file: String): String = {
+    "gs://" + bucket + "/" + file;
+  }
+
+  def getGCloudFileWithoutPrefix(bucket: String, file: String): String = {
+    bucket + "/" + file;
+  }
+
   def setStorageConf(store: String, accountKey: Option[String], accountSecret: Option[String])(implicit sc: SparkContext): Configuration = {
     store.toLowerCase() match {
       case "s3" =>
@@ -745,6 +763,12 @@ object CommonUtil {
       case "azure" =>
         sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
         sc.hadoopConfiguration.set("fs.azure.account.key." + AppConf.getConfig(accountKey.getOrElse("azure_storage_key")) + ".blob.core.windows.net", AppConf.getConfig(accountSecret.getOrElse("azure_storage_secret")))
+      case "gcloud" =>
+        sc.hadoopConfiguration.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem")
+        sc.hadoopConfiguration.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS")
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
       case _ =>
       // Do nothing
     }

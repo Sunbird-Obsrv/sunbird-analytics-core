@@ -212,7 +212,7 @@
 		<dependency>
 			<groupId>org.sunbird</groupId>
 			<artifactId>cloud-store-sdk_${scala.maj.version}</artifactId>
-			<version>1.3.0</version>
+			<version>1.4.0</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.microsoft.azure</groupId>
@@ -246,6 +246,17 @@
 					<artifactId>commons-lang3</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-storage</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.cloud.bigdataoss</groupId>
+			<artifactId>gcs-connector</artifactId>
+			<version>hadoop2-2.0.1</version>
+			<classifier>shaded</classifier>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
