@@ -20,7 +20,4 @@ object ESDispatcher extends IDispatcher {
         events.saveToEs(s"$index/_doc", Map("es.input.json" -> "true"))
     }
 
-    override def dispatch(events: Array[String], config: Map[String, AnyRef])(implicit fc: FrameworkContext): Array[String] = {
-        events
-    }
 }

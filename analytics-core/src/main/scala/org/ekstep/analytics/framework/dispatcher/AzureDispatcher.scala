@@ -5,74 +5,50 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework.exception.DispatcherException
-import org.ekstep.analytics.framework.util.{CommonUtil, JobLogger}
+import org.ekstep.analytics.framework.util.{ CommonUtil, JobLogger }
 import org.sunbird.cloud.storage.conf.AppConf
-import org.sunbird.cloud.storage.factory.{StorageConfig, StorageServiceFactory}
+import org.sunbird.cloud.storage.factory.{ StorageServiceFactory }
 import org.ekstep.analytics.framework.Level
 import scala.concurrent.Await
 import org.ekstep.analytics.framework.FrameworkContext
+import org.apache.hadoop.fs.FileUtil
+import org.apache.hadoop.fs.FileSystem
+import java.net.URI
+import org.apache.hadoop.fs.Path
+import org.ekstep.analytics.framework.util.JSONUtils
+import org.ekstep.analytics.framework.StorageConfig
 
-object AzureDispatcher extends IDispatcher {
+object AzureDispatcher extends HadoopDispatcher with IDispatcher {
 
-    implicit val className = "org.ekstep.analytics.framework.dispatcher.AzureDispatcher"
+  implicit val className = "org.ekstep.analytics.framework.dispatcher.AzureDispatcher"
 
-    @throws(classOf[DispatcherException])
-    def dispatch(events: Array[String], config: Map[String, AnyRef])(implicit fc: FrameworkContext): Array[String] = {
-        var filePath = config.getOrElse("filePath", null).asInstanceOf[String];
-        val bucket = config.getOrElse("bucket", null).asInstanceOf[String];
-        val key = config.getOrElse("key", null).asInstanceOf[String];
-        val zip = config.getOrElse("zip", false).asInstanceOf[Boolean];
-        val isPublic = config.getOrElse("public", false).asInstanceOf[Boolean];
+  override def dispatch(config: Map[String, AnyRef], events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext) = {
 
-        if (null == bucket || null == key) {
-            throw new DispatcherException("'bucket' & 'key' parameters are required to send output to azure")
-        }
-        var deleteFile = false;
-        if (null == filePath) {
-            filePath = AppConf.getConfig("spark_output_temp_dir") + "output-" + System.currentTimeMillis() + ".log";
-            val fw = new FileWriter(filePath, true);
-            events.foreach { x => { fw.write(x + "\n"); } };
-            fw.close();
-            deleteFile = true;
-        }
-        val finalPath = if (zip) CommonUtil.gzip(filePath) else filePath;
-        val storageService = fc.getStorageService("azure");
-        storageService.upload(bucket, finalPath, key, Option(isPublic), None, None, None);
-        storageService.closeContext();
-        if (deleteFile) CommonUtil.deleteFile(filePath);
-        if (zip) CommonUtil.deleteFile(finalPath);
-        events;
+    val bucket = config.getOrElse("bucket", null).asInstanceOf[String];
+    val key = config.getOrElse("key", null).asInstanceOf[String];
+
+    if (null == bucket || null == key) {
+      throw new DispatcherException("'bucket' & 'key' parameters are required to send output to azure")
     }
 
-    def dispatch(config: Map[String, AnyRef], events: RDD[String])(implicit sc: SparkContext, fc: FrameworkContext) = {
+    val srcFile = CommonUtil.getAzureFile(bucket, "_tmp/" + key);
+    val destFile = CommonUtil.getAzureFile(bucket, key);
 
-//        dispatch(events.collect(), config);
-        val bucket = config.getOrElse("bucket", null).asInstanceOf[String];
-        val key = config.getOrElse("key", null).asInstanceOf[String];
-        val isPublic = config.getOrElse("public", false).asInstanceOf[Boolean];
+    dispatchData(srcFile, destFile, sc.hadoopConfiguration, events)
+  }
 
-        if (null == bucket || null == key) {
-            throw new DispatcherException("'bucket' & 'key' parameters are required to send output to azure")
-        }
-        events.saveAsTextFile("wasb://" + bucket + "@" + AppConf.getStorageKey(AppConf.getStorageType()) + ".blob.core.windows.net/" + key);
+  override def dispatch(events: RDD[String], config: StorageConfig)(implicit sc: SparkContext, fc: FrameworkContext) = {
+    val bucket = config.container;
+    val key = config.fileName;
+
+    if (null == bucket || null == key || bucket.isEmpty() || key.isEmpty()) {
+      throw new DispatcherException("'bucket' & 'key' parameters are required to send output to azure")
     }
 
-    def dispatchDirectory(config: Map[String, AnyRef])(implicit sc: SparkContext, fc: FrameworkContext) = {
-        val dirPath = config.getOrElse("dirPath", null).asInstanceOf[String]
-        val bucket = config.getOrElse("bucket", null).asInstanceOf[String]
-        val key = config.getOrElse("key", null).asInstanceOf[String]
-        val isPublic = config.getOrElse("public", false).asInstanceOf[Boolean]
+    val srcFile = CommonUtil.getAzureFile(bucket, "_tmp/" + key, config.accountKey.getOrElse("azure_storage_key"));
+    val destFile = CommonUtil.getAzureFile(bucket, key, config.accountKey.getOrElse("azure_storage_key"));
 
-        if (null == bucket || null == key || dirPath == null) {
-            throw new DispatcherException("'local file path', 'bucket' & 'key' parameters are required to upload directory to azure")
-        }
-
-        val storageService = fc.getStorageService("azure");
-        val uploadMsg = storageService.upload(bucket, dirPath, key, Option(true), Option(1), Option(3), None)
-        storageService.closeContext();
-        JobLogger.log("Successfully Uploaded files", Option(Map("filesUploaded" -> "")), Level.INFO)
-        CommonUtil.deleteDirectory(dirPath)
-    }
-
+    dispatchData(srcFile, destFile, sc.hadoopConfiguration, events)
+  }
 
 }

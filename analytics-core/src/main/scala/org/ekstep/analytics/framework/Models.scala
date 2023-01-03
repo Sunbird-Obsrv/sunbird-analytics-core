@@ -63,7 +63,7 @@ class ProfileEvent(val eid: String, val ts: String, val `@timestamp`: String, va
 case class UserProfile(uid: String, gender: String, age: Int)
 
 // Analytics Framework Job Models
-case class Query(bucket: Option[String] = None, prefix: Option[String] = None, startDate: Option[String] = None, endDate: Option[String] = None, delta: Option[Int] = None, brokerList: Option[String] = None, topic: Option[String] = None, windowType: Option[String] = None, windowDuration: Option[Int] = None, file: Option[String] = None, excludePrefix: Option[String] = None, datePattern: Option[String] = None, folder: Option[String] = None, creationDate: Option[String] = None)
+case class Query(bucket: Option[String] = None, prefix: Option[String] = None, startDate: Option[String] = None, endDate: Option[String] = None, delta: Option[Int] = None, brokerList: Option[String] = None, topic: Option[String] = None, windowType: Option[String] = None, windowDuration: Option[Int] = None, file: Option[String] = None, excludePrefix: Option[String] = None, datePattern: Option[String] = None, folder: Option[String] = None, creationDate: Option[String] = None, partitions: Option[List[Int]] = None)
 @scala.beans.BeanInfo
 case class Filter(name: String, operator: String, value: Option[AnyRef] = None)
 @scala.beans.BeanInfo
@@ -77,11 +77,20 @@ case class JobConfig(search: Fetcher, filters: Option[Array[Filter]], sort: Opti
 
 //Druid Query Models
 @scala.beans.BeanInfo
-case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"))
+case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, columns: Option[List[String]] = None, sqlDimensions: Option[List[DruidSQLDimension]] = None, sqlQueryStr: Option[String] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"), intervalSlider: Int = 0)
+
 @scala.beans.BeanInfo
-case class DruidDimension(fieldName: String, aliasName: Option[String])
+case class DruidSQLQuery(query: String, resultFormat : String = "objectLines", header:Boolean =true )
+
 @scala.beans.BeanInfo
-case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None)
+case class DruidSQLDimension(fieldName: String, function: Option[String])
+
+@scala.beans.BeanInfo
+case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[List[ExtractFn]] = None)
+@scala.beans.BeanInfo
+case class ExtractFn(`type`: String, fn: String, retainMissingValue: Option[Boolean] = Option(false), replaceMissingValueWith: Option[String] = None)
+@scala.beans.BeanInfo
+case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"), round: Option[Boolean] = None, filterAggType: Option[String] = None, filterFieldName: Option[String] = None, filterValue: Option[AnyRef] = None)
 @scala.beans.BeanInfo
 case class PostAggregation(`type`: String, name: String, fields: PostAggregationFields, fn: String, ordering: Option[String] = None)
 // only right field can have type as FieldAccess or Constant. Only if it Constant, need to specify "rightFieldType"
@@ -184,7 +193,7 @@ case class Actor(id: String, `type`: String)
 @scala.beans.BeanInfo
 case class V3PData(id: String, ver: Option[String] = None, pid: Option[String] = None, model: Option[String] = None)
 @scala.beans.BeanInfo
-case class Question(id: String, maxscore: Int, exlength: Int, params: Array[Map[String, AnyRef]], uri: String, desc: String, title: String, mmc: Array[String], mc: Array[String])
+case class Question(id: String, maxscore: Int, exlength: Int, params: Array[Map[String, AnyRef]], uri: String, desc: String, title: String, mmc: Array[String], mc: Array[String], `type`: String)
 @scala.beans.BeanInfo
 case class V3CData(id: String, `type`: String)
 @scala.beans.BeanInfo
@@ -203,7 +212,7 @@ case class ShareItems(id: String, `type`: String, ver: String, params: List[Map[
 @scala.beans.BeanInfo
 class V3EData(val datatype: String, val `type`: String, val dspec: Map[String, AnyRef], val uaspec: Map[String, String], val loc: String, val mode: String, val duration: Long, val pageid: String,
               val subtype: String, val uri: String, val visits: List[Visit], val id: String, val target: Map[String, AnyRef],
-              val plugin: Map[String, AnyRef], val extra: Map[String, AnyRef], val item: Question, val pass: String, val score: Int, val resvalues: Array[Map[String, AnyRef]], 
+              val plugin: Map[String, AnyRef], val extra: AnyRef, val item: Question, val pass: String, val score: Int, val resvalues: Array[Map[String, AnyRef]],
               val values: AnyRef, val rating: Double, val comments: String, val dir: String, val items: List[ShareItems], val props : List[String], 
               val state: String, val prevstate: String, val err: AnyRef, val errtype: String, val stacktrace: String, val `object`: Map[String, AnyRef],
               val level: String, val message: String, val params: List[Map[String, AnyRef]], val summary: List[Map[String, AnyRef]], val index: Int, val `class`: String, val status: String, val query: String, val data: Option[AnyRef], val sort: Option[AnyRef], val correlationid: Option[String], val topn: List[AnyRef], val filters: Option[AnyRef] = None, val size: Int = 0) extends Serializable {}
@@ -243,3 +252,29 @@ case class DeviceProfileOutput(device_id: String, first_access: Option[Timestamp
                                fcm_token: Option[String], producer_id: Option[String], user_declared_state: Option[String],
                                user_declared_district: Option[String], api_last_updated_on: Option[Timestamp], user_declared_on: Option[Timestamp],
                                updated_date: Option[Timestamp] = Option(new Timestamp(System.currentTimeMillis()))) extends AlgoOutput
+                               
+                               
+case class StorageConfig(store: String, container: String, fileName: String, accountKey: Option[String] = None, secretKey: Option[String] = None);
+
+case class OnDemandJobRequest(request_id: String, request_data : String,download_urls :List[String], status: String)
+
+case class MergeConfig(`type`: Option[String], id: String, frequency: String, basePath: String, rollup: Integer, rollupAge: Option[String] = None,
+                       rollupCol: Option[String] = None, rollupFormat : Option[String] = None, rollupRange: Option[Integer] = None,
+                       merge: MergeFiles, container: String, postContainer: Option[String] = None,
+                       deltaFileAccess: Option[Boolean] = Option(true), reportFileAccess: Option[Boolean] = Option(true),
+                       dateRequired:Option[Boolean] = Option(true), columnOrder:Option[List[String]] =Option(List()),
+                       metricLabels :Option[List[String]] =Option(List()))
+
+case class MergeFiles(files: List[Map[String, String]], dims: List[String])
+
+@scala.beans.BeanInfo
+case class DruidOutput(t: Map[String, Any]) extends Map[String,Any]  with Input with AlgoInput with AlgoOutput with Output {
+  private val internalMap = t
+  override def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = new DruidOutput(internalMap + kv)
+
+  override def get(key: String): Option[Any] =internalMap.get(key)
+
+  override def iterator: Iterator[(String, Any)] = internalMap.iterator
+
+  override def -(key: String): Map[String, Any] = new DruidOutput(internalMap - key)
+}

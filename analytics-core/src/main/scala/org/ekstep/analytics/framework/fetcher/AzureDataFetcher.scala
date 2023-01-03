@@ -28,13 +28,13 @@ object AzureDataFetcher {
     }
 
     private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
-        val storageService = fc.getStorageService("azure");
+        val storageService = fc.getStorageService("azure", "azure_storage_key", "azure_storage_secret");
         val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
         storageService.getPaths(getBucket(query.bucket), keys).toArray
     }
 
     private def getBucket(bucket: Option[String]) : String = {
-        bucket.getOrElse("prod-data-store");
+        bucket.getOrElse("telemetry-data-store");
     }
 
     private def getPrefix(prefix: Option[String]) : String = {

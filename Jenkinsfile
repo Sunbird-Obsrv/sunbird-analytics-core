@@ -27,13 +27,17 @@ node('build-slave') {
         
         stage('Build') {
             sh '''
+                export JAVA_HOME=/usr/lib/jvm/jdk-11.0.2
+                export PATH=$JAVA_HOME/bin:$PATH
+                echo $(java -version)
                 mvn clean install -DskipTests
                 '''
         }
         stage('Archive artifacts'){
             sh """
-                        mkdir lpa_artifacts
+                        mkdir lpa_core_artifacts
                         cp analytics-job-driver/target/analytics-framework-2.0.jar lpa_core_artifacts
+                        cp analytics-core/lib/scruid*.jar lpa_core_artifacts
                         zip -j lpa_core_artifacts.zip:${artifact_version} lpa_core_artifacts/*
                     """
             archiveArtifacts artifacts: "lpa_core_artifacts.zip:${artifact_version}", fingerprint: true, onlyIfSuccessful: true
