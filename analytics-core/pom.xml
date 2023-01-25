@@ -36,6 +36,12 @@
 			<name>Jcenter Repo</name>
 			<url>https://jcenter.bintray.com/</url>
 		</repository>
+
+		<repository>
+            <id>cloud-store</id>
+            <url>https://oss.sonatype.org/content/repositories/orgsunbird-1144/</url>
+        </repository>
+
 	</repositories>
 
 	<dependencies>
@@ -212,7 +218,7 @@
 		<dependency>
 			<groupId>org.sunbird</groupId>
 			<artifactId>cloud-store-sdk_${scala.maj.version}</artifactId>
-			<version>1.4.0</version>
+			<version>1.4.6</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.microsoft.azure</groupId>
