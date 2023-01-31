@@ -1,15 +1,13 @@
 package org.ekstep.analytics.framework.fetcher
 
 import org.ekstep.analytics.framework.conf.AppConf
-import org.ekstep.analytics.framework.{FrameworkContext, Query}
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.storage.CustomS3StorageService
-import org.sunbird.cloud.storage.factory.{StorageConfig, StorageServiceFactory}
+import org.ekstep.analytics.framework.{FrameworkContext, Query}
 
 /**
- * @author Santhosh
+ * @author Deepak
  */
-object CephS3DataFetcher {
+object OCIDataFetcher {
 
     @throws(classOf[DataFetcherException])
     def getObjectKeys(queries: Array[Query])(implicit fc: FrameworkContext): Array[String] = {
