@@ -29,7 +29,7 @@ object OCIDataFetcher {
     }
 
     private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
-        val storageService = fc.getStorageService("s3", AppConf.getConfig("storage.key.config"), AppConf.getConfig("storage.secret.config"))
+        val storageService = fc.getStorageService("oci", AppConf.getConfig("storage.key.config"), AppConf.getConfig("storage.secret.config"))
         val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
         storageService.getPaths(getBucket(query.bucket), keys).toArray
     }
