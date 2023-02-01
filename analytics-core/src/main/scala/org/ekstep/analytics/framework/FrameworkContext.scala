@@ -41,6 +41,30 @@ class FrameworkContext {
     return fileUtil;
   }
 
+//  def newStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
+//    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint_with_protocol")
+//    if ("s3".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
+//      new CustomS3StorageService(
+//        org.sunbird.cloud.storage.factory.StorageConfig(
+//          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
+//        )
+//      )
+//    } else if ("oci".equalsIgnoreCase(storageType)   && !"".equalsIgnoreCase(storageEndpoint)){
+//      new CustomOCIStorageService(
+//        org.sunbird.cloud.storage.factory.StorageConfig(
+//          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
+//        )
+//      )
+//    }
+//    else {
+//      StorageServiceFactory.getStorageService(
+//        org.sunbird.cloud.storage.factory.StorageConfig(
+//          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret)
+//        )
+//      )
+//    }
+//  }
+
   def newStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
     val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint_with_protocol")
     if ("s3".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
@@ -49,7 +73,7 @@ class FrameworkContext {
           storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
         )
       )
-    } else if ("oci".equalsIgnoreCase(storageType)   && !"".equalsIgnoreCase(storageEndpoint)){
+    } else if ("oci".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
       new CustomOCIStorageService(
         org.sunbird.cloud.storage.factory.StorageConfig(
           storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
@@ -64,7 +88,6 @@ class FrameworkContext {
       )
     }
   }
-
   def getStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
     if("local".equals(storageType)) {
       return null;
