@@ -52,7 +52,7 @@ class FrameworkContext {
     } else if ("oci".equalsIgnoreCase(storageType)   && !"".equalsIgnoreCase(storageEndpoint)){
       new CustomOCIStorageService(
         org.sunbird.cloud.storage.factory.StorageConfig(
-          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
+          storageType, storageKey, storageSecret, Option(storageEndpoint)
         )
       )
     }
