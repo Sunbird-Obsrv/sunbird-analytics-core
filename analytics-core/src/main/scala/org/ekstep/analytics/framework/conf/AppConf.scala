@@ -12,11 +12,11 @@ object AppConf {
     lazy val conf = defaultConf.withFallback(envConf);
 
     def getConfig(key: String): String = {
-        val keyValue = ""
-        if (conf.hasPath(key))
-            keyValue = conf.getString(key);
-        // else 
-        //     keyValue = "";
+        val keyValue = if (conf.hasPath(key)){
+            conf.getString(key);
+        } else {
+            ""
+        }
         println(s"The value for $key is $keyValue")
         return keyValue
     }
