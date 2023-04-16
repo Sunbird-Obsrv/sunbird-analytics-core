@@ -20,7 +20,7 @@ class CustomOCIStorageService(config: StorageConfig) extends BaseStorageService 
   println(s"The value for secret is " +config.storageSecret)
   println(s"The value for key is " +config.storageKey)
   println(s"The value for endpoint is "+config.endPoint.get)
-  var context: BlobStoreContext = ContextBuilder.newBuilder("aws-s3").endpoint(config.endPoint.get).credentials(config.storageKey, config.storageSecret).overrides(overrides).buildView(classOf[BlobStoreContext])
+  var context: BlobStoreContext = ContextBuilder.newBuilder("aws-s3").credentials(config.storageKey, config.storageSecret).overrides(overrides).endpoint(config.endPoint.get).buildView(classOf[BlobStoreContext])
   var blobStore: BlobStore = context.getBlobStore
 
   override def getPaths(container: String, objects: List[Blob]): List[String] = {
