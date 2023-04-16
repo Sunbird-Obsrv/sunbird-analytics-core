@@ -17,6 +17,9 @@ class CustomOCIStorageService(config: StorageConfig) extends BaseStorageService 
   overrides.setProperty("jclouds.strip-expect-header", "true")
   overrides.setProperty("jclouds.regions", config.region.get)
   overrides.setProperty("jclouds.s3.signer-version", "4")
+  println(s"The value for secret is " +config.storageSecret)
+  println(s"The value for key is " +config.storageKey)
+  println(s"The value for endpoint is "+config.endPoint.get)
   var context: BlobStoreContext = ContextBuilder.newBuilder("aws-s3").endpoint(config.endPoint.get).credentials(config.storageKey, config.storageSecret).overrides(overrides).buildView(classOf[BlobStoreContext])
   var blobStore: BlobStore = context.getBlobStore
 
