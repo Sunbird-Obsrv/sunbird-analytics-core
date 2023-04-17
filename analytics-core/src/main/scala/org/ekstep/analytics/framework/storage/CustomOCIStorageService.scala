@@ -17,10 +17,16 @@ class CustomOCIStorageService(config: StorageConfig) extends BaseStorageService 
   overrides.setProperty("jclouds.strip-expect-header", "true")
   overrides.setProperty("jclouds.regions", config.region.get)
   overrides.setProperty("jclouds.s3.signer-version", "4")
-  println(s"The value for secret is " +config.storageSecret)
-  println(s"The value for key is " +config.storageKey)
-  println(s"The value for endpoint is "+config.endPoint.get)
-  var context: BlobStoreContext = ContextBuilder.newBuilder("aws-s3").credentials(config.storageKey, config.storageSecret).overrides(overrides).endpoint(config.endPoint.get).buildView(classOf[BlobStoreContext])
+  println(s"The updated value for secret is " +config.storageSecret)
+  println(s"The updated value for key is " +config.storageKey)
+  println(s"The updated value for endpoint is "+config.endPoint.get)
+  // var context: BlobStoreContext = ContextBuilder.newBuilder("aws-s3").credentials(config.storageKey, config.storageSecret).overrides(overrides).endpoint(config.endPoint.get).buildView(classOf[BlobStoreContext])
+
+  var context = ContextBuilder.newBuilder("aws-s3")
+    .credentials(config.storageKey, config.storageSecret)
+    .overrides(overrides)
+    .endpoint(config.endPoint.get).buildView(classOf[BlobStoreContext])
+
   var blobStore: BlobStore = context.getBlobStore
 
   override def getPaths(container: String, objects: List[Blob]): List[String] = {
