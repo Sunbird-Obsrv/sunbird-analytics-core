@@ -57,14 +57,9 @@ class FrameworkContext {
       //     storageType, storageKey, storageSecret, Option(storageEndpoint)
       //   )
       // )
-      // new CustomOCIStorageService(
-      //   org.sunbird.cloud.storage.factory.StorageConfig(
-      //     storageType, key, secret, Option(storageEndpoint)
-      //   )
-      // )
       new CustomOCIStorageService(
         org.sunbird.cloud.storage.factory.StorageConfig(
-          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
+          storageType, key, secret, Option(storageEndpoint)
         )
       )
     }
