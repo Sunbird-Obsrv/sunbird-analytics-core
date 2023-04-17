@@ -43,6 +43,8 @@ object DispatcherFactory {
         config.store.toLowerCase() match {
             case "s3" =>
                 S3Dispatcher;
+            case "oci" =>
+                S3Dispatcher;
             case "local" =>
                 FileDispatcher;
             case "azure" =>
