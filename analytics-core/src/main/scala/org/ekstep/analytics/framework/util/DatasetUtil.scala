@@ -62,6 +62,8 @@ class DatasetExt(df: Dataset[Row]) {
         "wasb://"
       case "gcloud" =>
         "gs://"
+      case "oci" =>
+        "s3n://"
       case _ =>
         ""
     }
