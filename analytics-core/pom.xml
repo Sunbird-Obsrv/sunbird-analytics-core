@@ -64,7 +64,7 @@
 			<exclusions>
 				<exclusion>
 					<artifactId>jets3t</artifactId>
-					<groupId>net.java.dev.jets3t</groupId>
+					<groupId>org.jets3t</groupId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.apache.xbean</groupId>
@@ -169,9 +169,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>net.java.dev.jets3t</groupId>
+			<groupId>org.jets3t</groupId>
 			<artifactId>jets3t</artifactId>
-			<version>0.9.4</version>
+			<version>0.9.7</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
