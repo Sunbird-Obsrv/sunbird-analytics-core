@@ -17,6 +17,8 @@ object DispatcherFactory {
         disp.to.toLowerCase() match {
             case "s3" =>
                 S3Dispatcher;
+            case "oci" =>
+                S3Dispatcher;
             case "kafka" =>
                 KafkaDispatcher;
             case "script" =>
