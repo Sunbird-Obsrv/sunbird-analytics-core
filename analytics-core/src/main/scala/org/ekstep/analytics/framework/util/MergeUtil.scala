@@ -74,6 +74,27 @@ class MergeUtil {
           columnOrder = columnOrder.filter(col=> reportDfColumns.contains(col))
           MergeResult(mergeReport(rollupCol,rollupFormat,deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
             StorageConfig(storageType, postContainer, path.getParent.getName,Option(storageKey),Option(storageSecret)))
+        case "oci" =>
+          var deltaDF = fetchOSSFile(filePaths("deltaPath"),
+            mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
+            deltaDF = (if(deltaDF.columns.contains("Date")) deltaDF.withColumn(rollupCol,
+              date_format(col("Date"), rollupFormat)) else deltaDF).dropDuplicates()
+          val reportFile = fetchOSSFile(filePaths("reportPath"), mergeConfig.reportFileAccess.getOrElse(true),
+            postContainer)
+          val reportDF = if (null == reportFile) {
+            sqlContext.createDataFrame(sc.emptyRDD[Row], if (null == reportSchema) {
+              deltaDF.schema
+            } else reportSchema
+            )
+          }
+          else {
+            reportSchema = reportFile.schema
+            reportFile
+          }
+          val reportDfColumns = reportDF.columns
+          columnOrder = columnOrder.filter(col=> reportDfColumns.contains(col))
+          MergeResult(mergeReport(rollupCol,rollupFormat,deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
+            StorageConfig(storageType, postContainer, path.getParent.getName,Option(storageKey),Option(storageSecret)))
         case _ =>
           throw new Exception("Merge type unknown")
       }
@@ -173,6 +194,20 @@ class MergeUtil {
       fc.getStorageService("azure", "azure_storage_key", "azure_storage_secret")
     else {
       fc.getStorageService("azure", "druid_storage_account_key", "druid_storage_account_secret")
+    }
+    val keys = storageService.searchObjects(container, filePath)
+    val reportPaths = storageService.getPaths(container, keys).toArray.mkString(",")
+    if (reportPaths.nonEmpty)
+      sqlContext.read.options(Map("header" -> "true","scientific" ->"false")).csv(reportPaths)
+    else null
+  }
+
+  def fetchOSSFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
+
+    val storageService = if (isPrivate)
+      fc.getStorageService("oci", "azure_storage_key", "azure_storage_secret")
+    else {
+      fc.getStorageService("oci", "druid_storage_account_key", "druid_storage_account_secret")
     }
     val keys = storageService.searchObjects(container, filePath)
     val reportPaths = storageService.getPaths(container, keys).toArray.mkString(",")
