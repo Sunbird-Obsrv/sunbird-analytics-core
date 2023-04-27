@@ -74,7 +74,7 @@ class MergeUtil {
           columnOrder = columnOrder.filter(col=> reportDfColumns.contains(col))
           MergeResult(mergeReport(rollupCol,rollupFormat,deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
             StorageConfig(storageType, postContainer, path.getParent.getName,Option(storageKey),Option(storageSecret)))
-        case "oci" =>
+        case "s3" =>
           var deltaDF = fetchOSSFile(filePaths("deltaPath"),
             mergeConfig.deltaFileAccess.getOrElse(true), mergeConfig.container)
             deltaDF = (if(deltaDF.columns.contains("Date")) deltaDF.withColumn(rollupCol,
