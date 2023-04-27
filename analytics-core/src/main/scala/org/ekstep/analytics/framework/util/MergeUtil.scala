@@ -96,7 +96,7 @@ class MergeUtil {
           MergeResult(mergeReport(rollupCol,rollupFormat,deltaDF, reportDF, mergeConfig, mergeConfig.merge.dims), reportDF,
             StorageConfig(storageType, postContainer, path.getParent.getName,Option(storageKey),Option(storageSecret)))
         case _ =>
-          throw new Exception("Merge type unknown")
+          throw new Exception("Merge type unknown: "+storageType)
       }
       // Rename old file by appending date and store it
       try {
