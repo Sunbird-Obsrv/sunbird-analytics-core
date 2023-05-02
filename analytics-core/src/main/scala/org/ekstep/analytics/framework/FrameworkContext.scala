@@ -43,6 +43,8 @@ class FrameworkContext {
 
   def newStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
     val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint_with_protocol")
+    val key = AppConf.getConfig("storage.key.config")
+    val secret = AppConf.getConfig("storage.secret.config")
     if ("s3".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
       new CustomS3StorageService(
         org.sunbird.cloud.storage.factory.StorageConfig(
@@ -50,9 +52,14 @@ class FrameworkContext {
         )
       )
     } else if ("oci".equalsIgnoreCase(storageType)   && !"".equalsIgnoreCase(storageEndpoint)){
+      // new CustomOCIStorageService(
+      //   org.sunbird.cloud.storage.factory.StorageConfig(
+      //     storageType, storageKey, storageSecret, Option(storageEndpoint)
+      //   )
+      // )
       new CustomOCIStorageService(
         org.sunbird.cloud.storage.factory.StorageConfig(
-          storageType, storageKey, storageSecret, Option(storageEndpoint)
+          storageType, key, secret, Option(storageEndpoint)
         )
       )
     }
