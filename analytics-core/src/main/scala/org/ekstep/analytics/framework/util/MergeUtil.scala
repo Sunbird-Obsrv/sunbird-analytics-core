@@ -205,7 +205,7 @@ class MergeUtil {
   def fetchOSSFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
 
     val storageService = if (isPrivate)
-      fc.getStorageService("oci", "azure_storage_key", "azure_storage_secret")
+      fc.getStorageService("oci", "aws_storage_key", "aws_storage_secret")
     else {
       fc.getStorageService("oci", "druid_storage_account_key", "druid_storage_account_secret")
     }
