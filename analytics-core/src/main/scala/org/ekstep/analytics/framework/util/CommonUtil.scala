@@ -769,6 +769,10 @@ object CommonUtil {
         sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
         sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
         sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
+      case "oci" =>
+        sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")));
+        sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getConfig(accountSecret.getOrElse("aws_storage_secret")));
+        // sc.hadoopConfiguration.set("fs.s3n.endpoint", AppConf.getConfig(accountSecret.getOrElse("cloud_storage_endpoint_with_protocol")));
       case _ =>
       // Do nothing
     }
@@ -790,6 +794,8 @@ object CommonUtil {
       case "azure" =>
         getAzureFile(bucket,filePath)
       case "s3" =>
+        getS3File(bucket, filePath)
+      case "oci" =>
         getS3File(bucket, filePath)
       // $COVERAGE-OFF$ for azure testing
       case "gcp" =>

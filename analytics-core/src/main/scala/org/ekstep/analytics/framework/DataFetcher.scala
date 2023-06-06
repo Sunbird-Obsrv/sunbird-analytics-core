@@ -6,7 +6,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.ekstep.analytics.framework.Level.INFO
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetcher, S3DataFetcher, CephS3DataFetcher, GcloudDataFetcher}
+import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetcher, S3DataFetcher, CephS3DataFetcher, GcloudDataFetcher,OCIDataFetcher}
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, JobLogger}
 
 /**
@@ -28,6 +28,9 @@ object DataFetcher {
             case "cephs3" =>
                 JobLogger.log("Fetching the batch data from S3-like stores")
                 CephS3DataFetcher.getObjectKeys(search.queries.get);
+            case "oci" =>
+                JobLogger.log("Fetching the batch data from S3-like stores")
+                OCIDataFetcher.getObjectKeys(search.queries.get);
             case "s3" =>
                 JobLogger.log("Fetching the batch data from S3")
                 S3DataFetcher.getObjectKeys(search.queries.get);
