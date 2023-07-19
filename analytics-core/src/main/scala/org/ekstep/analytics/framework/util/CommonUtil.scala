@@ -102,7 +102,7 @@ object CommonUtil {
                       sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None,
                       sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None,
                       sparkRedisPort: Option[AnyRef] = Option("6379"), writeConsistencyLevel: String = "QUORUM"): SparkSession = {
-    JobLogger.log("Initializing SparkSession")
+    JobLogger.log("Initializing SparkSessions")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
       .set("spark.memory.fraction", AppConf.getConfig("spark.memory_fraction"))
