@@ -91,7 +91,7 @@ object CommonUtil {
     }
 
     val sc = new SparkContext(conf)
-    setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"))
+    setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"), None, None)
     JobLogger.log("Spark Context initialized")
     sc
   }
@@ -142,7 +142,7 @@ object CommonUtil {
     }
 
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
-    setSparkCSPConfigurations(sparkSession.sparkContext, AppConf.getConfig("cloud_storage_type"))
+    setSparkCSPConfigurations(sparkSession.sparkContext, AppConf.getConfig("cloud_storage_type"), None, None)
     JobLogger.log("SparkSession initialized")
     sparkSession
   }
