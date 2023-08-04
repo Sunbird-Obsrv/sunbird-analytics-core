@@ -11,7 +11,7 @@ jobs:
         name: sunbird-analytics-core-build
         command: |
           java -version
-          mvn scoverage:report
+          mvn scoverage:report -DCLOUD_STORE_GROUP_ID=org.sunbird -DCLOUD_STORE_ARTIFACT_ID=cloud-store-sdk_2.12 -DCLOUD_STORE_VERSION=1.4.0
     - save_cache:
         key: dp-dependency-cache-{{ checksum "pom.xml" }}
         paths: ~/.m2
