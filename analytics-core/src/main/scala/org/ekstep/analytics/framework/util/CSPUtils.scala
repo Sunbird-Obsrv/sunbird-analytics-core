@@ -6,20 +6,18 @@ trait ICloudStorageProvider {
   def setConf(sc: SparkContext, storageKey: Option[String], storageSecret: Option[String]): Unit
 }
 
+
+
 object CloudStorageProviders {
   implicit val className: String = "org.ekstep.analytics.framework.util.CloudStorageProvider"
-  private val providerMap: Map[String, Class[_ <: ICloudStorageProvider]] = Map("s3" -> classOf[S3Provider], "azure" -> classOf[AzureProvider], "gcp" -> classOf[GcpProvider], "oci" -> classOf[OCIProvider])
+  private val providerMap: Map[String, ICloudStorageProvider] = Map("s3" -> S3Provider, "azure" -> AzureProvider, "gcp" -> GcpProvider, "oci" -> OCIProvider)
   def setSparkCSPConfigurations(sc: SparkContext, csp: String, storageKey: Option[String], storageSecret: Option[String]): Unit = {
-    providerMap.get(csp.toLowerCase()).foreach { providerClass =>
-      val providerConstructor = providerClass.getDeclaredConstructor()
-      val providerInstance:ICloudStorageProvider = providerConstructor.newInstance()
-      providerInstance.setConf(sc, storageKey, storageSecret)
+    providerMap.get(csp.toLowerCase()).foreach { provider =>
+      provider.setConf(sc, storageKey, storageSecret)
     }
   }
-
-
 }
-class S3Provider extends ICloudStorageProvider {
+object S3Provider extends ICloudStorageProvider {
   implicit val className: String = "org.ekstep.analytics.framework.util.S3Provider"
   override def setConf(sc: SparkContext, storageKey: Option[String], storageSecret: Option[String]): Unit = {
     JobLogger.log("Configuring S3 Access Key & Secret Key to SparkContext")
@@ -34,7 +32,7 @@ class S3Provider extends ICloudStorageProvider {
   }
 }
 
-class AzureProvider extends ICloudStorageProvider {
+object AzureProvider extends ICloudStorageProvider {
   implicit val className: String = "org.ekstep.analytics.framework.util.AzureProvider"
   override def setConf(sc: SparkContext, storageKey: Option[String], storageSecret: Option[String]): Unit = {
     JobLogger.log("Configuring Azure Access Key & Secret Key to SparkContext")
@@ -45,7 +43,7 @@ class AzureProvider extends ICloudStorageProvider {
     sc.hadoopConfiguration.set("fs.azure.account.keyprovider." + key + ".blob.core.windows.net", "org.apache.hadoop.fs.azure.SimpleKeyProvider")
   }
 }
-class GcpProvider extends ICloudStorageProvider {
+object GcpProvider extends ICloudStorageProvider {
   implicit val className: String = "org.ekstep.analytics.framework.util.GcpProvider"
   override def setConf(sc: SparkContext, storageKey: Option[String], storageSecret: Option[String]): Unit = {
     JobLogger.log("Configuring GCP Access Key & Secret Key to SparkContext")
@@ -59,7 +57,7 @@ class GcpProvider extends ICloudStorageProvider {
   }
 }
 
-class OCIProvider extends ICloudStorageProvider {
+object OCIProvider extends ICloudStorageProvider {
   implicit val className: String = "org.ekstep.analytics.framework.util.OCIProvider"
   override def setConf(sc: SparkContext, storageKey: Option[String], storageSecret: Option[String]): Unit = {
     val key = storageKey.filter(_.nonEmpty).map(AppConf.getConfig).getOrElse(AppConf.getStorageKey("oci"))
