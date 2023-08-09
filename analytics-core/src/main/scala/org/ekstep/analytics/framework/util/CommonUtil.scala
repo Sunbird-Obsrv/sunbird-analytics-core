@@ -8,13 +8,13 @@ import java.security.MessageDigest
 import java.sql.Timestamp
 import java.util.zip.GZIPOutputStream
 import java.util.{Date, Properties}
-
 import com.ing.wbaa.druid.definitions.{Granularity, GranularityType}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.Period._
+import org.ekstep.analytics.framework.util.CloudStorageProviders.setSparkCSPConfigurations
 import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
 
 import scala.collection.mutable.ListBuffer
@@ -91,9 +91,7 @@ object CommonUtil {
     }
 
     val sc = new SparkContext(conf)
-    setS3Conf(sc)
-    setAzureConf(sc)
-    setGcloudConf(sc)
+    setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"), None, None)
     JobLogger.log("Spark Context initialized")
     sc
   }
@@ -144,40 +142,10 @@ object CommonUtil {
     }
 
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
-    setS3Conf(sparkSession.sparkContext)
-    setAzureConf(sparkSession.sparkContext)
-    setGcloudConf(sparkSession.sparkContext)
+    setSparkCSPConfigurations(sparkSession.sparkContext, AppConf.getConfig("cloud_storage_type"), None, None)
     JobLogger.log("SparkSession initialized")
     sparkSession
   }
-
-  def setS3Conf(sc: SparkContext) = {
-    JobLogger.log("Configuring S3 AccessKey& SecrateKey to SparkContext")
-    sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getAwsKey());
-    sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getAwsSecret());
-
-    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint")
-    if (!"".equalsIgnoreCase(storageEndpoint)) {
-      sc.hadoopConfiguration.set("fs.s3n.endpoint", storageEndpoint)
-    }
-  }
-
-  def setAzureConf(sc: SparkContext) = {
-    val accName = AppConf.getStorageKey("azure")
-    val accKey = AppConf.getStorageSecret("azure")
-    sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
-    sc.hadoopConfiguration.set("fs.azure.account.key." + accName + ".blob.core.windows.net", accKey)
-    sc.hadoopConfiguration.set("fs.azure.account.keyprovider." + accName + ".blob.core.windows.net", "org.apache.hadoop.fs.azure.SimpleKeyProvider")
-  }
-
-  def setGcloudConf(sc: SparkContext) = {
-    sc.hadoopConfiguration.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem")
-    sc.hadoopConfiguration.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS")
-    sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
-    sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
-    sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
-  }
-
   def closeSparkContext()(implicit sc: SparkContext) {
     JobLogger.log("Closing Spark Context", None, INFO)
     sc.stop();
