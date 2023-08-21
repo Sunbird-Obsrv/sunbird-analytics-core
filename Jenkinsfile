@@ -30,8 +30,8 @@ node('build-slave') {
                 export JAVA_HOME=/usr/lib/jvm/jdk-11.0.2
                 export PATH=$JAVA_HOME/bin:$PATH
                 echo $(java -version)
-                mvn clean install -DskipTests -DCLOUD_STORE_GROUP_ID=org.sunbird -DCLOUD_STORE_ARTIFACT_ID=cloud-store-sdk_2.12 -DCLOUD_STORE_VERSION=1.4.0
-                '''
+            '''
+            sh 'mvn clean install -DskipTests -DCLOUD_STORE_GROUP_ID=' + params.CLOUD_STORE_GROUP_ID + ' -DCLOUD_STORE_ARTIFACT_ID=' + params.CLOUD_STORE_ARTIFACT_ID + ' -DCLOUD_STORE_VERSION=' + params.CLOUD_STORE_VERSION    
         }
         stage('Archive artifacts'){
             sh """

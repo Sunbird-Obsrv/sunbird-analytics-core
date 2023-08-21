@@ -1,7 +1,6 @@
 package org.ekstep.analytics.framework.util
 
 import java.lang.reflect.{ParameterizedType, Type}
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.JsonGenerator.Feature
 import com.fasterxml.jackson.core.`type`.TypeReference
