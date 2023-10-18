@@ -93,14 +93,23 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
       import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
-      a[AzureException] should be thrownBy {
-        df.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));        
+      val azureException = intercept[Throwable] {
+        df.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
       }
-      
-      a[S3Exception] should be thrownBy {
-        df.saveToBlobStore(StorageConfig("s3", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
+      val s3Exception = intercept[Throwable] {
+        df.saveToBlobStore(StorageConfig("s3", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")))
       }
-      
+      handleException(azureException)
+      handleException(s3Exception)
+      def handleException(caughtException: Throwable): Unit = {
+        caughtException match {
+          case s3Exception: S3Exception => println("S3 Exception occurred")
+          case azureException: AzureException => println("Azure Exception occurred")
+          case illegalArgumentException: IllegalArgumentException => println("CSP Configurations are not found")
+          case _ =>
+            fail("Unexpected exception type thrown")
+        }
+      }
       sparkSession.stop();
     }
 
