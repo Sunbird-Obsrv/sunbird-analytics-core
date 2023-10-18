@@ -36,6 +36,12 @@
 			<name>Jcenter Repo</name>
 			<url>https://jcenter.bintray.com/</url>
 		</repository>
+
+		<repository>
+            <id>cloud-store</id>
+            <url>https://oss.sonatype.org/content/repositories/orgsunbird-1144/</url>
+        </repository>
+
 	</repositories>
 
 	<dependencies>
@@ -58,7 +64,7 @@
 			<exclusions>
 				<exclusion>
 					<artifactId>jets3t</artifactId>
-					<groupId>net.java.dev.jets3t</groupId>
+					<groupId>org.jets3t</groupId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.apache.xbean</groupId>
@@ -163,9 +169,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>net.java.dev.jets3t</groupId>
+			<groupId>org.jets3t</groupId>
 			<artifactId>jets3t</artifactId>
-			<version>0.9.4</version>
+			<version>0.9.7</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -210,9 +216,6 @@
 		</dependency> -->
 		<!-- https://mvnrepository.com/artifact/org.sunbird/cloud-store-sdk -->
 		<dependency>
-<!--			<groupId>org.sunbird</groupId>-->
-<!--			<artifactId>cloud-store-sdk_${scala.maj.version}</artifactId>-->
-<!--			<version>1.4.0</version>-->
 			<groupId>${CLOUD_STORE_GROUP_ID}</groupId>
 			<artifactId>${CLOUD_STORE_ARTIFACT_ID}</artifactId>
 			<version>${CLOUD_STORE_VERSION}</version>
