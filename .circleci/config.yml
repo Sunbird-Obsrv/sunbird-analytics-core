@@ -5,7 +5,7 @@ jobs:
     machine:
       image: ubuntu-2004:202008-01
     environment:
-      CLOUD_STORE_VERSION: "1.4.0"
+      CLOUD_STORE_VERSION: "1.4.6"
       CLOUD_STORE_ARTIFACT_ID: "cloud-store-sdk_2.12"
       CLOUD_STORE_GROUP_ID: "org.sunbird"
     steps:
