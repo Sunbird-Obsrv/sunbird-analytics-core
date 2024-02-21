@@ -119,7 +119,7 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
     it should "cover the missing branches in S3DataFetcher, AzureDataFetcher and DruidDataFetcher" in {
       implicit val fc = new FrameworkContext();
       var query = JSONUtils.deserialize[Query]("""{"bucket":"test-container","prefix":"test/","folder":"true","endDate":"2020-01-10"}""")
-      S3DataFetcher.getObjectKeys(Array(query)).head should be ("s3n://test-container/test/2020-01-10")
+      S3DataFetcher.getObjectKeys(Array(query)).head should be ("s3a://test-container/test/2020-01-10")
       AzureDataFetcher.getObjectKeys(Array(query)).head should be ("wasb://test-container@azure-test-key.blob.core.windows.net/test/2020-01-10")
       
       query = JSONUtils.deserialize[Query]("""{"bucket":"test-container","prefix":"test/","folder":"true","endDate":"2020-01-10","excludePrefix":"test"}""")
