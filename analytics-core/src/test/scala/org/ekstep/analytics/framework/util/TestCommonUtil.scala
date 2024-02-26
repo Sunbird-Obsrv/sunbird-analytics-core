@@ -317,8 +317,8 @@ class TestCommonUtil extends BaseSpec {
     azureStorageConf.get("fs.azure.account.key.azure-test-key.blob.core.windows.net") should be("azure-test-secret")
 
     val s3StorageConf = CommonUtil.setStorageConf("s3", Option("aws_storage_key"), Option("aws_storage_secret"))
-    s3StorageConf.get("fs.s3n.awsAccessKeyId") should be("aws-test-key")
-    s3StorageConf.get("fs.s3n.awsSecretAccessKey") should be("aws-test-secret")
+    s3StorageConf.get("fs.s3a.access.key") should be("aws-test-key")
+    s3StorageConf.get("fs.s3a.secret.key") should be("aws-test-secret")
     
     val fileUtil = new HadoopFileUtil;
     val copiedFile = fileUtil.copy("src/test/resources/sample_telemetry.log", "src/test/resources/sample_telemetry.json", sc.hadoopConfiguration)
@@ -332,7 +332,7 @@ class TestCommonUtil extends BaseSpec {
     azureUrl should be ("wasb://telemetry-data-store@azure-test-key.blob.core.windows.net/report/archival-data/batch-001/2021-21-*.csv.gz")
 
     val s3Url = CommonUtil.getBlobUrl("s3", "report/archival-data/batch-001/2021-21-*.csv.gz", "telemetry-data-store")
-    s3Url should be ("s3n://telemetry-data-store/report/archival-data/batch-001/2021-21-*.csv.gz")
+    s3Url should be ("s3a://telemetry-data-store/report/archival-data/batch-001/2021-21-*.csv.gz")
 
     sc.stop()
   }
