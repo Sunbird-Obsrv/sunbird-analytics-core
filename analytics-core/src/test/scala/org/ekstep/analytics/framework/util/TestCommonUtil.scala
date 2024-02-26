@@ -317,8 +317,8 @@ class TestCommonUtil extends BaseSpec {
     azureStorageConf.get("fs.azure.account.key.azure-test-key.blob.core.windows.net") should be("azure-test-secret")
 
     val s3StorageConf = CommonUtil.setStorageConf("s3", Option("aws_storage_key"), Option("aws_storage_secret"))
-    s3StorageConf.get("fs.s3a.awsAccessKeyId") should be("aws-test-key")
-    s3StorageConf.get("fs.s3a.awsSecretAccessKey") should be("aws-test-secret")
+    s3StorageConf.get("fs.s3a.access.key") should be("aws-test-key")
+    s3StorageConf.get("fs.s3a.secret.key") should be("aws-test-secret")
     
     val fileUtil = new HadoopFileUtil;
     val copiedFile = fileUtil.copy("src/test/resources/sample_telemetry.log", "src/test/resources/sample_telemetry.json", sc.hadoopConfiguration)

@@ -23,8 +23,8 @@ object S3Provider extends ICloudStorageProvider {
     JobLogger.log("Configuring S3 Access Key & Secret Key to SparkContext")
     val key = storageKey.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getStorageKey)
     val secret = storageSecret.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getStorageSecret)
-    sc.hadoopConfiguration.set("fs.s3a.awsAccessKeyId", key)
-    sc.hadoopConfiguration.set("fs.s3a.awsSecretAccessKey", secret)
+    sc.hadoopConfiguration.set("fs.s3a.access.key", key)
+    sc.hadoopConfiguration.set("fs.s3a.secret.key", secret)
     val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint")
     if (storageEndpoint.nonEmpty) {
       sc.hadoopConfiguration.set("fs.s3a.endpoint", storageEndpoint)
@@ -63,7 +63,12 @@ object OCIProvider extends ICloudStorageProvider {
     val key = storageKey.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getStorageKey)
     val secret = storageSecret.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getStorageSecret)
     JobLogger.log("Configuring OCI Access Key & Secret Key to SparkContext")
-    sc.hadoopConfiguration.set("fs.s3a.awsAccessKeyId", key);
-    sc.hadoopConfiguration.set("fs.s3a.awsSecretAccessKey", secret);
+    sc.hadoopConfiguration.set("fs.s3a.access.key", key);
+    sc.hadoopConfiguration.set("fs.s3a.secret.key", secret);
+    sc.hadoopConfiguration.set("fs.s3a.path.style.access", "true")
+    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint_with_protocol")
+    if (storageEndpoint.nonEmpty) {
+      sc.hadoopConfiguration.set("fs.s3a.endpoint", storageEndpoint)
+    }
   }
 }
