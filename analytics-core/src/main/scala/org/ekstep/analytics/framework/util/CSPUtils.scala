@@ -65,5 +65,9 @@ object OCIProvider extends ICloudStorageProvider {
     JobLogger.log("Configuring OCI Access Key & Secret Key to SparkContext")
     sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", key);
     sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", secret);
+    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint_with_protocol")
+    if (storageEndpoint.nonEmpty) {
+      sc.hadoopConfiguration.set("fs.s3n.endpoint", storageEndpoint)
+    }
   }
 }
