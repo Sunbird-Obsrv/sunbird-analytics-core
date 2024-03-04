@@ -16,11 +16,9 @@ import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.Period._
 import org.ekstep.analytics.framework.util.CloudStorageProviders.setSparkCSPConfigurations
 import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
-
 import scala.collection.mutable.ListBuffer
 //import org.ekstep.analytics.framework.conf.AppConf
 import java.util.zip.{ZipEntry, ZipOutputStream}
-
 import org.apache.commons.lang3.StringUtils
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
@@ -91,7 +89,9 @@ object CommonUtil {
     }
 
     val sc = new SparkContext(conf)
-    setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"), None, None)
+    val key = AppConf.getConfig("storage.key.config")
+    val secret = AppConf.getConfig("storage.secret.config")
+    setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"), Option(key), Option(secret))
     JobLogger.log("Spark Context initialized")
     sc
   }
