@@ -30,8 +30,8 @@ class MergeUtil {
     })
     mergeConfig.merge.files.foreach(filePaths => {
       val isPrivate = mergeConfig.reportFileAccess.getOrElse(true)
-      val storageKey= if(isPrivate) "azure_storage_key" else "druid_storage_account_key"
-      val storageSecret= if(isPrivate) "azure_storage_secret" else "druid_storage_account_secret"
+      val storageKey= if(isPrivate) "cloud_storage_key" else "druid_storage_account_key"
+      val storageSecret= if(isPrivate) "cloud_storage_secret" else "druid_storage_account_secret"
       val metricLabels= mergeConfig.metricLabels.getOrElse(List())
       val path = new Path(filePaths("reportPath"))
       val postContainer= mergeConfig.postContainer.getOrElse(AppConf.getConfig("druid.report.default.container"))
@@ -191,7 +191,7 @@ class MergeUtil {
   def fetchBlobFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
 
     val storageService = if (isPrivate)
-      fc.getStorageService("azure", "azure_storage_key", "azure_storage_secret")
+      fc.getStorageService("azure", "cloud_storage_key", "cloud_storage_secret")
     else {
       fc.getStorageService("azure", "druid_storage_account_key", "druid_storage_account_secret")
     }
@@ -205,7 +205,7 @@ class MergeUtil {
   def fetchOSSFile(filePath: String, isPrivate: Boolean, container: String)(implicit sqlContext: SQLContext, fc: FrameworkContext): DataFrame = {
 
     val storageService = if (isPrivate)
-      fc.getStorageService("oci", "aws_storage_key", "aws_storage_secret")
+      fc.getStorageService("oci", "cloud_storage_key", "cloud_storage_secret")
     else {
       fc.getStorageService("oci", "druid_storage_account_key", "druid_storage_account_secret")
     }
