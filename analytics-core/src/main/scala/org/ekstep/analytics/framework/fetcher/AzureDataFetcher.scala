@@ -14,7 +14,7 @@ object AzureDataFetcher {
 
         val keys = for(query <- queries) yield {
             val paths = if(query.folder.isDefined && query.endDate.isDefined && query.folder.getOrElse("false").equals("true")) {
-                Array("wasb://"+getBucket(query.bucket) + "@" + AppConf.getStorageKey("azure") + ".blob.core.windows.net" + "/" + getPrefix(query.prefix) + query.endDate.getOrElse(""))
+                Array("wasb://"+getBucket(query.bucket) + "@" + AppConf.getStorageKey + ".blob.core.windows.net" + "/" + getPrefix(query.prefix) + query.endDate.getOrElse(""))
             } else {
                 getKeys(query);
             }

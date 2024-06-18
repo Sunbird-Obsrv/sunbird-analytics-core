@@ -21,7 +21,7 @@ object S3DataFetcher {
 
         val keys = for(query <- queries) yield {
             val paths = if(query.folder.isDefined && query.endDate.isDefined && query.folder.getOrElse("false").equals("true")) {
-                Array("s3n://"+getBucket(query.bucket)+"/"+getPrefix(query.prefix) + query.endDate.get)
+                Array("s3a://"+getBucket(query.bucket)+"/"+getPrefix(query.prefix) + query.endDate.get)
             } else {
                 getKeys(query);
             }
@@ -36,7 +36,7 @@ object S3DataFetcher {
     }
     
     private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
-        val storageService = fc.getStorageService("aws");
+        val storageService = fc.getStorageService("aws", "aws_storage_key", "aws_storage_secret");
         val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
         storageService.getPaths(getBucket(query.bucket), keys).toArray
     }

@@ -57,13 +57,13 @@ class DatasetExt(df: Dataset[Row]) {
 
     val filePrefix = storageConfig.store.toLowerCase() match {
       case "s3" =>
-        "s3n://"
+        "s3a://"
       case "azure" =>
         "wasb://"
       case "gcloud" =>
         "gs://"
       case "oci" =>
-        "s3n://"
+        "s3a://"
       case _ =>
         ""
     }

@@ -14,7 +14,7 @@ object OCIDataFetcher {
 
         val keys = for(query <- queries) yield {
             val paths = if(query.folder.isDefined && query.endDate.isDefined && query.folder.getOrElse("false").equals("true")) {
-                Array("s3n://" + getBucket(query.bucket) + "/" + getPrefix(query.prefix) + query.endDate.get)
+                Array("s3a://" + getBucket(query.bucket) + "/" + getPrefix(query.prefix) + query.endDate.get)
             } else {
                 getKeys(query);
             }
