@@ -10,6 +10,7 @@ import org.joda.time.LocalDate
 import java.util.Date
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.ekstep.analytics.framework.FrameworkContext
+import scala.collection.JavaConverters._
 
 /**
  * @author Santhosh
@@ -37,8 +38,8 @@ object S3DataFetcher {
     
     private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
         val storageService = fc.getStorageService("aws");
-        val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
-        storageService.getPaths(getBucket(query.bucket), keys).toArray
+        val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate.orNull, query.endDate.orNull, query.delta.map(Integer.valueOf(_)).orNull, query.datePattern.getOrElse("yyyy-MM-dd"))
+        storageService.getPaths(getBucket(query.bucket), keys).asScala.toArray
     }
     
     private def getBucket(bucket: Option[String]) : String = {

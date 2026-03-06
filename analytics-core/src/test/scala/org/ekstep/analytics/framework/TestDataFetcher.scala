@@ -4,7 +4,7 @@ import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
-import org.sunbird.cloud.storage.BaseStorageService
+import org.sunbird.cloud.storage.IStorageService
 import org.ekstep.analytics.framework.fetcher.S3DataFetcher
 import org.ekstep.analytics.framework.fetcher.AzureDataFetcher
 
@@ -57,11 +57,11 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
     it should "fetch no file from S3 and return an empty RDD" in {
         
         implicit val mockFc = mock[FrameworkContext];
-        val mockStorageService = mock[BaseStorageService]
+        val mockStorageService = mock[IStorageService]
         mockFc.inputEventsCount = sc.longAccumulator("Count");
-        (mockFc.getStorageService(_:String):BaseStorageService).expects("aws").returns(mockStorageService);
-        (mockStorageService.searchObjects _).expects("dev-data-store", "abc/", Option("2012-01-01"), Option("2012-02-01"), None, "yyyy-MM-dd").returns(null);
-        (mockStorageService.getPaths _).expects("dev-data-store", null).returns(List("src/test/resources/sample_telemetry_2.log"))
+        (mockFc.getStorageService(_:String):IStorageService).expects("aws").returns(mockStorageService);
+        (mockStorageService.searchObjects(_: String, _: String, _: String, _: String, _: Integer, _: String)).expects("dev-data-store", "abc/", "2012-01-01", "2012-02-01", null.asInstanceOf[Integer], "yyyy-MM-dd").returns(null);
+        (mockStorageService.getPaths _).expects("dev-data-store", null).returns(java.util.Arrays.asList("src/test/resources/sample_telemetry_2.log"))
         val queries = Option(Array(
             Query(Option("dev-data-store"), Option("abc/"), Option("2012-01-01"), Option("2012-02-01"))
         ));
@@ -89,10 +89,10 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
 
         implicit val mockFc = mock[FrameworkContext];
         mockFc.inputEventsCount = sc.longAccumulator("Count");
-        val mockStorageService = mock[BaseStorageService]
-        (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService);
-        (mockStorageService.searchObjects _).expects("dev-data-store", "raw/", Option("2017-08-31"), Option("2017-08-31"), None, "yyyy-MM-dd").returns(null);
-        (mockStorageService.getPaths _).expects("dev-data-store", null).returns(List("src/test/resources/sample_telemetry_2.log"))
+        val mockStorageService = mock[IStorageService]
+        (mockFc.getStorageService(_:String, _:String, _:String):IStorageService).expects("azure", "azure_storage_key", "azure_storage_secret").returns(mockStorageService);
+        (mockStorageService.searchObjects(_: String, _: String, _: String, _: String, _: Integer, _: String)).expects("dev-data-store", "raw/", "2017-08-31", "2017-08-31", null.asInstanceOf[Integer], "yyyy-MM-dd").returns(null);
+        (mockStorageService.getPaths _).expects("dev-data-store", null).returns(java.util.Arrays.asList("src/test/resources/sample_telemetry_2.log"))
         val queries = Option(Array(
             Query(Option("dev-data-store"), Option("raw/"), Option("2017-08-31"), Option("2017-08-31"))
         ));
@@ -166,11 +166,11 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
     it should "fetch data from Google Cloud" in {
 
         implicit val mockFc = mock[FrameworkContext];
-        val mockStorageService = mock[BaseStorageService]
+        val mockStorageService = mock[IStorageService]
         mockFc.inputEventsCount = sc.longAccumulator("Count");
-        (mockFc.getStorageService(_:String, _:String, _:String):BaseStorageService).expects("gcloud", "gcloud_client_key", "gcloud_private_secret").returns(mockStorageService);
-        (mockStorageService.searchObjects _).expects("test-obsrv-data-store", "unique/raw/", Option("2022-08-09"), Option("2022-08-09"), None, "yyyy-MM-dd").returns(null);
-        (mockStorageService.getPaths _).expects("test-obsrv-data-store", null).returns(List("src/test/resources/sample_telemetry_2.log"))
+        (mockFc.getStorageService(_:String, _:String, _:String):IStorageService).expects("gcloud", "gcloud_client_key", "gcloud_private_secret").returns(mockStorageService);
+        (mockStorageService.searchObjects(_: String, _: String, _: String, _: String, _: Integer, _: String)).expects("test-obsrv-data-store", "unique/raw/", "2022-08-09", "2022-08-09", null.asInstanceOf[Integer], "yyyy-MM-dd").returns(null);
+        (mockStorageService.getPaths _).expects("test-obsrv-data-store", null).returns(java.util.Arrays.asList("src/test/resources/sample_telemetry_2.log"))
         val queries = Option(Array(
             Query(Option("test-obsrv-data-store"), Option("unique/raw/"), Option("2022-08-09"), Option("2022-08-09"))
         ));

@@ -6,8 +6,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework.exception.DispatcherException
 import org.ekstep.analytics.framework.util.{ CommonUtil, JobLogger }
-import org.sunbird.cloud.storage.conf.AppConf
-import org.sunbird.cloud.storage.factory.{ StorageServiceFactory }
+import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.Level
 import scala.concurrent.Await
 import org.ekstep.analytics.framework.FrameworkContext

@@ -3,8 +3,7 @@ package org.ekstep.analytics.framework.fetcher
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.{FrameworkContext, Query}
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.storage.CustomS3StorageService
-import org.sunbird.cloud.storage.factory.{StorageConfig, StorageServiceFactory}
+import scala.collection.JavaConverters._
 
 /**
  * @author Santhosh
@@ -32,8 +31,8 @@ object CephS3DataFetcher {
 
     private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
         val storageService = fc.getStorageService("s3", AppConf.getConfig("storage.key.config"), AppConf.getConfig("storage.secret.config"))
-        val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
-        storageService.getPaths(getBucket(query.bucket), keys).toArray
+        val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate.orNull, query.endDate.orNull, query.delta.map(Integer.valueOf(_)).orNull, query.datePattern.getOrElse("yyyy-MM-dd"))
+        storageService.getPaths(getBucket(query.bucket), keys).asScala.toArray
     }
 
     private def getBucket(bucket: Option[String]) : String = {

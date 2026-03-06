@@ -1,11 +1,10 @@
 package org.ekstep.analytics.framework.fetcher
 
 import org.ekstep.analytics.framework.Query
-//import org.ekstep.analytics.framework.conf.AppConf
+import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.sunbird.cloud.storage.factory.{StorageConfig, StorageServiceFactory}
-import org.sunbird.cloud.storage.conf.AppConf
 import org.ekstep.analytics.framework.FrameworkContext
+import scala.collection.JavaConverters._
 
 object AzureDataFetcher {
 
@@ -14,7 +13,7 @@ object AzureDataFetcher {
 
         val keys = for(query <- queries) yield {
             val paths = if(query.folder.isDefined && query.endDate.isDefined && query.folder.getOrElse("false").equals("true")) {
-                Array("wasb://"+getBucket(query.bucket) + "@" + AppConf.getStorageKey("azure") + ".blob.core.windows.net" + "/" + getPrefix(query.prefix) + query.endDate.getOrElse(""))
+                Array("wasb://"+getBucket(query.bucket) + "@" + AppConf.getConfig("azure_storage_key") + ".blob.core.windows.net" + "/" + getPrefix(query.prefix) + query.endDate.getOrElse(""))
             } else {
                 getKeys(query);
             }
@@ -29,8 +28,8 @@ object AzureDataFetcher {
 
     private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
         val storageService = fc.getStorageService("azure", "azure_storage_key", "azure_storage_secret");
-        val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
-        storageService.getPaths(getBucket(query.bucket), keys).toArray
+        val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate.orNull, query.endDate.orNull, query.delta.map(Integer.valueOf(_)).orNull, query.datePattern.getOrElse("yyyy-MM-dd"))
+        storageService.getPaths(getBucket(query.bucket), keys).asScala.toArray
     }
 
     private def getBucket(bucket: Option[String]) : String = {

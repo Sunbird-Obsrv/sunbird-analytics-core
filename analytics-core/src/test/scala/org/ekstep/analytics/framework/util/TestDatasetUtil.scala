@@ -1,13 +1,12 @@
 package org.ekstep.analytics.framework.util
 
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.azure.AzureException
 import org.apache.hadoop.fs.s3.S3Exception
 import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
-import org.sunbird.cloud.storage.BaseStorageService
+import org.sunbird.cloud.storage.IStorageService
 
 import java.io.Serializable
 
@@ -70,14 +69,14 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     val rdd2 = sparkSession.sparkContext.textFile("src/test/resources/test-report3/2020-01-11.zip", 1).collect();
 
 
-    a[AzureException] should be thrownBy {
+    a[Exception] should be thrownBy {
       df1.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv",
         "test-report", Option(Map("header" -> "true")), Option(Seq("env")),None,Option(true))
     }
-    val mockBaseStorageService = mock[BaseStorageService]
-    (mockBaseStorageService.download _).expects("test-container", "test-report3/2020-01-12.csv","src/test/resources/test-report3/", Some(false)).once()
-    (mockBaseStorageService.upload _).expects("test-container", "src/test/resources/test-report3/2020-01-12.zip",
-      "test-report3/2020-01-12.zip", Some(false), Some(0), Some(3), None).once()
+    val mockBaseStorageService = mock[IStorageService]
+    (mockBaseStorageService.download(_: String, _: String, _: String, _: Boolean)).expects("test-container", "test-report3/2020-01-12.csv","src/test/resources/test-report3/", false).once()
+    (mockBaseStorageService.upload(_: String, _: String, _: String, _: Boolean, _: Int, _: Int, _: Integer)).expects("test-container", "src/test/resources/test-report3/2020-01-12.zip",
+      "test-report3/2020-01-12.zip", false, 0, 3, null.asInstanceOf[Integer]).once()
       df.copyMergeFile(Seq("Date"), "", "src/test/resources/test-report3/_tmp",
         "src/test/resources/test-report3", sparkSession.sparkContext.hadoopConfiguration, "csv",
         Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mockBaseStorageService), Option(true),None,Some("src/test/resources/"))
@@ -104,7 +103,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
       def handleException(caughtException: Throwable): Unit = {
         caughtException match {
           case s3Exception: S3Exception => println("S3 Exception occurred")
-          case azureException: AzureException => println("Azure Exception occurred")
+          case _: Exception => println("Exception occurred")
           case illegalArgumentException: IllegalArgumentException => println("CSP Configurations are not found")
           case _ =>
             fail("Unexpected exception type thrown")

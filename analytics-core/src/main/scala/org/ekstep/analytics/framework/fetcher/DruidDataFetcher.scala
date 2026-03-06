@@ -21,7 +21,7 @@ import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, ResultAccumulator}
-import org.sunbird.cloud.storage.conf.AppConf
+import org.ekstep.analytics.framework.conf.AppConf
 
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 

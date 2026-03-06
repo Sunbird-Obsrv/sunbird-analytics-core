@@ -2,7 +2,7 @@ package org.ekstep.analytics.framework.fetcher
 
 import org.ekstep.analytics.framework.{FrameworkContext, Query}
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.sunbird.cloud.storage.conf.AppConf
+import scala.collection.JavaConverters._
 
 object GcloudDataFetcher {
 
@@ -26,8 +26,8 @@ object GcloudDataFetcher {
 
   private def getKeys(query: Query)(implicit fc: FrameworkContext) : Array[String] = {
     val storageService = fc.getStorageService("gcloud", "gcloud_client_key", "gcloud_private_secret");
-    val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate, query.endDate, query.delta, query.datePattern.getOrElse("yyyy-MM-dd"))
-    storageService.getPaths(getBucket(query.bucket), keys).toArray
+    val keys = storageService.searchObjects(getBucket(query.bucket), getPrefix(query.prefix), query.startDate.orNull, query.endDate.orNull, query.delta.map(Integer.valueOf(_)).orNull, query.datePattern.getOrElse("yyyy-MM-dd"))
+    storageService.getPaths(getBucket(query.bucket), keys).asScala.toArray
   }
 
   private def getBucket(bucket: Option[String]) : String = {

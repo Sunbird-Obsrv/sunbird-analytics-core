@@ -4,21 +4,19 @@ import com.ing.wbaa.druid.{DruidConfig, QueryHost}
 import com.ing.wbaa.druid.client.DruidClient
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.StructType
-import org.sunbird.cloud.storage.BaseStorageService
-import org.sunbird.cloud.storage.factory.StorageServiceFactory
+import org.sunbird.cloud.storage.{IStorageService, StorageConfig => SdkStorageConfig, StorageServiceFactory}
 
 import scala.collection.mutable.Map
 import org.ekstep.analytics.framework.util.HadoopFileUtil
 import org.apache.spark.util.LongAccumulator
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.fetcher.{AkkaHttpClient, AkkaHttpUtil, DruidDataFetcher}
-import org.ekstep.analytics.framework.storage.{CustomS3StorageService,CustomOCIStorageService}
 
 class FrameworkContext {
 
   var dc: DruidClient = null;
   var drc: DruidClient = null;
-  var storageContainers: Map[String, BaseStorageService] = Map();
+  var storageContainers: Map[String, IStorageService] = Map();
   val fileUtil = new HadoopFileUtil();
   
   var inputEventsCount: LongAccumulator = _
@@ -33,7 +31,7 @@ class FrameworkContext {
     }
   }
 
-  def getStorageService(storageType: String): BaseStorageService = {
+  def getStorageService(storageType: String): IStorageService = {
     getStorageService(storageType, storageType, storageType);
   }
 
@@ -41,46 +39,57 @@ class FrameworkContext {
     return fileUtil;
   }
 
-  def newStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
+  def newStorageService(storageType: String, storageKey: String, storageSecret: String): IStorageService = {
     val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint_with_protocol")
     val storageRegion = AppConf.getConfig("cloud_storage_region")
-    val key = AppConf.getConfig("storage.key.config")
-    val secret = AppConf.getConfig("storage.secret.config")
     if ("s3".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
-      new CustomS3StorageService(
-        org.sunbird.cloud.storage.factory.StorageConfig(
-          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint)
-        )
-      )
-    } else if ("oci".equalsIgnoreCase(storageType)   && !"".equalsIgnoreCase(storageEndpoint)){
-      // new CustomOCIStorageService(
-      //   org.sunbird.cloud.storage.factory.StorageConfig(
-      //     storageType, storageKey, storageSecret, Option(storageEndpoint)
-      //   )
-      // )
-      new CustomOCIStorageService(
-        org.sunbird.cloud.storage.factory.StorageConfig(
-          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret), Option(storageEndpoint), Option(storageRegion)
-        )
-      )
-    }
-    else {
-      StorageServiceFactory.getStorageService(
-        org.sunbird.cloud.storage.factory.StorageConfig(
-          storageType, AppConf.getConfig(storageKey), AppConf.getConfig(storageSecret)
-        )
-      )
+      val s3Config = SdkStorageConfig.builder(SdkStorageConfig.StorageType.CEPHS3)
+        .authType(SdkStorageConfig.AuthType.ACCESS_KEY)
+        .storageKey(AppConf.getConfig(storageKey))
+        .storageSecret(AppConf.getConfig(storageSecret))
+        .endPoint(storageEndpoint)
+        .build()
+      StorageServiceFactory.getStorageService(s3Config)
+    } else if ("oci".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
+      val ociConfig = SdkStorageConfig.builder(SdkStorageConfig.StorageType.OCI)
+        .authType(SdkStorageConfig.AuthType.ACCESS_KEY)
+        .storageKey(AppConf.getConfig(storageKey))
+        .storageSecret(AppConf.getConfig(storageSecret))
+        .endPoint(storageEndpoint)
+        .region(storageRegion)
+        .build()
+      StorageServiceFactory.getStorageService(ociConfig)
+    } else if ("aws".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
+      val awsConfig = SdkStorageConfig.builder(SdkStorageConfig.StorageType.AWS)
+        .authType(SdkStorageConfig.AuthType.IAM)
+        .region(storageRegion)
+        .build()
+      StorageServiceFactory.getStorageService(awsConfig)
+    } else {
+      val sdkType = storageType.toLowerCase match {
+        case "azure" => SdkStorageConfig.StorageType.AZURE
+        case "gcloud" => SdkStorageConfig.StorageType.GCLOUD
+        case "oci"   => SdkStorageConfig.StorageType.OCI
+        case "aws"   => SdkStorageConfig.StorageType.AWS
+        case _       => SdkStorageConfig.StorageType.CEPHS3
+      }
+      val config = SdkStorageConfig.builder(sdkType)
+        .authType(SdkStorageConfig.AuthType.ACCESS_KEY)
+        .storageKey(AppConf.getConfig(storageKey))
+        .storageSecret(AppConf.getConfig(storageSecret))
+        .build()
+      StorageServiceFactory.getStorageService(config)
     }
   }
 
-  def getStorageService(storageType: String, storageKey: String, storageSecret: String): BaseStorageService = {
+  def getStorageService(storageType: String, storageKey: String, storageSecret: String): IStorageService = {
     if("local".equals(storageType)) {
       return null;
     }
     if (!storageContainers.contains(storageType + "|" + storageKey)) {
       storageContainers.put(storageType + "|" + storageKey, newStorageService(storageType, storageKey, storageSecret))
     }
-    storageContainers.get(storageType + "|" + storageKey).get
+    storageContainers(storageType + "|" + storageKey)
   }
 
   def setDruidClient(druidClient: DruidClient, druidRollupClient: DruidClient) {
@@ -121,7 +130,7 @@ class FrameworkContext {
 
   def shutdownStorageService() = {
     if (storageContainers.nonEmpty) {
-      storageContainers.foreach(f => f._2.closeContext());
+      storageContainers.foreach(f => f._2.close());
     }
   }
 

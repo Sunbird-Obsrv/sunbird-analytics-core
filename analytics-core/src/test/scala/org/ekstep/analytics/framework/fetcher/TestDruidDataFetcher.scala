@@ -17,7 +17,7 @@ import org.ekstep.analytics.framework.util.{CommonUtil, EmbeddedPostgresqlServic
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.joda.time.DateTimeUtils
-import org.sunbird.cloud.storage.conf.AppConf
+import org.ekstep.analytics.framework.conf.AppConf
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

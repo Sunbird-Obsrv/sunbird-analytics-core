@@ -17,12 +17,11 @@ import org.ekstep.analytics.framework.Period._
 import org.ekstep.analytics.framework.util.CloudStorageProviders.setSparkCSPConfigurations
 import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
 import scala.collection.mutable.ListBuffer
-//import org.ekstep.analytics.framework.conf.AppConf
+import org.ekstep.analytics.framework.conf.AppConf
 import java.util.zip.{ZipEntry, ZipOutputStream}
 import org.apache.commons.lang3.StringUtils
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
-import org.sunbird.cloud.storage.conf.AppConf
 import scala.util.control.Breaks._
 
 object CommonUtil {
@@ -734,8 +733,8 @@ object CommonUtil {
       case "gcloud" =>
         sc.hadoopConfiguration.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem")
         sc.hadoopConfiguration.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS")
-        sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
-        sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getConfig("cloud_storage_key"))
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getConfig("cloud_storage_secret"))
         sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
       case "oci" =>
         sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")));

@@ -8,9 +8,8 @@ import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils}
 import org.elasticsearch.hadoop.EsHadoopIllegalArgumentException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
-import org.sunbird.cloud.storage.BaseStorageService
+import org.sunbird.cloud.storage.IStorageService
 import org.ekstep.analytics.framework.dispatcher.S3Dispatcher
-import org.apache.hadoop.fs.azure.AzureException
 import org.ekstep.analytics.framework.dispatcher.ConsoleDispatcher
 
 /**
@@ -172,15 +171,15 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
 
     implicit val fc = new FrameworkContext();
 
-    a[AzureException] should be thrownBy {
+    a[Exception] should be thrownBy {
       AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
     }
     
-    a[AzureException] should be thrownBy {
+    a[Exception] should be thrownBy {
       OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key", Option("azure_storage_key")), events.map(f => JSONUtils.serialize(f)));
     }
     
-    a[AzureException] should be thrownBy {
+    a[Exception] should be thrownBy {
       OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key"), events.map(f => JSONUtils.serialize(f)));
     }
     
