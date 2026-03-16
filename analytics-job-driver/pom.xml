@@ -146,10 +146,7 @@
 								<exclude>META-INF/*.DSA</exclude>
 								<exclude>META-INF/*.RSA</exclude>
 								<!-- <exclude>META-INF/services/org.sunbird.cloud.storage.StorageServiceProvider</exclude> -->
-								<exclude>com/fasterxml/jackson/core/**</exclude>
-								<exclude>com/fasterxml/jackson/databind/**</exclude>
-								<exclude>com/fasterxml/jackson/annotation/**</exclude>
-								<exclude>com/fasterxml/jackson/module/**</exclude>
+								<exclude>com/fasterxml/jackson/**</exclude>
 							</excludes>
 						</filter>
 					</filters>
