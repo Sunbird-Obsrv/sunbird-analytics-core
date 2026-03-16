@@ -25,6 +25,8 @@
 	<modules>
 		<module>analytics-core</module>
 		<module>analytics-job-driver</module>
+		<module>optional-master</module>
+		<module>batch-models</module>
 	</modules>
 
 	<dependencies>

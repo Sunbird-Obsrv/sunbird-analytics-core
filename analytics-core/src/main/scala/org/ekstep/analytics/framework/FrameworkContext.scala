@@ -59,18 +59,32 @@ class FrameworkContext {
         .region(storageRegion)
         .build()
       StorageServiceFactory.getStorageService(ociConfig)
-    } else if ("aws".equalsIgnoreCase(storageType) && !"".equalsIgnoreCase(storageEndpoint)) {
-      val awsConfig = SdkStorageConfig.builder(SdkStorageConfig.StorageType.AWS)
-        .authType(SdkStorageConfig.AuthType.IAM)
-        .region(storageRegion)
-        .build()
-      StorageServiceFactory.getStorageService(awsConfig)
+    } else if ("aws".equalsIgnoreCase(storageType)) {
+      val awsConfigBuilder = SdkStorageConfig.builder(SdkStorageConfig.StorageType.AWS)
+      val webIdentityTokenFile = System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+      val roleArn = System.getenv("AWS_ROLE_ARN")
+      val useIAM = webIdentityTokenFile != null && !webIdentityTokenFile.isEmpty && roleArn != null && !roleArn.isEmpty
+      // Only set region if explicitly configured; otherwise let the SDK auto-detect from
+      // AWS_DEFAULT_REGION / AWS_REGION env vars (automatically set in EKS/OIDC pods)
+      if (storageRegion != null && !storageRegion.isEmpty) awsConfigBuilder.region(storageRegion)
+      // For IAM/OIDC, do NOT set a custom endpoint — the SDK must use the standard AWS regional
+      // endpoint for SigV4 signing to work correctly with temporary IRSA credentials.
+      // A custom endpoint (e.g. https://s3.us-east-1.amazonaws.com) forces customEndpoint=true
+      // in AwsStorageService, which causes signature mismatch with session-token-based auth.
+      if (!useIAM && storageEndpoint != null && !storageEndpoint.isEmpty) awsConfigBuilder.endPoint(storageEndpoint)
+      if (useIAM) {
+        awsConfigBuilder.authType(SdkStorageConfig.AuthType.IAM)
+      } else {
+        awsConfigBuilder.authType(SdkStorageConfig.AuthType.ACCESS_KEY)
+          .storageKey(AppConf.getConfig(storageKey))
+          .storageSecret(AppConf.getConfig(storageSecret))
+      }
+      StorageServiceFactory.getStorageService(awsConfigBuilder.build())
     } else {
       val sdkType = storageType.toLowerCase match {
         case "azure" => SdkStorageConfig.StorageType.AZURE
         case "gcloud" => SdkStorageConfig.StorageType.GCLOUD
         case "oci"   => SdkStorageConfig.StorageType.OCI
-        case "aws"   => SdkStorageConfig.StorageType.AWS
         case _       => SdkStorageConfig.StorageType.CEPHS3
       }
       val config = SdkStorageConfig.builder(sdkType)

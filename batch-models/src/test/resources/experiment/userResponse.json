@@ -1,0 +1,593 @@
+{
+  "id": "api.user.search",
+  "ver": "v1",
+  "ts": "2019-07-30 05:41:37:009+0000",
+  "params": {
+    "resmsgid": null,
+    "msgid": "28b5b453-bb4d-44be-91dc-cb17472bbe79",
+    "err": null,
+    "status": "success",
+    "errmsg": null
+  },
+  "responseCode": "OK",
+  "result": {
+    "response": {
+      "count": 6,
+      "content": [
+        {
+          "lastName": null,
+          "rootOrgName": "Sunbird",
+          "roles": [
+            "BOOK_REVIEWER"
+          ],
+          "channel": "ROOT_ORG",
+          "updatedDate": "2019-03-19 10:55:27:201+0000",
+          "batches": [],
+          "isDeleted": false,
+          "organisations": [
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "orgName": "Sunbird",
+              "addedByName": null,
+              "addedBy": null,
+              "roles": [
+                "BOOK_REVIEWER",
+                "PUBLIC"
+              ],
+              "approvedBy": null,
+              "updatedDate": "2019-03-19 10:55:27:222+0000",
+              "userId": "d5fd92df-2683-4357-8620-45bc0683f38c",
+              "approvaldate": null,
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "b00bc992ef25f1a9a8d63291e20efc8d",
+              "isRejected": false,
+              "id": "01269669690267238412",
+              "position": null,
+              "isApproved": false,
+              "orgjoindate": "2019-02-11 12:47:05:420+0000",
+              "orgLeftDate": null
+            }
+          ],
+          "id": "d5fd92df-2683-4357-8620-45bc0683f38c",
+          "tempPassword": null,
+          "identifier": "d5fd92df-2683-4357-8620-45bc0683f38c",
+          "thumbnail": null,
+          "updatedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+          "phoneVerified": false,
+          "profileSummary": null,
+          "locationIds": [],
+          "registryId": null,
+          "rootOrgId": "ORG_001",
+          "firstName": "BOOK",
+          "emailVerified": true,
+          "lastLoginTime": null,
+          "tncAcceptedOn": "2019-02-11T12:48:50.282Z",
+          "createdDate": "2019-02-11 12:47:05:293+0000",
+          "framework": {
+            "gradeLevel": [
+              "Grade 1"
+            ],
+            "subject": [
+              "English"
+            ],
+            "id": [
+              "NCFCOPY"
+            ],
+            "medium": [
+              "Hindi"
+            ],
+            "board": [
+              "CBSE"
+            ]
+          },
+          "createdBy": "874ed8a5-782e-4f6c-8f36-e0288455901e",
+          "currentLoginTime": null,
+          "userType": "OTHER",
+          "tncAcceptedVersion": "v1",
+          "status": 1
+        },
+        {
+          "lastName": "creator_org_001",
+          "roles": [
+            "PUBLIC"
+          ],
+          "channel": null,
+          "updatedDate": "2019-02-21 10:56:05:135+0000",
+          "isDeleted": true,
+          "organisations": [
+            {
+              "organisationId": "0123653943740170242",
+              "updatedBy": null,
+              "orgName": "QA ORG",
+              "addedByName": null,
+              "addedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "roles": [
+                "REPORT_VIEWER",
+                "CONTENT_REVIEWER"
+              ],
+              "approvedBy": null,
+              "updatedDate": null,
+              "userId": "b2479136-8608-41c0-b3b1-283f38c338ed",
+              "approvaldate": null,
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "0123653943740170242",
+              "isRejected": false,
+              "id": "0123653943740170242",
+              "position": null,
+              "isApproved": false,
+              "orgjoindate": "2019-02-21 10:55:05:340+0000",
+              "orgLeftDate": null
+            },
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "orgName": "Sunbird",
+              "addedByName": "paqPbvW3s7CNzPQGTuCEicjfZJFzN9G7DTO7YJJ3J2tY/eZgGk600hTD3UcLrIDBIcrBmwIB1Stu\n3N0aVoinZmTEhYsqwYNB3kfjDCXXLzCL2fzskZpcyvAQqYxoa3ePT6a+wzaAmCWueMEdPmZuRg==",
+              "addedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "roles": [
+                "REPORT_VIEWER",
+                "CONTENT_REVIEWER"
+              ],
+              "approvedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "updatedDate": "2019-02-21 10:55:05:327+0000",
+              "userId": "b2479136-8608-41c0-b3b1-283f38c338ed",
+              "approvaldate": "2018-03-16 10:44:22:327+0000",
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": null,
+              "isRejected": false,
+              "id": "ORG_001",
+              "position": null,
+              "isApproved": false,
+              "orgjoindate": "2018-03-16 10:44:22:327+0000",
+              "orgLeftDate": null
+            }
+          ],
+          "id": "b2479136-8608-41c0-b3b1-283f38c338ed",
+          "tempPassword": null,
+          "identifier": "b2479136-8608-41c0-b3b1-283f38c338ed",
+          "thumbnail": null,
+          "updatedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+          "phoneVerified": null,
+          "profileSummary": null,
+          "locationIds": [
+            "95fdafcd-5a63-44b7-b570-9ae87a6a7d04",
+            "7608af61-285f-4e25-b644-3d40cc7d7e0d",
+            "969dd3c1-4e98-4c17-a994-559f2dc70e18"
+          ],
+          "registryId": null,
+          "rootOrgId": "ORG_001",
+          "firstName": "book",
+          "emailVerified": false,
+          "lastLoginTime": null,
+          "tncAcceptedOn": "2019-01-02T12:53:43.710Z",
+          "createdDate": "2018-03-16 10:43:28:156+0000",
+          "framework": {
+            "gradeLevel": [
+              "Grade 1"
+            ],
+            "subject": [
+              "English"
+            ],
+            "id": [
+              "NCFCOPY"
+            ],
+            "medium": [
+              "English"
+            ],
+            "board": [
+              "CBSE"
+            ]
+          },
+          "createdBy": "",
+          "currentLoginTime": null,
+          "userType": null,
+          "tncAcceptedVersion": "v1",
+          "status": 0
+        },
+        {
+          "lastName": "User",
+          "maskedPhone": "******7418",
+          "rootOrgName": "Sunbird",
+          "roles": [
+            "public"
+          ],
+          "channel": null,
+          "updatedDate": "2019-04-09 07:29:24:481+0000",
+          "batches": [
+            {
+              "enrolledOn": "2019-02-12 12:25:41:321+0000",
+              "lastAccessedOn": "2019-05-14T06:17:07.929Z",
+              "progress": 0,
+              "batchId": "012610271956156416144",
+              "courseId": "do_112607994234183680118"
+            },
+            {
+              "enrolledOn": "2018-10-09 16:25:42:676+0000",
+              "lastAccessedOn": "2018-12-20T13:55:06.812Z",
+              "progress": 1,
+              "batchId": "0126083288437637121",
+              "courseId": "do_1126074283966218241265"
+            },
+            {
+              "enrolledOn": "2018-10-24 05:02:05:087+0000",
+              "lastAccessedOn": null,
+              "progress": 0,
+              "batchId": "0126186096777543682",
+              "courseId": "do_112617416029536256139"
+            },
+            {
+              "enrolledOn": "2019-02-13 13:05:59:282+0000",
+              "lastAccessedOn": "2019-03-07T07:18:27.280Z",
+              "progress": 0,
+              "batchId": "0126944484597432320",
+              "courseId": "do_112694011070554112119"
+            },
+            {
+              "enrolledOn": "2019-02-11 07:03:43:576+0000",
+              "lastAccessedOn": null,
+              "progress": 0,
+              "batchId": "012696528566116352669",
+              "courseId": "do_112696130630025216165"
+            }
+          ],
+          "isDeleted": null,
+          "organisations": [
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": null,
+              "orgName": "Sunbird",
+              "addedByName": null,
+              "addedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "roles": [
+                "COURSE_MENTOR",
+                "BOOK_CREATOR",
+                "PUBLIC"
+              ],
+              "approvedBy": null,
+              "updatedDate": null,
+              "userId": "8454cb21-3ce9-4e30-85b5-fade097880d8",
+              "approvaldate": null,
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "b00bc992ef25f1a9a8d63291e20efc8d",
+              "isRejected": false,
+              "id": "012718490252500992318",
+              "position": null,
+              "isApproved": false,
+              "orgjoindate": "2019-03-14 07:45:04:542+0000",
+              "orgLeftDate": null
+            }
+          ],
+          "maskedEmail": "us********@testss.com",
+          "id": "8454cb21-3ce9-4e30-85b5-fade097880d8",
+          "tempPassword": null,
+          "email": "us********@testss.com",
+          "identifier": "8454cb21-3ce9-4e30-85b5-fade097880d8",
+          "thumbnail": null,
+          "updatedBy": "8454cb21-3ce9-4e30-85b5-fade097880d8",
+          "phoneVerified": null,
+          "profileSummary": null,
+          "locationIds": [],
+          "registryId": null,
+          "userName": "ntptest104",
+          "rootOrgId": "ORG_001",
+          "firstName": "Mentor First",
+          "emailVerified": null,
+          "lastLoginTime": null,
+          "tncAcceptedOn": "2018-12-18T09:47:15.721Z",
+          "createdDate": "2017-10-31 10:47:05:401+0000",
+          "framework": {
+            "gradeLevel": [
+              "Grade 1"
+            ],
+            "subject": [
+              "English"
+            ],
+            "id": [
+              "NCFCOPY"
+            ],
+            "medium": [
+              "English"
+            ],
+            "board": [
+              "CBSE"
+            ]
+          },
+          "phone": "******7418",
+          "createdBy": "5d7eb482-c2b8-4432-bf38-cc58f3c23b45",
+          "currentLoginTime": null,
+          "userType": null,
+          "tncAcceptedVersion": "v1",
+          "status": 1
+        },
+        {
+          "lastName": "Hero",
+          "rootOrgName": "Sunbird",
+          "roles": [
+            "PUBLIC"
+          ],
+          "channel": "ROOT_ORG",
+          "updatedDate": "2019-02-25 11:08:53:676+0000",
+          "batches": [
+            {
+              "enrolledOn": "2019-02-27 05:48:18:604+0000",
+              "lastAccessedOn": null,
+              "progress": 0,
+              "batchId": "012707810597257216219",
+              "courseId": "do_1127065425662279681296"
+            }
+          ],
+          "isDeleted": false,
+          "organisations": [
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": null,
+              "orgName": "Sunbird",
+              "addedByName": "J04b8MjP8w5ypFDbO0qyqn5iCgiTNgigWRqoo03H59CF/pGx2YDzH7bPlF7VRgoRL/j/z8U2SoPS\ny2oOGOlBbmeGCBb3A9TP4GC/BcfMnP8CD3Aq+7+UlO4dd/YSv08sT6a+wzaAmCWueMEdPmZuRg==",
+              "addedBy": "b0d2f8a3-c668-4bd3-8137-a2505c99657d",
+              "roles": [
+                "COURSE_MENTOR",
+                "CONTENT_REVIEWER",
+                "ORG_ADMIN",
+                "ORG_ADMIN",
+                "BOOK_CREATOR",
+                "FLAG_REVIEWER",
+                "ANNOUNCEMENT_SENDER",
+                "CONTENT_CURATION",
+                "CONTENT_CREATION",
+                "CONTENT_REVIEW",
+                "PUBLIC"
+              ],
+              "approvedBy": "b0d2f8a3-c668-4bd3-8137-a2505c99657d",
+              "updatedDate": "2019-02-25 11:24:59:091+0000",
+              "userId": "8d5843cc-b9d4-4b5e-afa7-b76b87b03040",
+              "approvaldate": null,
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "b00bc992ef25f1a9a8d63291e20efc8d",
+              "isRejected": false,
+              "id": "ORG_001",
+              "position": null,
+              "isApproved": false,
+              "orgjoindate": null,
+              "orgLeftDate": null
+            },
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": null,
+              "orgName": "Sunbird",
+              "addedByName": null,
+              "addedBy": null,
+              "roles": [
+                "PUBLIC"
+              ],
+              "approvedBy": null,
+              "updatedDate": null,
+              "userId": "8d5843cc-b9d4-4b5e-afa7-b76b87b03040",
+              "approvaldate": null,
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "b00bc992ef25f1a9a8d63291e20efc8d",
+              "isRejected": null,
+              "id": "ORG_001",
+              "position": null,
+              "isApproved": null,
+              "orgjoindate": "2019-02-22 11:29:23:928+0000",
+              "orgLeftDate": null
+            }
+          ],
+          "id": "8d5843cc-b9d4-4b5e-afa7-b76b87b03040",
+          "tempPassword": null,
+          "identifier": "8d5843cc-b9d4-4b5e-afa7-b76b87b03040",
+          "thumbnail": null,
+          "phoneVerified": true,
+          "profileSummary": null,
+          "locationIds": [],
+          "registryId": null,
+          "rootOrgId": "ORG_001",
+          "firstName": "Sunbird Ka",
+          "emailVerified": false,
+          "lastLoginTime": null,
+          "tncAcceptedOn": "2019-02-22T11:34:41.480Z",
+          "createdDate": "2019-02-22 11:29:23:701+0000",
+          "framework": {
+            "gradeLevel": [
+              "Grade 12"
+            ],
+            "subject": [
+              "Mathematics"
+            ],
+            "id": [
+              "NCFCOPY"
+            ],
+            "medium": [
+              "English"
+            ],
+            "board": [
+              "CBSE"
+            ]
+          },
+          "createdBy": null,
+          "currentLoginTime": null,
+          "userType": "OTHER",
+          "tncAcceptedVersion": "v1",
+          "status": 1
+        },
+        {
+          "lastName": null,
+          "rootOrgName": "Sunbird",
+          "roles": [
+            "PUBLIC"
+          ],
+          "channel": "ROOT_ORG",
+          "updatedDate": "2019-02-22 06:00:24:576+0000",
+          "batches": [],
+          "isDeleted": false,
+          "organisations": [
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": null,
+              "orgName": "Sunbird",
+              "addedByName": null,
+              "addedBy": null,
+              "roles": [
+                "BOOK_CREATOR",
+                "OFFICIAL_TEXTBOOK_BADGE_ISSUER",
+                "PUBLIC"
+              ],
+              "approvedBy": null,
+              "updatedDate": null,
+              "userId": "d9c61d2a-af42-42f7-a49b-6f28b9c9babe",
+              "approvaldate": null,
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "b00bc992ef25f1a9a8d63291e20efc8d",
+              "isRejected": null,
+              "id": "ORG_001",
+              "position": null,
+              "isApproved": null,
+              "orgjoindate": "2019-02-21 12:17:13:455+0000",
+              "orgLeftDate": null
+            }
+          ],
+          "id": "d9c61d2a-af42-42f7-a49b-6f28b9c9babe",
+          "tempPassword": null,
+          "identifier": "d9c61d2a-af42-42f7-a49b-6f28b9c9babe",
+          "thumbnail": null,
+          "phoneVerified": false,
+          "profileSummary": null,
+          "locationIds": [],
+          "registryId": null,
+          "rootOrgId": "ORG_001",
+          "firstName": "Harisha",
+          "emailVerified": true,
+          "lastLoginTime": null,
+          "tncAcceptedOn": "2019-02-21T12:54:03.742Z",
+          "createdDate": "2019-02-21 12:17:13:260+0000",
+          "framework": {
+            "gradeLevel": [
+              "Grade 1"
+            ],
+            "subject": [
+              "Mathematics"
+            ],
+            "id": [
+              "NCFCOPY"
+            ],
+            "medium": [
+              "Hindi"
+            ],
+            "board": [
+              "CBSE"
+            ]
+          },
+          "createdBy": "97255811-5486-4f01-bad1-36138d0f5b8a",
+          "currentLoginTime": null,
+          "userType": "OTHER",
+          "tncAcceptedVersion": "v1",
+          "status": 1
+        },
+        {
+          "lastName": "creator_org_001",
+          "roles": [
+            "PUBLIC"
+          ],
+          "channel": null,
+          "updatedDate": "2019-02-28 10:34:52:327+0000",
+          "batches": [
+            {
+              "enrolledOn": "2019-03-01 12:44:05:306+0000",
+              "lastAccessedOn": "2019-04-08T09:44:34.865Z",
+              "progress": 0,
+              "batchId": "012709039496978432272",
+              "courseId": "do_112709030942121984149"
+            },
+            {
+              "enrolledOn": "2019-03-01 12:45:12:553+0000",
+              "lastAccessedOn": null,
+              "progress": 0,
+              "batchId": "012707151876210688231",
+              "courseId": "do_1127065425662279681296"
+            },
+            {
+              "enrolledOn": "2019-03-25 09:02:38:646+0000",
+              "lastAccessedOn": "2019-03-25T09:03:39.346Z",
+              "progress": 1,
+              "batchId": "0127128743422853121",
+              "courseId": "do_112712785064222720171"
+            }
+          ],
+          "isDeleted": null,
+          "organisations": [
+            {
+              "organisationId": "ORG_001",
+              "updatedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "orgName": "Sunbird",
+              "addedByName": "paqPbvW3s7CNzPQGTuCEicjfZJFzN9G7DTO7YJJ3J2tY/eZgGk600hTD3UcLrIDBIcrBmwIB1Stu\n3N0aVoinZmTEhYsqwYNB3kfjDCXXLzCL2fzskZpcyvAQqYxoa3ePT6a+wzaAmCWueMEdPmZuRg==",
+              "addedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "roles": [
+                "ANNOUNCEMENT_SENDER",
+                "CONTENT_CREATOR",
+                "TEACHER_BADGE_ISSUER",
+                "PUBLIC"
+              ],
+              "approvedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+              "updatedDate": "2019-02-28 10:34:52:369+0000",
+              "userId": "6d4da241-a31b-4041-bbdb-dd3a898b3f85",
+              "approvaldate": "2018-01-21 15:30:16:081+0000",
+              "isDeleted": false,
+              "parentOrgId": null,
+              "hashTagId": "b00bc992ef25f1a9a8d63291e20efc8d",
+              "isRejected": false,
+              "id": "01242357289604710416",
+              "position": null,
+              "isApproved": false,
+              "orgjoindate": "2018-01-21 15:30:16:081+0000",
+              "orgLeftDate": null
+            }
+          ],
+          "id": "6d4da241-a31b-4041-bbdb-dd3a898b3f85",
+          "tempPassword": null,
+          "identifier": "6d4da241-a31b-4041-bbdb-dd3a898b3f85",
+          "thumbnail": null,
+          "updatedBy": "781c21fc-5054-4ee0-9a02-fbb1006a4fdd",
+          "phoneVerified": null,
+          "profileSummary": "Test to check for update",
+          "locationIds": [],
+          "registryId": null,
+          "rootOrgId": "ORG_001",
+          "firstName": "హరీష్",
+          "emailVerified": false,
+          "lastLoginTime": null,
+          "tncAcceptedOn": "2018-12-18T09:46:13.592Z",
+          "createdDate": "2018-01-21 15:29:59:268+0000",
+          "framework": {
+            "gradeLevel": [
+              "Kindergarten",
+              "Grade 2"
+            ],
+            "subject": [
+              "Mathematics"
+            ],
+            "medium": [
+              "English"
+            ],
+            "board": [
+              "NCERT",
+              "CBSE"
+            ]
+          },
+          "createdBy": "",
+          "currentLoginTime": null,
+          "userType": null,
+          "tncAcceptedVersion": "v1",
+          "status": 1
+        }
+      ]
+    }
+  }
+}

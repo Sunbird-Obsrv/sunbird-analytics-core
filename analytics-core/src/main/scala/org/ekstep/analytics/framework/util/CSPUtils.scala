@@ -10,7 +10,7 @@ trait ICloudStorageProvider {
 
 object CloudStorageProviders {
   implicit val className: String = "org.ekstep.analytics.framework.util.CloudStorageProvider"
-  private val providerMap: Map[String, ICloudStorageProvider] = Map("s3" -> S3Provider, "azure" -> AzureProvider, "gcp" -> GcpProvider, "oci" -> OCIProvider)
+  private val providerMap: Map[String, ICloudStorageProvider] = Map("s3" -> S3Provider, "aws" -> S3Provider, "azure" -> AzureProvider, "gcp" -> GcpProvider, "oci" -> OCIProvider)
   def setSparkCSPConfigurations(sc: SparkContext, csp: String, storageKey: Option[String], storageSecret: Option[String]): Unit = {
     providerMap.get(csp.toLowerCase()).foreach { provider =>
       provider.setConf(sc, storageKey, storageSecret)
@@ -20,14 +20,20 @@ object CloudStorageProviders {
 object S3Provider extends ICloudStorageProvider {
   implicit val className: String = "org.ekstep.analytics.framework.util.S3Provider"
   override def setConf(sc: SparkContext, storageKey: Option[String], storageSecret: Option[String]): Unit = {
-    JobLogger.log("Configuring S3 Access Key & Secret Key to SparkContext")
-    val key = storageKey.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getAwsKey())
-    val secret = storageSecret.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getAwsSecret())
-    sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", key)
-    sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", secret)
+    JobLogger.log("Configuring S3 Access to SparkContext")
+    val webIdentityTokenFile = System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+    val roleArn = System.getenv("AWS_ROLE_ARN")
+    if (webIdentityTokenFile != null && webIdentityTokenFile.nonEmpty && roleArn != null && roleArn.nonEmpty) {
+      sc.hadoopConfiguration.set("fs.s3a.aws.credentials.provider", "com.amazonaws.auth.WebIdentityTokenCredentialsProvider")
+    } else {
+      val key = storageKey.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getAwsKey())
+      val secret = storageSecret.filter(_.nonEmpty).map(value => AppConf.getConfig(value)).getOrElse(AppConf.getAwsSecret())
+      sc.hadoopConfiguration.set("fs.s3a.access.key", key)
+      sc.hadoopConfiguration.set("fs.s3a.secret.key", secret)
+    }
     val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint")
     if (storageEndpoint.nonEmpty) {
-      sc.hadoopConfiguration.set("fs.s3n.endpoint", storageEndpoint)
+      sc.hadoopConfiguration.set("fs.s3a.endpoint", storageEndpoint)
     }
   }
 }

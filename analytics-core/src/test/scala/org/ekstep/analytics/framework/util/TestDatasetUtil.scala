@@ -1,7 +1,7 @@
 package org.ekstep.analytics.framework.util
 
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.s3.S3Exception
+import java.io.IOException
 import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.scalamock.scalatest.MockFactory
@@ -102,7 +102,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
       handleException(s3Exception)
       def handleException(caughtException: Throwable): Unit = {
         caughtException match {
-          case s3Exception: S3Exception => println("S3 Exception occurred")
+          case _: IOException => println("S3 Exception occurred")
           case _: Exception => println("Exception occurred")
           case illegalArgumentException: IllegalArgumentException => println("CSP Configurations are not found")
           case _ =>

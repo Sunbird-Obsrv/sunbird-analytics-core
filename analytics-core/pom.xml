@@ -150,13 +150,13 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>2.7.3</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
-			<version>2.7.3</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -168,15 +168,10 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-aws</artifactId>
-			<version>2.7.3</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.jets3t</groupId>
-			<artifactId>jets3t</artifactId>
-			<version>0.9.7</version>
-			<scope>provided</scope>
-		</dependency>
+		<!-- jets3t removed: not needed with Hadoop 3.x -->
 		<dependency>
 			<groupId>org.neo4j.driver</groupId>
 			<artifactId>neo4j-java-driver</artifactId>
@@ -227,8 +222,9 @@
 			<groupId>org.sunbird</groupId>
 			<artifactId>cloud-storage-sdk-aws</artifactId>
 			<version>2.0.0</version>
-        	<scope>runtime</scope>
+        	<!-- <scope>runtime</scope> -->
 		</dependency>
+		<!-- jets3t not needed with Hadoop 3.x (s3n:// removed) -->
     <!-- </dependency>
 		<dependency>
 			<groupId>${CLOUD_STORE_GROUP_ID}</groupId>
@@ -283,6 +279,7 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 			<version>${jackson.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>

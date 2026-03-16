@@ -1,0 +1,1 @@
+  {"experiments":[{"experiment_id":"A1234","name":"USER_ORG","client":"portal","key":"/org/profile","start_date":"2019-07-25","end_date":"2019-07-28","criteria":{"type":"user","request":{"filters":{"organisations.orgName":["sunbird"],"framework.board":["CBSE"]}}}}]}

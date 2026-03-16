@@ -31,8 +31,9 @@ object DataFetcher {
             case "oci" =>
                 JobLogger.log("Fetching the batch data from S3-like stores")
                 OCIDataFetcher.getObjectKeys(search.queries.get);
-            case "s3" =>
+            case "s3" | "aws" =>
                 JobLogger.log("Fetching the batch data from S3")
+                CommonUtil.setStorageConf("aws", None, None)
                 S3DataFetcher.getObjectKeys(search.queries.get);
             case "azure" =>
                 JobLogger.log("Fetching the batch data from AZURE")
