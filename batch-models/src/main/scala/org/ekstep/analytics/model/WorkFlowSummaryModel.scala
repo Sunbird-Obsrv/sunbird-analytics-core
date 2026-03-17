@@ -28,8 +28,9 @@ case class WorkflowInput(sessionKey: WorkflowIndex, events: Buffer[String]) exte
 case class WorkflowOutput(index: WorkflowIndex, summaries: Buffer[MeasuredEvent]) extends AlgoOutput
 case class WorkflowIndex(did: String, channel: String, pdataId: String)
 case class WorkFlowIndexEvent(eid: String, context: V3Context)
+case class WFSSummaryOutput(dataset: String, id: String, ver: String, events: List[MeasuredEvent]) extends Output
 
-object WorkFlowSummaryModel extends IBatchModelTemplate[String, WorkflowInput, MeasuredEvent, MeasuredEvent] with Serializable {
+object WorkFlowSummaryModel extends IBatchModelTemplate[String, WorkflowInput, MeasuredEvent, WFSSummaryOutput] with Serializable {
 
     implicit val className = "org.ekstep.analytics.model.WorkFlowSummaryModel"
     override def name: String = "WorkFlowSummaryModel"
@@ -39,7 +40,17 @@ object WorkFlowSummaryModel extends IBatchModelTemplate[String, WorkflowInput, M
 
         val defaultPDataId = V3PData(AppConf.getConfig("default.consumption.app.id"), Option("1.0"))
         val parallelization = config.getOrElse("parallelization", 20).asInstanceOf[Int];
-        val indexedData = data.map{f =>
+        val extractedData = data.map { f =>
+            try {
+                val wrapper = JSONUtils.deserialize[Map[String, AnyRef]](f)
+                wrapper.get("events").map(JSONUtils.serialize)
+                    .orElse(wrapper.get("event").map(JSONUtils.serialize))
+                    .getOrElse(f)
+            } catch {
+                case ex: Exception => f
+            }
+        }
+        val indexedData = extractedData.map{f =>
                 try {
                     (JSONUtils.deserialize[WorkFlowIndexEvent](f), f)
                 }
@@ -228,7 +239,15 @@ object WorkFlowSummaryModel extends IBatchModelTemplate[String, WorkflowInput, M
         }).flatMap(f => f.map(f => f));
         
     }
-    override def postProcess(data: RDD[MeasuredEvent], config: Map[String, AnyRef])(implicit sc: SparkContext, fc: FrameworkContext): RDD[MeasuredEvent] = {
-        data
+    override def postProcess(data: RDD[MeasuredEvent], config: Map[String, AnyRef])(implicit sc: SparkContext, fc: FrameworkContext): RDD[WFSSummaryOutput] = {
+        val dataset = config.getOrElse("dataset", "wfs-telemetry").asInstanceOf[String]
+        data.map { event =>
+            WFSSummaryOutput(
+                dataset = dataset,
+                id = java.util.UUID.randomUUID().toString,
+                ver = "3.0",
+                events = List(event)
+            )
+        }
     }
 }

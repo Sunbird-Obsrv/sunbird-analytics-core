@@ -24,7 +24,7 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
         out.count() should be(8)
         fc.outputEventsCount.value should be(8)
 
-        val me = out.collect();
+        val me = out.flatMap(_.events).collect()
         val appSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("app") }
         val sessionSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("session") }
         val playerSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("player") }
@@ -46,12 +46,12 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
     }
 
     it should "generate 3 workflow summary" in {
-      
+
         val data = loadFile[String]("src/test/resources/workflow-summary/test-data3.log")
         val out = WorkFlowSummaryModel.execute(data, None)
         out.count() should be(3)
 
-        val me = out.collect();
+        val me = out.flatMap(_.events).collect()
         val appSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("app") }
         val sessionSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("session") }
         val playerSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("player") }
@@ -132,7 +132,7 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
         val out = WorkFlowSummaryModel.execute(data, None)
         out.count() should be(7)
 
-        val me = out.collect();
+        val me = out.flatMap(_.events).collect()
         val appSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("app") }
         val sessionSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("session") }
         val playerSummaryEvent1 = me.filter { x => x.dimensions.`type`.get.equals("player") }
@@ -182,7 +182,7 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
         val out = WorkFlowSummaryModel.execute(data, None)
         out.count() should be(19)
 
-        val me = out.collect();
+        val me = out.flatMap(_.events).collect()
         val appSummaryEvents = me.filter { x => x.dimensions.`type`.get.equals("app") }
         val sessionSummaryEvents = me.filter { x => x.dimensions.`type`.get.equals("session") }
         val playerSummaryEvents = me.filter { x => x.dimensions.`type`.get.equals("content") }
@@ -225,7 +225,7 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
 
         out.count() should be(9)
 
-        val me = out.collect();
+        val me = out.flatMap(_.events).collect()
         val appSummaryEvents = me.filter { x => x.dimensions.`type`.get.equals("app") }
         appSummaryEvents.size should be(3)
 
@@ -260,7 +260,7 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
         val out = WorkFlowSummaryModel.execute(data, None)
         out.count() should be(15)
 
-        val me = out.collect();
+        val me = out.flatMap(_.events).collect()
         val appSummaryEvents = me.filter { x => x.dimensions.`type`.get.equals("app") }
         appSummaryEvents.size should be(2)
 
@@ -296,7 +296,7 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
 
         out.count() should be(6)
 
-        val event1 = out.collect().filter(f => f.mid.equals("2D2E6508F9F24B6B15DCC9F43B82E9D8")).last
+        val event1 = out.flatMap(_.events).collect().filter(f => f.mid.equals("2D2E6508F9F24B6B15DCC9F43B82E9D8")).last
 
         event1.eid should be("ME_WORKFLOW_SUMMARY");
         event1.context.pdata.model.get should be("WorkflowSummarizer");
@@ -329,5 +329,5 @@ class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
         out.count() should be(1)
     }
 
-    
+
 }
