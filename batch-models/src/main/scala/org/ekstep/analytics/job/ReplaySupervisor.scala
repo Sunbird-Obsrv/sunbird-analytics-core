@@ -15,8 +15,7 @@ object ReplaySupervisor extends optional.Application {
 
         JobLogger.start("Started executing ReplaySupervisor", Option(Map("config" -> config, "model" -> model, "fromDate" -> fromDate, "toDate" -> toDate)))
         val con = JSONUtils.deserialize[JobConfig](config)
-        val sparkCassandraConnectionHost = con.modelParams.getOrElse(Map()).get("sparkCassandraConnectionHost")
-        val sc = CommonUtil.getSparkContext(JobContext.parallelization, con.appName.getOrElse(con.model), sparkCassandraConnectionHost);
+        val sc = CommonUtil.getSparkContext(JobContext.parallelization, con.appName.getOrElse(con.model));
 
         val storageKey = con.modelParams.getOrElse(Map()).getOrElse("storageKeyConfig", "azure_storage_key").asInstanceOf[String]
         val storageSecret = con.modelParams.getOrElse(Map()).getOrElse("storageSecretConfig", "azure_storage_secret").asInstanceOf[String]

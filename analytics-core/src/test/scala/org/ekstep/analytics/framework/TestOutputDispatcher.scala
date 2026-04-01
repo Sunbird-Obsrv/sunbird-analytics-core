@@ -2,10 +2,8 @@ package org.ekstep.analytics.framework
 
 import java.io.{File, IOException}
 
-import org.ekstep.analytics.framework.dispatcher.AzureDispatcher
 import org.ekstep.analytics.framework.exception.DispatcherException
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils}
-import org.elasticsearch.hadoop.EsHadoopIllegalArgumentException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import org.sunbird.cloud.storage.IStorageService
@@ -52,46 +50,32 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
       OutputDispatcher.dispatch(Dispatcher("kafka", Map("brokerList" -> "localhost:9092")), events);
     }
 
-    // Invoke script dispatcher without required fields ('script')
-    a[DispatcherException] should be thrownBy {
-      OutputDispatcher.dispatch(Dispatcher("script", Map[String, AnyRef]()), events);
-    }
-
     // Invoke File dispatcher without required fields ('file')
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(Dispatcher("file", Map[String, AnyRef]()), events);
-    }
-
-    // Invoke script dispatcher with invalid script
-    a[IOException] should be thrownBy {
-      OutputDispatcher.dispatch(Dispatcher("script", Map("script" -> "src/test/resources/simpleScript3.sh")), events);
-    }
-
-    a[DispatcherException] should be thrownBy {
-      OutputDispatcher.dispatch(Dispatcher("script", Map("script" -> "src/test/resources/simpleScript2.sh")), events);
     }
 
     // Invoke S3 dispatcher without required fields ('bucket','key')
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("key" -> "testKey")), events);
     }
-    
+
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(Dispatcher("s3", Map[String, AnyRef]("bucket" -> "testBucket")), events);
     }
-    
+
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(StorageConfig("s3", null, null), events);
     }
-    
+
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(StorageConfig("file", "test", null), events);
     }
-    
+
     a[DispatcherException] should be thrownBy {
       OutputDispatcher.dispatch(null.asInstanceOf[StorageConfig], events);
     }
-    
+
     a[DispatcherException] should be thrownBy {
       ConsoleDispatcher.dispatch(events.map(f => JSONUtils.serialize(f)), StorageConfig("file", "test", null));
     }
@@ -120,15 +104,6 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
 
   }
 
-  it should "execute test cases related to script dispatcher" in {
-
-    implicit val fc = new FrameworkContext();
-    val result = OutputDispatcher.dispatch(Dispatcher("script", Map("script" -> "src/test/resources/simpleScript.sh")), events);
-    //result(0) should endWith ("analytics-core");
-    //result(1) should include ("7436");
-  }
-
-
   it should "dispatch output to a file" in {
 
     implicit val fc = new FrameworkContext();
@@ -136,79 +111,19 @@ class TestOutputDispatcher extends SparkSpec("src/test/resources/sample_telemetr
     val f = new File("src/test/resources/test_output.log");
     f.exists() should be(true)
     CommonUtil.deleteFile("src/test/resources/test_output.log");
-    
+
     OutputDispatcher.dispatch(StorageConfig("local", null, "src/test/resources/test_output.log"), events);
     val f2 = new File("src/test/resources/test_output.log");
     f2.exists() should be(true)
     CommonUtil.deleteFile("src/test/resources/test_output.log");
   }
-  
-  it should "give DispatcherException if azure config is missing " in {
 
-    implicit val fc = new FrameworkContext();
-    val eventArr = events.map(f => JSONUtils.serialize(f)).cache();
-    
-    the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "output/test-directory/", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), eventArr);
-    } should have message "'bucket' & 'key' parameters are required to send output to azure"
-    
-    the[DispatcherException] thrownBy {
-      AzureDispatcher.dispatch(Map[String, AnyRef]("bucket" -> "test-bucket", "dirPath" -> "src/test/resources/1234/OE_INTERACT/"), eventArr);
-    } should have message "'bucket' & 'key' parameters are required to send output to azure"
-    
-    the[DispatcherException] thrownBy {
-      OutputDispatcher.dispatch(StorageConfig("azure", "test-bucket", null), eventArr);
-    } should have message "'bucket' & 'key' parameters are required to send output to azure"
-    
-    the[DispatcherException] thrownBy {
-      OutputDispatcher.dispatch(StorageConfig("azure", null, "output/test-directory/"), eventArr);
-    } should have message "'bucket' & 'key' parameters are required to send output to azure"
-
-  }
-
-
-  it should "dispatch output to S3/Azure" in {
+  it should "dispatch output to S3" in {
 
     implicit val fc = new FrameworkContext();
 
-    a[Exception] should be thrownBy {
-      AzureDispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
-    }
-    
-    a[Exception] should be thrownBy {
-      OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key", Option("azure_storage_key")), events.map(f => JSONUtils.serialize(f)));
-    }
-    
-    a[Exception] should be thrownBy {
-      OutputDispatcher.dispatch(StorageConfig("azure", "test_bucket", "test_key"), events.map(f => JSONUtils.serialize(f)));
-    }
-    
     a[IllegalArgumentException] should be thrownBy {
       S3Dispatcher.dispatch(Map[String, AnyRef]("key" -> "test_key", "bucket" -> "test_bucket"), events.map(f => JSONUtils.serialize(f)));
-    }
-
-    a[IOException] should be thrownBy {
-      OutputDispatcher.dispatch(StorageConfig("gcloud", "test-obsrv-data-store", "test_key/test_data.json"), events.map(f => JSONUtils.serialize(f)));
-    }
-  }
-
-  it should "dispatch output to elastic-search" in {
-
-    implicit val fc = new FrameworkContext();
-    val eventsInString = events.map { x => JSONUtils.serialize(x) }
-    val output1 = Dispatcher("elasticsearch", Map[String, AnyRef]("index" -> "test_index"));
-    a[EsHadoopIllegalArgumentException] should be thrownBy {
-      OutputDispatcher.dispatch(output1, eventsInString);
-    }
-  }
-
-  it should "throw exception while dispatching output to elastic-search" in {
-
-    implicit val fc = new FrameworkContext();
-    val eventsInString = events.map { x => JSONUtils.serialize(x) }
-    val output1 = Dispatcher("elasticsearch", Map[String, AnyRef]());
-    a[DispatcherException] should be thrownBy {
-      OutputDispatcher.dispatch(output1, eventsInString);
     }
   }
 

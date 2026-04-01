@@ -23,31 +23,22 @@ import org.joda.time.DateTime
  * @author Santhosh
  */
 class TestFrameworkContext extends BaseSpec with BeforeAndAfterAll {
-    
+
     "FrameworkContext" should "test all methods" in {
-      
+
       val fc = new FrameworkContext();
-      
+
       noException should be thrownBy {
         fc.shutdownStorageService();
       }
-      
-      fc.initialize(Option(Array(("azure", "local", "local"))));
-      fc.getStorageService("azure", "local", "local") should not be (null)
-      
+
+      fc.initialize(Option(Array(("aws", "aws_storage_key", "aws_storage_secret"))));
+      fc.getStorageService("aws", "aws_storage_key", "aws_storage_secret") should not be (null)
+
       fc.storageContainers.clear();
-      fc.getStorageService("azure") should not be (null)
-      
-      fc.setDruidClient(null, null);
-      noException should be thrownBy {
-        fc.shutdownDruidClient();
-      }
-      
-      fc.getDruidClient() should not be (null);
-      fc.setDruidClient(fc.getDruidClient(), fc.getDruidRollUpClient())
-      
-      fc.getAkkaHttpUtil() should  not be (null)
+      fc.getStorageService("aws") should not be (null)
+
       fc.closeContext();
     }
-        
+
 }

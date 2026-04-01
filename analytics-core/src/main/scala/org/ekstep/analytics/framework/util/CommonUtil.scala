@@ -8,7 +8,6 @@ import java.security.MessageDigest
 import java.sql.Timestamp
 import java.util.zip.GZIPOutputStream
 import java.util.{Date, Properties}
-import com.ing.wbaa.druid.definitions.{Granularity, GranularityType}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
@@ -50,9 +49,7 @@ object CommonUtil {
     fc;
   }
 
-  def getSparkContext(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
-                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, sparkRedisConnectionHost: Option[AnyRef] = None,
-                      sparkRedisDB: Option[AnyRef] = None, sparkRedisPort: Option[AnyRef] = Option("6379")): SparkContext = {
+  def getSparkContext(parallelization: Int, appName: String): SparkContext = {
     JobLogger.log("Initializing Spark Context")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
@@ -66,28 +63,7 @@ object CommonUtil {
       JobLogger.log("Master not found. Setting it to local[*]")
       conf.setMaster("local[*]")
     }
-
-    if (!conf.contains("spark.cassandra.connection.host"))
-      conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
     // $COVERAGE-ON$
-
-    if (sparkCassandraConnectionHost.nonEmpty) {
-      conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
-      println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
-    }
-
-    if (sparkElasticsearchConnectionHost.nonEmpty) {
-      conf.set("es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
-      conf.set("es.port", "9200")
-      conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
-      conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
-    }
-
-    if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
-      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
-      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
-    }
 
     val sc = new SparkContext(conf)
     val key = AppConf.getConfig("storage.key.config")
@@ -97,16 +73,12 @@ object CommonUtil {
     sc
   }
 
-  def getSparkSession(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
-                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None,
-                      sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None,
-                      sparkRedisPort: Option[AnyRef] = Option("6379"), writeConsistencyLevel: String = "QUORUM"): SparkSession = {
+  def getSparkSession(parallelization: Int, appName: String): SparkSession = {
     JobLogger.log("Initializing SparkSession")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
       .set("spark.memory.fraction", AppConf.getConfig("spark.memory_fraction"))
       .set("spark.memory.storageFraction", AppConf.getConfig("spark.storage_fraction"))
-      .set("spark.sql.extensions", "com.datastax.spark.connector.CassandraSparkExtensions")
       .set("directJoinSetting", "on")
       .set("spark.sql.legacy.timeParserPolicy", "LEGACY")
       .set("spark.driver.userClassPathFirst", "true")
@@ -118,31 +90,7 @@ object CommonUtil {
       JobLogger.log("Master not found. Setting it to local[*]")
       conf.setMaster("local[*]")
     }
-
-    if (!conf.contains("spark.cassandra.connection.host"))
-    conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
     // $COVERAGE-ON$
-
-    if (sparkCassandraConnectionHost.nonEmpty) {
-      conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.getOrElse("QUORUM"))
-      conf.set("spark.cassandra.output.consistency.level", writeConsistencyLevel)
-      println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
-    }
-
-    if (sparkElasticsearchConnectionHost.nonEmpty) {
-      conf.set("es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
-      conf.set("es.port", "9200")
-      conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
-      conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
-      conf.set("es.write.operation", "upsert")
-    }
-
-    if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
-      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
-      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
-    }
 
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
     setSparkCSPConfigurations(sparkSession.sparkContext, AppConf.getConfig("cloud_storage_type"), None, None)
@@ -666,15 +614,6 @@ object CommonUtil {
     val startDate = currentDate.minusDays(count * 7).dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ")
     val endDate = currentDate.dayOfWeek().withMinimumValue().toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     startDate + "/" + endDate
-  }
-
-  def getGranularity(value: String): Granularity = {
-    value.toLowerCase match {
-      case "latest_index" =>
-        GranularityType.decode("all").right.getOrElse(GranularityType.All)
-      case _ =>
-        GranularityType.decode(value).right.getOrElse(GranularityType.All)
-    }
   }
 
   def getMetricEvent(params: Map[String, AnyRef], producerId: String, producerPid: String): V3DerivedEvent = {

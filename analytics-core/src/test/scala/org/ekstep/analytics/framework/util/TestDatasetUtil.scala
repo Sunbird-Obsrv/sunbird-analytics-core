@@ -17,7 +17,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     "DatasetUtil" should "test the dataset extensions" in {
       
       val fileUtil = new HadoopFileUtil();
-      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
       val df = sparkSession.createDataFrame(rdd);
       df.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
@@ -56,7 +56,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
   "DatasetUtil" should "test the zip functionality" in {
 
     val fileUtil = new HadoopFileUtil();
-    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
 
     val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1);
     val df1 = sparkSession.createDataFrame(rdd1);
@@ -88,7 +88,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     
     it should "test exception branches" in {
       
-      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
       import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
@@ -115,7 +115,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
   "DatasetUtil" should "test the dataset copy functionality" in {
 
     val fileUtil = new HadoopFileUtil();
-    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
     val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
 
     val tempDir = "src/test/resources/test-report/_tmp"
@@ -142,7 +142,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
 
   it should "test the dataset saveToBlobStore with scientific notation format" in {
 
-    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
     val rdd1 = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 1209058.0, 3), EnvSummary("env2", 1.20905875E+08, 3), EnvSummary("env1", 140905875.0, 4)), 1);
     val df1 = sparkSession.createDataFrame(rdd1);
     df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report-exponential", Option(Map("header" -> "true")), Option(Seq("env")));

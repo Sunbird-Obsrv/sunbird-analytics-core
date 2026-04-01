@@ -5,10 +5,10 @@ import org.ekstep.analytics.framework.{BaseSpec, Dispatcher}
 
 class TestDispatcherFactory extends BaseSpec {
 
-    it should "return a Model class for a model code" in {
+    it should "return a dispatcher for known dispatcher types" in {
 
-        val dispatcherList = List(Dispatcher("s3", Map()), Dispatcher("kafka", Map()), Dispatcher("script", Map()),
-            Dispatcher("console", Map()), Dispatcher("file", Map()), Dispatcher("azure", Map()), Dispatcher("slack", Map()), Dispatcher("elasticsearch", Map()))
+        val dispatcherList = List(Dispatcher("s3", Map()), Dispatcher("kafka", Map()),
+            Dispatcher("console", Map()), Dispatcher("file", Map()))
         val dispatchers = dispatcherList.map { f => DispatcherFactory.getDispatcher(f) }
 
         dispatchers(0) should be(S3Dispatcher)

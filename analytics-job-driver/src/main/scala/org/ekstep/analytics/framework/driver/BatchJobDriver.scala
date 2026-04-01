@@ -28,9 +28,7 @@ object BatchJobDriver {
         
         val context: Context = {
             val spark = if (sc.isEmpty) {
-                val sparkCassandraConnectionHost = config.modelParams.getOrElse(Map()).get("sparkCassandraConnectionHost")
-                val sparkElasticsearchConnectionHost = config.modelParams.getOrElse(Map()).get("sparkElasticsearchConnectionHost")
-                CommonUtil.getSparkContext(JobContext.parallelization, config.appName.getOrElse(config.model), sparkCassandraConnectionHost,sparkElasticsearchConnectionHost)
+                CommonUtil.getSparkContext(JobContext.parallelization, config.appName.getOrElse(config.model))
             } else {
                 sc.get
             }

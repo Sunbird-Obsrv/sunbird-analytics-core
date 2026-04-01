@@ -12,8 +12,6 @@ import org.apache.logging.log4j.Logger
 import org.ekstep.analytics.framework.JobContext
 import org.scalatest.BeforeAndAfterAll
 
-import com.datastax.spark.connector.cql.CassandraConnector
-
 /**
  * @author Santhosh
  */

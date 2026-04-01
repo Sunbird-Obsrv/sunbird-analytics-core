@@ -12,7 +12,6 @@ import scala.collection.mutable.ListBuffer
 import org.joda.time.format.DateTimeFormat
 import org.ekstep.analytics.framework.Period._
 import org.joda.time.DateTimeUtils
-import com.ing.wbaa.druid.definitions.GranularityType
 import com.google.common.eventbus.Subscribe
 import org.ekstep.analytics.framework.conf.AppConf
 
@@ -46,7 +45,7 @@ class TestCommonUtil extends BaseSpec {
       dir.isDirectory() should be(false);
       f.isFile() should be(false);
 
-      val sc = CommonUtil.getSparkContext(1, "test", None, None);
+      val sc = CommonUtil.getSparkContext(1, "test");
       (new HadoopFileUtil()).delete("delete-this/delete-this.txt", sc.hadoopConfiguration);
       sc.stop();
 
@@ -309,7 +308,7 @@ class TestCommonUtil extends BaseSpec {
     connectionProperties.getProperty("password") should be("postgres")
     connectionProperties.getProperty("driver") should be("org.postgresql.Driver")
 
-    implicit val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"))
+    implicit val sc = CommonUtil.getSparkContext(10, "Test")
     val defaultCaseConf = CommonUtil.setStorageConf("local", Option(""), Option(""))
 
     val azureStorageConf = CommonUtil.setStorageConf("azure", Option("azure_storage_key"), Option("azure_storage_secret"))
@@ -340,27 +339,12 @@ class TestCommonUtil extends BaseSpec {
   it should "test all the exception branches" in {
 
     noException should be thrownBy {
-      val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"));
+      val sc = CommonUtil.getSparkContext(10, "Test");
       sc.stop();
     }
 
     noException should be thrownBy {
-      val sc = CommonUtil.getSparkContext(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), Option("10.0.0.0"), Option("2"));
-      sc.stop();
-    }
-
-    noException should be thrownBy {
-      val sc = CommonUtil.getSparkSession(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), Option("Quorum"))
-      sc.stop();
-    }
-
-    noException should be thrownBy {
-      val sc = CommonUtil.getSparkSession(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), Option("Quorum"), Option("10.0.0.0"), Option("2"))
-      sc.stop();
-    }
-
-    noException should be thrownBy {
-      val sc = CommonUtil.getSparkSession(10, "Test", Option("10.0.0.0"), Option("10.0.0.0"), None)
+      val sc = CommonUtil.getSparkSession(10, "Test")
       sc.stop();
     }
 
@@ -403,8 +387,6 @@ class TestCommonUtil extends BaseSpec {
     CommonUtil.getIntervalRange("Last30Days", "telemetry-rollup-syncts", 2) should be("2019-11-30T00:00:00+00:00/2019-12-30T00:00:00+00:00")
     CommonUtil.getIntervalRange("Last60Days", "telemetry-rollup-syncts") should be("Last60Days")
     DateTimeUtils.setCurrentMillisSystem();
-
-    CommonUtil.getGranularity("") should be(GranularityType.All)
 
     val eventListener = new TestEventListener();
     EventBusUtil.register(eventListener)

@@ -6,7 +6,6 @@ import org.ekstep.analytics.framework.GData
 import org.ekstep.analytics.framework.PData
 import org.ekstep.analytics.framework.DtRange
 import org.joda.time.DateTime
-import org.ekstep.analytics.framework.CassandraTable
 import org.ekstep.analytics.framework.AlgoOutput
 import org.ekstep.analytics.framework.Output
 import org.ekstep.analytics.framework.conf.AppConf
@@ -39,7 +38,7 @@ class MEEdata(val eks: Eks) extends Serializable;
 
 /* Cassandra Models */
 case class WorkFlowSummaryIndex(d_period: Int, d_channel: String, d_app_id: String, d_tag: String, d_type: String, d_mode: String, d_device_id: String, d_content_id: String, d_user_id: String) extends Output
-case class WorkFlowUsageSummaryFact(d_period: Int, d_channel: String, d_app_id: String, d_tag: String, d_type: String, d_mode: String, d_device_id: String, d_content_id: String, d_user_id: String, m_publish_date: DateTime, m_last_sync_date: DateTime, m_last_gen_date: DateTime, m_total_ts: Double, m_total_sessions: Long, m_avg_ts_session: Double, m_total_interactions: Long, m_avg_interactions_min: Double, m_total_pageviews_count: Long, m_avg_pageviews: Double, m_total_users_count: Long, m_total_content_count: Long, m_total_devices_count: Long, m_unique_users: Array[Byte], m_device_ids: Array[Byte], m_contents: Array[Byte], m_content_type: Option[String], m_updated_date: Option[DateTime] = Option(DateTime.now())) extends AlgoOutput with CassandraTable
+case class WorkFlowUsageSummaryFact(d_period: Int, d_channel: String, d_app_id: String, d_tag: String, d_type: String, d_mode: String, d_device_id: String, d_content_id: String, d_user_id: String, m_publish_date: DateTime, m_last_sync_date: DateTime, m_last_gen_date: DateTime, m_total_ts: Double, m_total_sessions: Long, m_avg_ts_session: Double, m_total_interactions: Long, m_avg_interactions_min: Double, m_total_pageviews_count: Long, m_avg_pageviews: Double, m_total_users_count: Long, m_total_content_count: Long, m_total_devices_count: Long, m_unique_users: Array[Byte], m_device_ids: Array[Byte], m_contents: Array[Byte], m_content_type: Option[String], m_updated_date: Option[DateTime] = Option(DateTime.now())) extends AlgoOutput
 
 case class RequestFilter(start_date: String, end_date: String, tags: Option[List[String]], events: Option[List[String]], app_id: Option[String], channel: Option[String]);
 case class RequestConfig(filter: RequestFilter, dataset_id: Option[String] = Option("eks-consumption-raw"), output_format: Option[String] = None);
