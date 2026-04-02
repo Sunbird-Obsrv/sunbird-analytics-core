@@ -129,6 +129,7 @@ case class Game(identifier: String, code: String, subject: String, objectType: S
 // Common models for all data products
 case class Empty() extends Input with AlgoInput with AlgoOutput with Output
 case class RegisteredTag(tag_id: String, last_updated: Long, active: Boolean)
+@deprecated("CassandraTable is no longer used", "2.0")
 trait CassandraTable extends AnyRef with Serializable
 
 /* Data Exhaust*/

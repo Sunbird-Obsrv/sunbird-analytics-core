@@ -16,6 +16,9 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
+		<!-- <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
+		<CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_2.12</CLOUD_STORE_ARTIFACT_ID>
+		<CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION> -->
 	</properties>
 
 	<repositories>
@@ -36,6 +39,12 @@
 			<name>Jcenter Repo</name>
 			<url>https://jcenter.bintray.com/</url>
 		</repository>
+
+		<repository>
+            <id>cloud-store</id>
+            <url>https://oss.sonatype.org/content/repositories/orgsunbird-1144/</url>
+        </repository>
+
 	</repositories>
 
 	<dependencies>
@@ -58,7 +67,7 @@
 			<exclusions>
 				<exclusion>
 					<artifactId>jets3t</artifactId>
-					<groupId>net.java.dev.jets3t</groupId>
+					<groupId>org.jets3t</groupId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.apache.xbean</groupId>
@@ -141,13 +150,13 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>2.7.3</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
-			<version>2.7.3</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -159,24 +168,7 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-aws</artifactId>
-			<version>2.7.3</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>net.java.dev.jets3t</groupId>
-			<artifactId>jets3t</artifactId>
-			<version>0.9.4</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.neo4j.driver</groupId>
-			<artifactId>neo4j-java-driver</artifactId>
-			<version>1.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>com.typesafe.netty</groupId>
-			<artifactId>netty-http-pipelining</artifactId>
-			<version>1.1.4</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -190,18 +182,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j</artifactId>
-			<version>3.0.8</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-		    <groupId>org.neo4j</groupId>
-		    <artifactId>neo4j-bolt</artifactId>
-		    <version>3.0.8</version>
-		    <scope>test</scope>
-		</dependency>
 		<!-- <dependency>
 			<groupId>org.sunbird</groupId>
 			<artifactId>sunbird-cloud-store-sdk</artifactId>
@@ -211,8 +191,21 @@
 		<!-- https://mvnrepository.com/artifact/org.sunbird/cloud-store-sdk -->
 		<dependency>
 			<groupId>org.sunbird</groupId>
-			<artifactId>cloud-store-sdk_${scala.maj.version}</artifactId>
-			<version>1.4.0</version>
+			<artifactId>cloud-storage-sdk-api</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.sunbird</groupId>
+			<artifactId>cloud-storage-sdk-aws</artifactId>
+			<version>2.0.0</version>
+        	<!-- <scope>runtime</scope> -->
+		</dependency>
+		<!-- jets3t not needed with Hadoop 3.x (s3n:// removed) -->
+    <!-- </dependency>
+		<dependency>
+			<groupId>${CLOUD_STORE_GROUP_ID}</groupId>
+			<artifactId>${CLOUD_STORE_ARTIFACT_ID}</artifactId>
+			<version>${CLOUD_STORE_VERSION}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.microsoft.azure</groupId>
@@ -235,37 +228,28 @@
 					<artifactId>httpclient</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.microsoft.azure</groupId>
-			<artifactId>azure-storage</artifactId>
-			<version>3.0.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.commons</groupId>
-					<artifactId>commons-lang3</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>google-cloud-storage</artifactId>
-			<version>2.0.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.cloud.bigdataoss</groupId>
-			<artifactId>gcs-connector</artifactId>
-			<version>hadoop2-2.0.1</version>
-			<classifier>shaded</classifier>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 			<version>${jackson.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-scala_${scala.maj.version}</artifactId>
 			<version>${jackson.version}</version>
 			<scope>provided</scope>
 		</dependency>
@@ -286,104 +270,6 @@
 			<groupId>com.typesafe.scala-logging</groupId>
 			<artifactId>scala-logging_${scala.maj.version}</artifactId>
 			<version>3.6.0</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/ing.wbaa.druid/scruid -->
-		<dependency>
-			<groupId>com.ing.wbaa.druid</groupId>
-			<artifactId>scruid_${scala.maj.version}</artifactId>
-			<version>2.5.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/scruid_2.12-2.5.0.jar</systemPath>
-		</dependency>
-		             <!-- Scruid dependency starts -->
-		<!-- https://mvnrepository.com/artifact/io.circe/circe-core -->
-		<dependency>
-			<groupId>io.circe</groupId>
-			<artifactId>circe-core_${scala.maj.version}</artifactId>
-			<version>${circe.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.circe/circe-parser -->
-		<dependency>
-			<groupId>io.circe</groupId>
-			<artifactId>circe-parser_${scala.maj.version}</artifactId>
-			<version>${circe.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/io.circe/circe-generic -->
-		<dependency>
-			<groupId>io.circe</groupId>
-			<artifactId>circe-generic_${scala.maj.version}</artifactId>
-			<version>${circe.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-stream-json -->
-		<dependency>
-			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-stream-json_${scala.maj.version}</artifactId>
-			<version>${mdedetrich.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-http-json -->
-		<dependency>
-			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-http-json_${scala.maj.version}</artifactId>
-			<version>${mdedetrich.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-stream-circe -->
-		<dependency>
-			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-stream-circe_${scala.maj.version}</artifactId>
-			<version>${mdedetrich.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.mdedetrich/akka-http-circe -->
-		<dependency>
-			<groupId>org.mdedetrich</groupId>
-			<artifactId>akka-http-circe_${scala.maj.version}</artifactId>
-			<version>${mdedetrich.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-http -->
-		<dependency>
-			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http_${scala.maj.version}</artifactId>
-			<version>10.1.12</version>
-		</dependency>
-		<dependency>
-			<groupId>io.circe</groupId>
-			<artifactId>circe-java8_${scala.maj.version}</artifactId>
-			<version>0.11.1</version>
-		</dependency>
-		<!-- Scruid dependency ends -->
-		<!--
-		<dependency>
-			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch-hadoop</artifactId>
-			<version>6.7.0</version>
-		</dependency>
-		-->
-		<!-- https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch-spark-20 -->
-		<dependency>
-			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch-spark-20_2.12</artifactId>
-			<version>7.12.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.spark</groupId>
-					<artifactId>spark-core_${scala.maj.version}</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.spark</groupId>
-					<artifactId>spark-sql_${scala.maj.version}</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.spark</groupId>
-					<artifactId>spark-catalyst_${scala.maj.version}</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.spark</groupId>
-					<artifactId>spark-yarn_${scala.maj.version}</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.spark</groupId>
-					<artifactId>spark-streaming_${scala.maj.version}</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>

@@ -6,7 +6,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.ekstep.analytics.framework.Level.INFO
 import org.ekstep.analytics.framework.exception.DataFetcherException
-import org.ekstep.analytics.framework.fetcher.{AzureDataFetcher, DruidDataFetcher, S3DataFetcher, CephS3DataFetcher, GcloudDataFetcher}
+import org.ekstep.analytics.framework.fetcher.S3DataFetcher
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, JobLogger}
 
 /**
@@ -19,35 +19,18 @@ object DataFetcher {
     def fetchBatchData[T](search: Fetcher)(implicit mf: Manifest[T], sc: SparkContext, fc: FrameworkContext): RDD[T] = {
 
         JobLogger.log("Fetching data", Option(Map("query" -> search)))
-        if (search.queries.isEmpty && search.druidQuery.isEmpty) {
+        if (search.queries.isEmpty) {
             if (search.`type`.equals("none")) return sc.emptyRDD[T]
             throw new DataFetcherException("Data fetch configuration not found")
         }
-        //val date = search.queries.get.last.endDate
         val keys = search.`type`.toLowerCase() match {
-            case "cephs3" =>
-                JobLogger.log("Fetching the batch data from S3-like stores")
-                CephS3DataFetcher.getObjectKeys(search.queries.get);
-            case "s3" =>
+            case "s3" | "aws" =>
                 JobLogger.log("Fetching the batch data from S3")
+                CommonUtil.setStorageConf("aws", None, None)
                 S3DataFetcher.getObjectKeys(search.queries.get);
-            case "azure" =>
-                JobLogger.log("Fetching the batch data from AZURE")
-                AzureDataFetcher.getObjectKeys(search.queries.get);
-            case "gcloud" =>
-                JobLogger.log("Fetching the batch data from Google Cloud")
-                GcloudDataFetcher.getObjectKeys(search.queries.get);
             case "local" =>
                 JobLogger.log("Fetching the batch data from Local file")
                 search.queries.get.map { x => x.file.getOrElse(null) }.filterNot { x => x == null };
-            case "druid" =>
-                JobLogger.log("Fetching the batch data from Druid")
-                val data = DruidDataFetcher.getDruidData(search.druidQuery.get)
-                // $COVERAGE-OFF$
-                // Disabling scoverage as the below code cannot be covered as DruidDataFetcher is not mockable being an object and embedded druid is not available yet
-                val druidDataList = data.map(f => JSONUtils.deserialize[T](f))
-                return druidDataList
-            // $COVERAGE-ON$
             case _ =>
                 throw new DataFetcherException("Unknown fetcher type found");
         }

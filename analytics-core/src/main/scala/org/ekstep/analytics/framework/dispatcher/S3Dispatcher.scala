@@ -7,8 +7,6 @@ import org.ekstep.analytics.framework.util.JobLogger
 import org.ekstep.analytics.framework.Level._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
-import org.sunbird.cloud.storage.factory.StorageServiceFactory
-import org.sunbird.cloud.storage.conf.AppConf
 import org.ekstep.analytics.framework.FrameworkContext
 import org.ekstep.analytics.framework.StorageConfig
 

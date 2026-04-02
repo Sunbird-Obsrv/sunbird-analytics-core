@@ -2,11 +2,8 @@ package org.ekstep.analytics.framework
 
 import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework.exception.DispatcherException
-import org.ekstep.analytics.framework.dispatcher.S3Dispatcher
 import org.ekstep.analytics.framework.dispatcher.KafkaDispatcher
-import org.ekstep.analytics.framework.dispatcher.ScriptDispatcher
 import org.ekstep.analytics.framework.factory.DispatcherFactory
-import org.ekstep.analytics.framework.exception.DispatcherException
 import org.ekstep.analytics.framework.util.JobLogger
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.ekstep.analytics.framework.util.CommonUtil
@@ -44,7 +41,7 @@ object OutputDispatcher {
         DispatcherFactory.getDispatcher(dispatcher).dispatch(dispatcher.params, eventArr);
         events.count;
     }
-    
+
     @throws(classOf[DispatcherException])
     def dispatch[T](config: StorageConfig, events: RDD[T])(implicit sc: SparkContext, fc: FrameworkContext): Long = {
 

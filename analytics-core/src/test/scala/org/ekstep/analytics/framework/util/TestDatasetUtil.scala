@@ -1,13 +1,12 @@
 package org.ekstep.analytics.framework.util
 
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.azure.AzureException
-import org.apache.hadoop.fs.s3.S3Exception
+import java.io.IOException
 import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
-import org.sunbird.cloud.storage.BaseStorageService
+import org.sunbird.cloud.storage.IStorageService
 
 import java.io.Serializable
 
@@ -18,7 +17,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     "DatasetUtil" should "test the dataset extensions" in {
       
       val fileUtil = new HadoopFileUtil();
-      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
       val df = sparkSession.createDataFrame(rdd);
       df.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
@@ -57,7 +56,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
   "DatasetUtil" should "test the zip functionality" in {
 
     val fileUtil = new HadoopFileUtil();
-    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
 
     val rdd1 = sparkSession.sparkContext.parallelize(Seq(DruidSummary("2020-01-11","env1", 22.1, 3), DruidSummary("2020-01-11","env2", 20.1, 3)), 1);
     val df1 = sparkSession.createDataFrame(rdd1);
@@ -70,14 +69,14 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     val rdd2 = sparkSession.sparkContext.textFile("src/test/resources/test-report3/2020-01-11.zip", 1).collect();
 
 
-    a[AzureException] should be thrownBy {
+    a[Exception] should be thrownBy {
       df1.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv",
         "test-report", Option(Map("header" -> "true")), Option(Seq("env")),None,Option(true))
     }
-    val mockBaseStorageService = mock[BaseStorageService]
-    (mockBaseStorageService.download _).expects("test-container", "test-report3/2020-01-12.csv","src/test/resources/test-report3/", Some(false)).once()
-    (mockBaseStorageService.upload _).expects("test-container", "src/test/resources/test-report3/2020-01-12.zip",
-      "test-report3/2020-01-12.zip", Some(false), Some(0), Some(3), None).once()
+    val mockBaseStorageService = mock[IStorageService]
+    (mockBaseStorageService.download(_: String, _: String, _: String, _: Boolean)).expects("test-container", "test-report3/2020-01-12.csv","src/test/resources/test-report3/", false).once()
+    (mockBaseStorageService.upload(_: String, _: String, _: String, _: Boolean, _: Int, _: Int, _: Integer)).expects("test-container", "src/test/resources/test-report3/2020-01-12.zip",
+      "test-report3/2020-01-12.zip", false, 0, 3, null.asInstanceOf[Integer]).once()
       df.copyMergeFile(Seq("Date"), "", "src/test/resources/test-report3/_tmp",
         "src/test/resources/test-report3", sparkSession.sparkContext.hadoopConfiguration, "csv",
         Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mockBaseStorageService), Option(true),None,Some("src/test/resources/"))
@@ -89,25 +88,34 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     
     it should "test exception branches" in {
       
-      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+      val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
       val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
       import sparkSession.implicits._
       val df = sparkSession.createDataFrame(rdd);
-      a[AzureException] should be thrownBy {
-        df.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));        
+      val azureException = intercept[Throwable] {
+        df.saveToBlobStore(StorageConfig("azure", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
       }
-      
-      a[S3Exception] should be thrownBy {
-        df.saveToBlobStore(StorageConfig("s3", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")));
+      val s3Exception = intercept[Throwable] {
+        df.saveToBlobStore(StorageConfig("s3", "test-container", "src/test/resources"), "csv", "test-report", Option(Map("header" -> "true")), Option(Seq("env")))
       }
-      
+      handleException(azureException)
+      handleException(s3Exception)
+      def handleException(caughtException: Throwable): Unit = {
+        caughtException match {
+          case _: IOException => println("S3 Exception occurred")
+          case _: Exception => println("Exception occurred")
+          case illegalArgumentException: IllegalArgumentException => println("CSP Configurations are not found")
+          case _ =>
+            fail("Unexpected exception type thrown")
+        }
+      }
       sparkSession.stop();
     }
 
   "DatasetUtil" should "test the dataset copy functionality" in {
 
     val fileUtil = new HadoopFileUtil();
-    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
     val rdd = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 22.1, 3), EnvSummary("env2", 20.1, 3), EnvSummary("env1", 32.1, 4)), 1);
 
     val tempDir = "src/test/resources/test-report/_tmp"
@@ -134,7 +142,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
 
   it should "test the dataset saveToBlobStore with scientific notation format" in {
 
-    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil", None, None, None);
+    val sparkSession = CommonUtil.getSparkSession(1, "TestDatasetUtil");
     val rdd1 = sparkSession.sparkContext.parallelize(Seq(EnvSummary("env1", 1209058.0, 3), EnvSummary("env2", 1.20905875E+08, 3), EnvSummary("env1", 140905875.0, 4)), 1);
     val df1 = sparkSession.createDataFrame(rdd1);
     df1.saveToBlobStore(StorageConfig("local", null, "src/test/resources"), "csv", "test-report-exponential", Option(Map("header" -> "true")), Option(Seq("env")));

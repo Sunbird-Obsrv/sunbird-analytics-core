@@ -21,7 +21,7 @@ object JSONUtils {
     mapper.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
     mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
     mapper.configure(Feature.WRITE_BIGDECIMAL_AS_PLAIN, true)
-    mapper.setSerializationInclusion(Include.NON_NULL)
+    mapper.setSerializationInclusion(Include.NON_ABSENT)
 
     @throws(classOf[Exception])
     def serialize(obj: AnyRef): String = {

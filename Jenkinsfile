@@ -17,7 +17,7 @@ node('build-slave') {
                 }
                 else {
                     def scmVars = checkout scm
-                    checkout scm: [$class: 'GitSCM', branches: [[name: "refs/tags/$params.github_release_tag"]],  userRemoteConfigs: [[url: scmVars.GIT_URL]]]
+                    checkout scm: [$class: 'GitSCM', branches: [[name: "*/$params.github_release_tag"]],  userRemoteConfigs: [[url: scmVars.GIT_URL]]]
                     artifact_version = params.github_release_tag
             println(ANSI_BOLD + ANSI_YELLOW + "github_release_tag specified, building from github_release_tag: " + params.github_release_tag + ANSI_NORMAL)
                 }
@@ -30,8 +30,8 @@ node('build-slave') {
                 export JAVA_HOME=/usr/lib/jvm/jdk-11.0.2
                 export PATH=$JAVA_HOME/bin:$PATH
                 echo $(java -version)
-                mvn clean install -DskipTests
-                '''
+            '''
+            sh 'mvn clean install -DskipTests -DCLOUD_STORE_GROUP_ID=' + params.CLOUD_STORE_GROUP_ID + ' -DCLOUD_STORE_ARTIFACT_ID=' + params.CLOUD_STORE_ARTIFACT_ID + ' -DCLOUD_STORE_VERSION=' + params.CLOUD_STORE_VERSION    
         }
         stage('Archive artifacts'){
             sh """

@@ -8,23 +8,19 @@ import java.security.MessageDigest
 import java.sql.Timestamp
 import java.util.zip.GZIPOutputStream
 import java.util.{Date, Properties}
-
-import com.ing.wbaa.druid.definitions.{Granularity, GranularityType}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.Period._
+import org.ekstep.analytics.framework.util.CloudStorageProviders.setSparkCSPConfigurations
 import org.ekstep.analytics.framework.{DtRange, Event, JobConfig, _}
-
 import scala.collection.mutable.ListBuffer
-//import org.ekstep.analytics.framework.conf.AppConf
+import org.ekstep.analytics.framework.conf.AppConf
 import java.util.zip.{ZipEntry, ZipOutputStream}
-
 import org.apache.commons.lang3.StringUtils
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone, Days, LocalDate, Weeks, Years}
-import org.sunbird.cloud.storage.conf.AppConf
 import scala.util.control.Breaks._
 
 object CommonUtil {
@@ -53,63 +49,40 @@ object CommonUtil {
     fc;
   }
 
-  def getSparkContext(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
-                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, sparkRedisConnectionHost: Option[AnyRef] = None,
-                      sparkRedisDB: Option[AnyRef] = None, sparkRedisPort: Option[AnyRef] = Option("6379")): SparkContext = {
+  def getSparkContext(parallelization: Int, appName: String): SparkContext = {
     JobLogger.log("Initializing Spark Context")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
       .set("spark.memory.fraction", AppConf.getConfig("spark.memory_fraction"))
       .set("spark.memory.storageFraction", AppConf.getConfig("spark.storage_fraction"))
+      .set("spark.driver.userClassPathFirst", "true")
+      .set("spark.executor.userClassPathFirst", "true")
     val master = conf.getOption("spark.master")
     // $COVERAGE-OFF$ Disabling scoverage as the below code cannot be covered as they depend on environment variables
     if (master.isEmpty) {
       JobLogger.log("Master not found. Setting it to local[*]")
       conf.setMaster("local[*]")
     }
-
-    if (!conf.contains("spark.cassandra.connection.host"))
-      conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
     // $COVERAGE-ON$
 
-    if (sparkCassandraConnectionHost.nonEmpty) {
-      conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
-      println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
-    }
-
-    if (sparkElasticsearchConnectionHost.nonEmpty) {
-      conf.set("es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
-      conf.set("es.port", "9200")
-      conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
-      conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
-    }
-
-    if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
-      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
-      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
-    }
-
     val sc = new SparkContext(conf)
-    setS3Conf(sc)
-    setAzureConf(sc)
-    setGcloudConf(sc)
+    val key = AppConf.getConfig("storage.key.config")
+    val secret = AppConf.getConfig("storage.secret.config")
+    setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"), Option(key), Option(secret))
     JobLogger.log("Spark Context initialized")
     sc
   }
 
-  def getSparkSession(parallelization: Int, appName: String, sparkCassandraConnectionHost: Option[AnyRef] = None,
-                      sparkElasticsearchConnectionHost: Option[AnyRef] = None, readConsistencyLevel: Option[String] = None,
-                      sparkRedisConnectionHost: Option[AnyRef] = None, sparkRedisDB: Option[AnyRef] = None,
-                      sparkRedisPort: Option[AnyRef] = Option("6379"), writeConsistencyLevel: String = "QUORUM"): SparkSession = {
+  def getSparkSession(parallelization: Int, appName: String): SparkSession = {
     JobLogger.log("Initializing SparkSession")
     val conf = new SparkConf().setAppName(appName).set("spark.default.parallelism", parallelization.toString)
       .set("spark.driver.memory", AppConf.getConfig("spark.driver_memory"))
       .set("spark.memory.fraction", AppConf.getConfig("spark.memory_fraction"))
       .set("spark.memory.storageFraction", AppConf.getConfig("spark.storage_fraction"))
-      .set("spark.sql.extensions", "com.datastax.spark.connector.CassandraSparkExtensions")
       .set("directJoinSetting", "on")
       .set("spark.sql.legacy.timeParserPolicy", "LEGACY")
+      .set("spark.driver.userClassPathFirst", "true")
+      .set("spark.executor.userClassPathFirst", "true")
 
     val master = conf.getOption("spark.master")
     // $COVERAGE-OFF$ Disabling scoverage as the below code cannot be covered as they depend on environment variables
@@ -117,67 +90,13 @@ object CommonUtil {
       JobLogger.log("Master not found. Setting it to local[*]")
       conf.setMaster("local[*]")
     }
-
-    if (!conf.contains("spark.cassandra.connection.host"))
-    conf.set("spark.cassandra.connection.host", AppConf.getConfig("spark.cassandra.connection.host"))
     // $COVERAGE-ON$
 
-    if (sparkCassandraConnectionHost.nonEmpty) {
-      conf.set("spark.cassandra.connection.host", sparkCassandraConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.cassandra.input.consistency.level", readConsistencyLevel.getOrElse("QUORUM"))
-      conf.set("spark.cassandra.output.consistency.level", writeConsistencyLevel)
-      println("setting spark.cassandra.connection.host to lp-cassandra", conf.get("spark.cassandra.connection.host"))
-    }
-
-    if (sparkElasticsearchConnectionHost.nonEmpty) {
-      conf.set("es.nodes", sparkElasticsearchConnectionHost.get.asInstanceOf[String])
-      conf.set("es.port", "9200")
-      conf.set("es.write.rest.error.handler.log.logger.name", "org.ekstep.es.dispatcher")
-      conf.set("es.write.rest.error.handler.log.logger.level", "INFO")
-      conf.set("es.write.operation", "upsert")
-    }
-
-    if(sparkRedisConnectionHost.nonEmpty && sparkRedisDB.nonEmpty) {
-      conf.set("spark.redis.host", sparkRedisConnectionHost.get.asInstanceOf[String])
-      conf.set("spark.redis.port", sparkRedisPort.get.asInstanceOf[String])
-      conf.set("spark.redis.db", sparkRedisDB.get.asInstanceOf[String])
-    }
-
     val sparkSession = SparkSession.builder().appName("sunbird-analytics").config(conf).getOrCreate()
-    setS3Conf(sparkSession.sparkContext)
-    setAzureConf(sparkSession.sparkContext)
-    setGcloudConf(sparkSession.sparkContext)
+    setSparkCSPConfigurations(sparkSession.sparkContext, AppConf.getConfig("cloud_storage_type"), None, None)
     JobLogger.log("SparkSession initialized")
     sparkSession
   }
-
-  def setS3Conf(sc: SparkContext) = {
-    JobLogger.log("Configuring S3 AccessKey& SecrateKey to SparkContext")
-    sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getAwsKey());
-    sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getAwsSecret());
-
-    val storageEndpoint = AppConf.getConfig("cloud_storage_endpoint")
-    if (!"".equalsIgnoreCase(storageEndpoint)) {
-      sc.hadoopConfiguration.set("fs.s3n.endpoint", storageEndpoint)
-    }
-  }
-
-  def setAzureConf(sc: SparkContext) = {
-    val accName = AppConf.getStorageKey("azure")
-    val accKey = AppConf.getStorageSecret("azure")
-    sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
-    sc.hadoopConfiguration.set("fs.azure.account.key." + accName + ".blob.core.windows.net", accKey)
-    sc.hadoopConfiguration.set("fs.azure.account.keyprovider." + accName + ".blob.core.windows.net", "org.apache.hadoop.fs.azure.SimpleKeyProvider")
-  }
-
-  def setGcloudConf(sc: SparkContext) = {
-    sc.hadoopConfiguration.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem")
-    sc.hadoopConfiguration.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS")
-    sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
-    sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
-    sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
-  }
-
   def closeSparkContext()(implicit sc: SparkContext) {
     JobLogger.log("Closing Spark Context", None, INFO)
     sc.stop();
@@ -697,15 +616,6 @@ object CommonUtil {
     startDate + "/" + endDate
   }
 
-  def getGranularity(value: String): Granularity = {
-    value.toLowerCase match {
-      case "latest_index" =>
-        GranularityType.decode("all").right.getOrElse(GranularityType.All)
-      case _ =>
-        GranularityType.decode(value).right.getOrElse(GranularityType.All)
-    }
-  }
-
   def getMetricEvent(params: Map[String, AnyRef], producerId: String, producerPid: String): V3DerivedEvent = {
 
     val channel = "data-pipeline"
@@ -732,7 +642,7 @@ object CommonUtil {
   }
 
   def getS3File(bucket: String, file: String): String = {
-    "s3n://" + bucket + "/" + file;
+    "s3a://" + bucket + "/" + file;
   }
   
   def getS3FileWithoutPrefix(bucket: String, file: String): String = {
@@ -757,18 +667,28 @@ object CommonUtil {
 
   def setStorageConf(store: String, accountKey: Option[String], accountSecret: Option[String])(implicit sc: SparkContext): Configuration = {
     store.toLowerCase() match {
-      case "s3" =>
-        sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")));
-        sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getConfig(accountSecret.getOrElse("aws_storage_secret")));
+      case "s3" | "aws" =>
+        val webIdentityTokenFile = System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+        val roleArn = System.getenv("AWS_ROLE_ARN")
+        if (webIdentityTokenFile != null && !webIdentityTokenFile.isEmpty && roleArn != null && !roleArn.isEmpty) {
+          sc.hadoopConfiguration.set("fs.s3a.aws.credentials.provider", "com.amazonaws.auth.WebIdentityTokenCredentialsProvider")
+        } else {
+          sc.hadoopConfiguration.set("fs.s3a.access.key", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")))
+          sc.hadoopConfiguration.set("fs.s3a.secret.key", AppConf.getConfig(accountSecret.getOrElse("aws_storage_secret")))
+        }
       case "azure" =>
         sc.hadoopConfiguration.set("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
         sc.hadoopConfiguration.set("fs.azure.account.key." + AppConf.getConfig(accountKey.getOrElse("azure_storage_key")) + ".blob.core.windows.net", AppConf.getConfig(accountSecret.getOrElse("azure_storage_secret")))
       case "gcloud" =>
         sc.hadoopConfiguration.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem")
         sc.hadoopConfiguration.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS")
-        sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getStorageKey("gcloud"))
-        sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getStorageSecret("gcloud"))
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.email", AppConf.getConfig("cloud_storage_key"))
+        sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key", AppConf.getConfig("cloud_storage_secret"))
         sc.hadoopConfiguration.set("fs.gs.auth.service.account.private.key.id", AppConf.getConfig("gcloud_private_secret_id"))
+      case "oci" =>
+        sc.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", AppConf.getConfig(accountKey.getOrElse("aws_storage_key")));
+        sc.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", AppConf.getConfig(accountSecret.getOrElse("aws_storage_secret")));
+        // sc.hadoopConfiguration.set("fs.s3n.endpoint", AppConf.getConfig(accountSecret.getOrElse("cloud_storage_endpoint_with_protocol")));
       case _ =>
       // Do nothing
     }
@@ -790,6 +710,8 @@ object CommonUtil {
       case "azure" =>
         getAzureFile(bucket,filePath)
       case "s3" =>
+        getS3File(bucket, filePath)
+      case "oci" =>
         getS3File(bucket, filePath)
       // $COVERAGE-OFF$ for azure testing
       case "gcp" =>

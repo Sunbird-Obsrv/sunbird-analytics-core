@@ -1,0 +1,17 @@
+{"model":"DeviceSummaryModel","category":"consumption","input_dependency":"None"}
+{"model":"UpdateDeviceProfileDB","category":"consumption","input_dependency":"DeviceSummaryModel"}
+{"model":"DataExhaustJob","category":"consumption","input_dependency":"None"}
+{"model":"UpdateWorkFlowUsageDB","category":"consumption","input_dependency":"WorkFlowUsageSummaryModel"}
+{"model":"WorkFlowSummaryModel","category":"consumption","input_dependency":"None"}
+{"model":"WorkFlowUsageSummaryModel","category":"consumption","input_dependency":"WorkFlowSummaryModel"}
+{"model":"UpdatePortalMetrics","category":"consumption","input_dependency":"None"}
+{"model":"UpdateWorkFlowUsageMetricsModel","category":"consumption","input_dependency":"None"}
+{"model":"CourseMetricsJob","category":"consumption","input_dependency":"None"}
+{"model":"UpdateContentRating","category":"consumption","input_dependency":"None"}
+{"model":"DruidQueryProcessingModel","category":"consumption","input_dependency":"None"}
+{"model":"UsageMetrics","category":"consumption","input_dependency":"None"}
+{"model":"MetricsAuditJob","category":"consumption","input_dependency":"None"}
+{"model":"AssessmentMetricsJob","category":"consumption","input_dependency":"None"}
+{"model":"StateAdminReportJob","category":"consumption","input_dependency":"None"}
+{"model":"StateAdminGeoReportJob","category":"consumption","input_dependency":"None"}
+{"model": "CourseEnrollmentJob","category": "consumption","input_dependency": "None"}
