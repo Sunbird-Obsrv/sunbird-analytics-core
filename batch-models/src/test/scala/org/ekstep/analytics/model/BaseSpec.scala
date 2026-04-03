@@ -3,7 +3,6 @@ package org.ekstep.analytics.model
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.ekstep.analytics.framework.conf.AppConf
-import org.ekstep.analytics.util.EmbeddedPostgresql
 import org.scalatest._
 
 /**

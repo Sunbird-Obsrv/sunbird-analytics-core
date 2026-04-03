@@ -4,10 +4,10 @@ import org.ekstep.analytics.framework.exception.DispatcherException
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.ekstep.analytics.framework.{Event, SparkSpec}
 import org.ekstep.analytics.framework.FrameworkContext
-import net.manub.embeddedkafka.EmbeddedKafka
+import io.github.embeddedkafka.EmbeddedKafka
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.StringDeserializer
-import net.manub.embeddedkafka.EmbeddedKafkaConfig
+import io.github.embeddedkafka.EmbeddedKafkaConfig
 
 class TestKafkaDispatcher extends SparkSpec with EmbeddedKafka {
 

@@ -7,12 +7,8 @@ import org.apache.logging.log4j.core.LoggerContext
 import org.ekstep.analytics.framework.Level._
 import org.ekstep.analytics.framework.conf.AppConf
 import org.apache.commons.lang3.StringUtils
-import org.apache.logging.log4j.core.appender.mom.kafka.KafkaAppender
-import org.apache.logging.log4j.core.config.Property
-import org.apache.logging.log4j.core.layout.PatternLayout
 import java.nio.charset.Charset
 
-import org.apache.logging.log4j.core.config.AppenderRef
 import org.ekstep.analytics.framework.dispatcher.KafkaDispatcher
 import org.joda.time.DateTime
 
