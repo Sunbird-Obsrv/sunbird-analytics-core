@@ -56,7 +56,7 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>3.3.6</version>
+			<version>3.4.0</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -197,6 +197,7 @@
 								<exclude>META-INF/*.RSA</exclude>
 								<!-- <exclude>META-INF/services/org.sunbird.cloud.storage.StorageServiceProvider</exclude> -->
 								<exclude>com/fasterxml/jackson/**</exclude>
+									<exclude>org/slf4j/**</exclude>
 							</excludes>
 						</filter>
 					</filters>
