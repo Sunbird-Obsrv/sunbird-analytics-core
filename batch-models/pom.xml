@@ -195,6 +195,14 @@
 					<groupId>org.apache.spark</groupId>
 					<artifactId>spark-core_${scala.maj.version}</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -248,6 +256,14 @@
 					<groupId>org.apache.spark</groupId>
 					<artifactId>spark-core_${scala.maj.version}</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -275,7 +291,7 @@
 		<dependency>
 			<groupId>io.github.embeddedkafka</groupId>
 			<artifactId>embedded-kafka_${scala.maj.version}</artifactId>
-			<version>3.5.1</version>
+			<version>3.9.1</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- Safe replacements for excluded transitives -->
@@ -356,9 +372,9 @@
 			<version>1.1.10.5</version>
 		</dependency>
 		<dependency>
-			<groupId>org.lz4</groupId>
+			<groupId>at.yawk.lz4</groupId>
 			<artifactId>lz4-java</artifactId>
-			<version>1.8.1</version>
+			<version>1.10.4</version>
 		</dependency>
 	</dependencies>
 	<build>

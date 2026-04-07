@@ -31,6 +31,116 @@
 
 	</dependencies>
 
+	<!-- Centrally pin safe versions for transitive dependencies flagged by Dependabot.
+	     Modules do not need to re-declare these; Maven will enforce these versions
+	     automatically across the entire dependency graph. -->
+	<dependencyManagement>
+		<dependencies>
+			<!-- CVE-2022-37865 (CRIT), CVE-2022-37866 (HIGH), CVE-2022-46751 (HIGH) -->
+			<dependency>
+				<groupId>org.apache.ivy</groupId>
+				<artifactId>ivy</artifactId>
+				<version>2.5.2</version>
+			</dependency>
+			<!-- CVE-2023-44981 (CRIT), CVE-2024-23944 (MED) -->
+			<dependency>
+				<groupId>org.apache.zookeeper</groupId>
+				<artifactId>zookeeper</artifactId>
+				<version>3.8.4</version>
+			</dependency>
+			<!-- CVE-2024-47561 (CRIT), CVE-2023-39410 (HIGH) -->
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro</artifactId>
+				<version>1.11.4</version>
+			</dependency>
+			<!-- CVE-2021-22569 (HIGH), CVE-2022-3509/3510 (HIGH), CVE-2024-7254 (HIGH), CVE-2022-3171 (MED) -->
+			<dependency>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-java</artifactId>
+				<version>3.25.5</version>
+			</dependency>
+			<!-- CVE-2023-52428 (HIGH), CVE-2025-53864 (MED) -->
+			<dependency>
+				<groupId>com.nimbusds</groupId>
+				<artifactId>nimbus-jose-jwt</artifactId>
+				<version>9.37.4</version>
+			</dependency>
+			<!-- CVE-2024-36114 (HIGH), CVE-2025-67721 (HIGH) -->
+			<dependency>
+				<groupId>io.airlift</groupId>
+				<artifactId>aircompressor</artifactId>
+				<version>2.0.3</version>
+			</dependency>
+			<!-- CVE-2025-66566 (HIGH) — org.lz4:lz4-java is a POM redirect to this artifact -->
+			<dependency>
+				<groupId>at.yawk.lz4</groupId>
+				<artifactId>lz4-java</artifactId>
+				<version>1.10.4</version>
+			</dependency>
+			<!-- CVE-2024-29371 (HIGH), CVE-2023-51775 (MED) -->
+			<dependency>
+				<groupId>org.bitbucket.b_c</groupId>
+				<artifactId>jose4j</artifactId>
+				<version>0.9.6</version>
+			</dependency>
+			<!-- CVE-2024-13009 (HIGH), CVE-2024-8184 (MED) -->
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-server</artifactId>
+				<version>9.4.57.v20241219</version>
+			</dependency>
+			<!-- CVE-2024-6763 (MED) — CVE-2025-11143 has no fix -->
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-http</artifactId>
+				<version>9.4.57.v20241219</version>
+			</dependency>
+			<!-- Align with jetty-server/jetty-http upgrade -->
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-util</artifactId>
+				<version>9.4.57.v20241219</version>
+			</dependency>
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-io</artifactId>
+				<version>9.4.57.v20241219</version>
+			</dependency>
+			<!-- CVE-2025-48734 (HIGH) — pin for all modules -->
+			<dependency>
+				<groupId>commons-beanutils</groupId>
+				<artifactId>commons-beanutils</artifactId>
+				<version>1.11.0</version>
+			</dependency>
+			<!-- CVE-2024-29857 (MED), CVE-2024-30171 (MED) — bcprov-jdk15on was renamed
+			     to bcprov-jdk18on from v1.71; pin new artifact where it appears -->
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk18on</artifactId>
+				<version>1.78</version>
+			</dependency>
+			<!-- CVE-2021-37533 (MED) -->
+			<dependency>
+				<groupId>commons-net</groupId>
+				<artifactId>commons-net</artifactId>
+				<version>3.9.0</version>
+			</dependency>
+			<!-- CVE-2024-29131 (MED), CVE-2024-29133 (MED) -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-configuration2</artifactId>
+				<version>2.11.0</version>
+			</dependency>
+			<!-- CVE-2025-48924 (MED) -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-lang3</artifactId>
+				<version>3.18.0</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<build>
 		<pluginManagement>
 			<plugins>
