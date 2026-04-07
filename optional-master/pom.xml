@@ -41,7 +41,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <scala.version>2.12.10</scala.version>
+                <scala.version>2.13.18</scala.version>
             </properties>
         </profile>
     </profiles>
