@@ -1,8 +1,44 @@
 version: 2
+
 updates:
   - package-ecosystem: "maven"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
     target-branch: "master"
     open-pull-requests-limit: 10
+    groups:
+      apache-commons:
+        patterns:
+          - "org.apache.commons:*"
+          - "commons-*:*"
+      netty:
+        patterns:
+          - "io.netty:*"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson.*:*"
+      logging:
+        patterns:
+          - "org.apache.logging.log4j:*"
+          - "org.slf4j:*"
+          - "ch.qos.logback:*"
+      security-libs:
+        patterns:
+          - "org.bouncycastle:*"
+          - "com.nimbusds:*"
+          - "org.bitbucket.b_c:*"
+    ignore:
+      # Spark ecosystem: pinned to 3.2.1, requires coordinated manual upgrade
+      - dependency-name: "org.apache.spark:*"
+      - dependency-name: "org.apache.hadoop:*"
+      # Scala: pinned to 2.12.10, tied to Spark binary compatibility
+      - dependency-name: "org.scala-lang:*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"

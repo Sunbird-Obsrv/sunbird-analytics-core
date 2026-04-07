@@ -5,6 +5,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -25,4 +27,11 @@ jobs:
           cache: 'maven'
 
       - name: Submit Dependency Graph
-        uses: advanced-security/maven-dependency-submission-action@v4
+        uses: advanced-security/maven-dependency-submission-action@v5
+        with:
+          directory: '.'
+          maven-args: >-
+            -DCLOUD_STORE_GROUP_ID=org.sunbird
+            -DCLOUD_STORE_ARTIFACT_ID=cloud-storage-sdk-aws
+            -DCLOUD_STORE_VERSION=2.0.0
+            -DskipTests
