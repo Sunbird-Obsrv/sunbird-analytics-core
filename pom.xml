@@ -15,7 +15,7 @@
 		<scala.maj.version>2.12</scala.maj.version>
 		<scala.version>2.12.10</scala.version>
 		<spark.maj.version>3.2</spark.maj.version>
-		<spark.version>3.2.1</spark.version>
+		<spark.version>3.5.8</spark.version>
 		<jackson.version>2.12.7</jackson.version>
 		<paranamer.version>2.8</paranamer.version>
 	</properties>
