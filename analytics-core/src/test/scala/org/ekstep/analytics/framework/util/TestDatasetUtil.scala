@@ -5,7 +5,7 @@ import java.io.IOException
 import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.util.DatasetUtil.extensions
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.sunbird.cloud.storage.IStorageService
 
 import java.io.Serializable
@@ -76,7 +76,7 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
     val mockBaseStorageService = mock[IStorageService]
     (mockBaseStorageService.download(_: String, _: String, _: String, _: Boolean)).expects("test-container", "test-report3/2020-01-12.csv","src/test/resources/test-report3/", false).once()
     (mockBaseStorageService.upload(_: String, _: String, _: String, _: Boolean, _: Int, _: Int, _: Integer)).expects("test-container", "src/test/resources/test-report3/2020-01-12.zip",
-      "test-report3/2020-01-12.zip", false, 0, 3, null.asInstanceOf[Integer]).once()
+      "test-report3/2020-01-12.zip", false, 0, 3, *).once()
       df.copyMergeFile(Seq("Date"), "", "src/test/resources/test-report3/_tmp",
         "src/test/resources/test-report3", sparkSession.sparkContext.hadoopConfiguration, "csv",
         Map("header" -> "true"), StorageConfig("azure", "test-container", "src/test/resources"), Option(mockBaseStorageService), Option(true),None,Some("src/test/resources/"))

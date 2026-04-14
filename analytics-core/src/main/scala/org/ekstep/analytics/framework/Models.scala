@@ -2,103 +2,71 @@ package org.ekstep.analytics.framework
 
 import java.io.Serializable
 import java.sql.Timestamp
+import scala.beans.BeanProperty
 
 class Models extends Serializable {}
 
-@scala.beans.BeanInfo
-class GData(val id: String, val ver: String) extends Serializable {}
+class GData(@BeanProperty val id: String, @BeanProperty val ver: String) extends Serializable {}
 
-@scala.beans.BeanInfo
-class Eks(val dspec: Map[String, AnyRef], val loc: String, val pass: String, val qid: String, val score: Int, val res: Array[String], val length: AnyRef,
-          val atmpts: Int, val failedatmpts: Int, val category: String, val current: String, val max: String, val `type`: String, val extype: String,
-          val id: String, val gid: String, val itype: String, val stageid: String, val stageto: String, val resvalues: Array[Map[String, AnyRef]],
-          val params: Array[Map[String, AnyRef]], val uri: String, val state: String, val subtype: String, val pos: Array[Map[String, AnyRef]],
-          val values: Array[AnyRef], val tid: String, val direction: String, val datatype: String, val count: AnyRef, val contents: Array[Map[String, AnyRef]],
-          val comments: String, val rating: Double, val qtitle: String, val qdesc: String, val mmc: Array[String], val context: Map[String, AnyRef],
-          val method: String, val request: AnyRef) extends Serializable {}
+class Eks(@BeanProperty val dspec: Map[String, AnyRef], @BeanProperty val loc: String, @BeanProperty val pass: String, @BeanProperty val qid: String, @BeanProperty val score: Int, @BeanProperty val res: Array[String], @BeanProperty val length: AnyRef,
+          @BeanProperty val atmpts: Int, @BeanProperty val failedatmpts: Int, @BeanProperty val category: String, @BeanProperty val current: String, @BeanProperty val max: String, @BeanProperty val `type`: String, @BeanProperty val extype: String,
+          @BeanProperty val id: String, @BeanProperty val gid: String, @BeanProperty val itype: String, @BeanProperty val stageid: String, @BeanProperty val stageto: String, @BeanProperty val resvalues: Array[Map[String, AnyRef]],
+          @BeanProperty val params: Array[Map[String, AnyRef]], @BeanProperty val uri: String, @BeanProperty val state: String, @BeanProperty val subtype: String, @BeanProperty val pos: Array[Map[String, AnyRef]],
+          @BeanProperty val values: Array[AnyRef], @BeanProperty val tid: String, @BeanProperty val direction: String, @BeanProperty val datatype: String, @BeanProperty val count: AnyRef, @BeanProperty val contents: Array[Map[String, AnyRef]],
+          @BeanProperty val comments: String, @BeanProperty val rating: Double, @BeanProperty val qtitle: String, @BeanProperty val qdesc: String, @BeanProperty val mmc: Array[String], @BeanProperty val context: Map[String, AnyRef],
+          @BeanProperty val method: String, @BeanProperty val request: AnyRef) extends Serializable {}
 
-@scala.beans.BeanInfo
-class Ext(val stageId: String, val `type`: String) extends Serializable {}
+class Ext(@BeanProperty val stageId: String, @BeanProperty val `type`: String) extends Serializable {}
 
-@scala.beans.BeanInfo
-class EData(val eks: Eks, val ext: Ext) extends Serializable {}
+class EData(@BeanProperty val eks: Eks, @BeanProperty val ext: Ext) extends Serializable {}
 
-@scala.beans.BeanInfo
-class EventMetadata(val sync_timestamp: String, val public: String) extends Serializable {}
+class EventMetadata(@BeanProperty val sync_timestamp: String, @BeanProperty val public: String) extends Serializable {}
 
-@scala.beans.BeanInfo
-class Event(val eid: String, val ts: String, val ets: Long, val `@timestamp`: String, val ver: String, val gdata: GData, val sid: String,
-            val uid: String, val did: String, val channel: Option[String], val pdata: Option[PData], val edata: EData, val etags: Option[ETags], val tags: AnyRef = null, val cdata: List[CData] = List(), val metadata: EventMetadata = null) extends AlgoInput with Input {}
+class Event(@BeanProperty val eid: String, @BeanProperty val ts: String, @BeanProperty val ets: Long, val `@timestamp`: String, @BeanProperty val ver: String, @BeanProperty val gdata: GData, @BeanProperty val sid: String,
+            @BeanProperty val uid: String, @BeanProperty val did: String, @BeanProperty val channel: Option[String], @BeanProperty val pdata: Option[PData], @BeanProperty val edata: EData, @BeanProperty val etags: Option[ETags], @BeanProperty val tags: AnyRef = null, @BeanProperty val cdata: List[CData] = List(), @BeanProperty val metadata: EventMetadata = null) extends AlgoInput with Input {}
 
 // Computed Event Model
-@scala.beans.BeanInfo
-case class CData(id: String, `type`: Option[String])
-@scala.beans.BeanInfo
-case class DerivedEvent(eid: String, ets: Long, syncts: Long, ver: String, mid: String, uid: String, channel: String, content_id: Option[String] = None, cdata: Option[CData], context: Context, dimensions: Dimensions, edata: MEEdata, etags: Option[ETags] = Option(ETags(None, None, None)), tags: Option[List[AnyRef]] = None, `object`: Option[V3Object] = None) extends Input with AlgoInput
-@scala.beans.BeanInfo
-case class MeasuredEvent(eid: String, ets: Long, syncts: Long, ver: String, mid: String, uid: String, channel: String, content_id: Option[String] = None, cdata: Option[CData], context: Context, dimensions: Dimensions, edata: MEEdata, etags: Option[ETags] = None, tags: Option[List[AnyRef]] = None, `object`: Option[V3Object] = None) extends Output  with AlgoOutput
-@scala.beans.BeanInfo
-case class Dimensions(uid: Option[String], did: Option[String], gdata: Option[GData], cdata: Option[CData], domain: Option[String], user: Option[UserProfile], pdata: Option[PData], loc: Option[String] = None, group_user: Option[Boolean] = None, anonymous_user: Option[Boolean] = None, tag: Option[String] = None, period: Option[Int] = None, content_id: Option[String] = None, ss_mid: Option[String] = None, item_id: Option[String] = None, sid: Option[String] = None, stage_id: Option[String] = None, funnel: Option[String] = None, dspec: Option[Map[String, AnyRef]] = None, onboarding: Option[Boolean] = None, genieVer: Option[String] = None, author_id: Option[String] = None, partner_id: Option[String] = None, concept_id: Option[String] = None, client: Option[Map[String, AnyRef]] = None, textbook_id: Option[String] = None, channel: Option[String] = None, `type`: Option[String] = None, mode: Option[String] = None, content_type: Option[String] = None, dial_code: Option[String] = None)
-@scala.beans.BeanInfo
-case class PData(id: String, ver: String, model: Option[String] = None, pid: Option[String] = None)
-@scala.beans.BeanInfo
-case class DtRange(from: Long, to: Long)
-@scala.beans.BeanInfo
-case class Context(pdata: PData, dspec: Option[Map[String, String]] = None, granularity: String, date_range: DtRange, status: Option[String] = None, client_id: Option[String] = None, attempt: Option[Int] = None, rollup: Option[RollUp] = None, cdata: Option[List[V3CData]] = None)
-@scala.beans.BeanInfo
-case class MEEdata(eks: AnyRef)
-@scala.beans.BeanInfo
-case class ETags(app: Option[List[String]] = None, partner: Option[List[String]] = None, dims: Option[List[String]] = None)
+case class CData(@BeanProperty id: String, @BeanProperty `type`: Option[String])
+case class DerivedEvent(@BeanProperty eid: String, @BeanProperty ets: Long, @BeanProperty syncts: Long, @BeanProperty ver: String, @BeanProperty mid: String, @BeanProperty uid: String, @BeanProperty channel: String, @BeanProperty content_id: Option[String] = None, @BeanProperty cdata: Option[CData], @BeanProperty context: Context, @BeanProperty dimensions: Dimensions, @BeanProperty edata: MEEdata, @BeanProperty etags: Option[ETags] = Option(ETags(None, None, None)), @BeanProperty tags: Option[List[AnyRef]] = None, @BeanProperty `object`: Option[V3Object] = None) extends Input with AlgoInput
+case class MeasuredEvent(@BeanProperty eid: String, @BeanProperty ets: Long, @BeanProperty syncts: Long, @BeanProperty ver: String, @BeanProperty mid: String, @BeanProperty uid: String, @BeanProperty channel: String, @BeanProperty content_id: Option[String] = None, @BeanProperty cdata: Option[CData], @BeanProperty context: Context, @BeanProperty dimensions: Dimensions, @BeanProperty edata: MEEdata, @BeanProperty etags: Option[ETags] = None, @BeanProperty tags: Option[List[AnyRef]] = None, @BeanProperty `object`: Option[V3Object] = None) extends Output  with AlgoOutput
+case class Dimensions(@BeanProperty uid: Option[String], @BeanProperty did: Option[String], @BeanProperty gdata: Option[GData], @BeanProperty cdata: Option[CData], @BeanProperty domain: Option[String], @BeanProperty user: Option[UserProfile], @BeanProperty pdata: Option[PData], @BeanProperty loc: Option[String] = None, @BeanProperty group_user: Option[Boolean] = None, @BeanProperty anonymous_user: Option[Boolean] = None, @BeanProperty tag: Option[String] = None, @BeanProperty period: Option[Int] = None, @BeanProperty content_id: Option[String] = None, @BeanProperty ss_mid: Option[String] = None, @BeanProperty item_id: Option[String] = None, @BeanProperty sid: Option[String] = None, @BeanProperty stage_id: Option[String] = None, @BeanProperty funnel: Option[String] = None, @BeanProperty dspec: Option[Map[String, AnyRef]] = None, @BeanProperty onboarding: Option[Boolean] = None, @BeanProperty genieVer: Option[String] = None, @BeanProperty author_id: Option[String] = None, @BeanProperty partner_id: Option[String] = None, @BeanProperty concept_id: Option[String] = None, @BeanProperty client: Option[Map[String, AnyRef]] = None, @BeanProperty textbook_id: Option[String] = None, @BeanProperty channel: Option[String] = None, @BeanProperty `type`: Option[String] = None, @BeanProperty mode: Option[String] = None, @BeanProperty content_type: Option[String] = None, @BeanProperty dial_code: Option[String] = None)
+case class PData(@BeanProperty id: String, @BeanProperty ver: String, @BeanProperty model: Option[String] = None, @BeanProperty pid: Option[String] = None)
+case class DtRange(@BeanProperty from: Long, @BeanProperty to: Long)
+case class Context(@BeanProperty pdata: PData, @BeanProperty dspec: Option[Map[String, String]] = None, @BeanProperty granularity: String, @BeanProperty date_range: DtRange, @BeanProperty status: Option[String] = None, @BeanProperty client_id: Option[String] = None, @BeanProperty attempt: Option[Int] = None, @BeanProperty rollup: Option[RollUp] = None, @BeanProperty cdata: Option[List[V3CData]] = None)
+case class MEEdata(@BeanProperty eks: AnyRef)
+case class ETags(@BeanProperty app: Option[List[String]] = None, @BeanProperty partner: Option[List[String]] = None, @BeanProperty dims: Option[List[String]] = None)
 
 // User profile event models
 
-@scala.beans.BeanInfo
-class ProfileEks(val ueksid: String, val utype: String, val loc: String, val err: String, val attrs: Array[AnyRef], val uid: String, val age: Int, val day: Int, val month: Int, val gender: String, val language: String, val standard: Int, val is_group_user: Boolean, val dspec: Map[String, AnyRef]) extends Serializable {}
-@scala.beans.BeanInfo
-class ProfileData(val eks: ProfileEks, val ext: Ext) extends Serializable {}
-@scala.beans.BeanInfo
-class ProfileEvent(val eid: String, val ts: String, val `@timestamp`: String, val ver: String, val gdata: GData, val sid: String, val uid: String, val did: String, val pdata: Option[PData] = None, val channel: Option[String] = None, val edata: ProfileData) extends Input with AlgoInput with Serializable {}
+class ProfileEks(@BeanProperty val ueksid: String, @BeanProperty val utype: String, @BeanProperty val loc: String, @BeanProperty val err: String, @BeanProperty val attrs: Array[AnyRef], @BeanProperty val uid: String, @BeanProperty val age: Int, @BeanProperty val day: Int, @BeanProperty val month: Int, @BeanProperty val gender: String, @BeanProperty val language: String, @BeanProperty val standard: Int, @BeanProperty val is_group_user: Boolean, @BeanProperty val dspec: Map[String, AnyRef]) extends Serializable {}
+class ProfileData(@BeanProperty val eks: ProfileEks, @BeanProperty val ext: Ext) extends Serializable {}
+class ProfileEvent(@BeanProperty val eid: String, @BeanProperty val ts: String, val `@timestamp`: String, @BeanProperty val ver: String, @BeanProperty val gdata: GData, @BeanProperty val sid: String, @BeanProperty val uid: String, @BeanProperty val did: String, @BeanProperty val pdata: Option[PData] = None, @BeanProperty val channel: Option[String] = None, @BeanProperty val edata: ProfileData) extends Input with AlgoInput with Serializable {}
 
 // User Model
 case class UserProfile(uid: String, gender: String, age: Int)
 
 // Analytics Framework Job Models
 case class Query(bucket: Option[String] = None, prefix: Option[String] = None, startDate: Option[String] = None, endDate: Option[String] = None, delta: Option[Int] = None, brokerList: Option[String] = None, topic: Option[String] = None, windowType: Option[String] = None, windowDuration: Option[Int] = None, file: Option[String] = None, excludePrefix: Option[String] = None, datePattern: Option[String] = None, folder: Option[String] = None, creationDate: Option[String] = None, partitions: Option[List[Int]] = None)
-@scala.beans.BeanInfo
 case class Filter(name: String, operator: String, value: Option[AnyRef] = None)
-@scala.beans.BeanInfo
 case class Sort(name: String, order: Option[String])
-@scala.beans.BeanInfo
 case class Dispatcher(to: String, params: Map[String, AnyRef])
-@scala.beans.BeanInfo
 case class Fetcher(`type`: String, query: Option[Query], queries: Option[Array[Query]], druidQuery: Option[DruidQueryModel] = None)
-@scala.beans.BeanInfo
 case class JobConfig(search: Fetcher, filters: Option[Array[Filter]], sort: Option[Sort], model: String, modelParams: Option[Map[String, AnyRef]], output: Option[Array[Dispatcher]], parallelization: Option[Int], appName: Option[String], deviceMapping: Option[Boolean] = Option(false), exhaustConfig: Option[Map[String, DataSet]] = None, name: Option[String] = None)
 
 //Druid Query Models
-@scala.beans.BeanInfo
 case class DruidQueryModel(queryType: String, dataSource: String, intervals: String, granularity: Option[String] = Option("all"), aggregations: Option[List[Aggregation]] = Option(List(Aggregation(Option("count"), "count", "count"))), dimensions: Option[List[DruidDimension]] = None, filters: Option[List[DruidFilter]] = None, having: Option[DruidHavingFilter] = None, postAggregation: Option[List[PostAggregation]] = None, columns: Option[List[String]] = None, sqlDimensions: Option[List[DruidSQLDimension]] = None, sqlQueryStr: Option[String] = None, threshold: Option[Long] = None, metric: Option[String] = None, descending: Option[String] = Option("false"), intervalSlider: Int = 0)
 
-@scala.beans.BeanInfo
 case class DruidSQLQuery(query: String, resultFormat : String = "objectLines", header:Boolean =true )
 
-@scala.beans.BeanInfo
 case class DruidSQLDimension(fieldName: String, function: Option[String])
 
-@scala.beans.BeanInfo
 case class DruidDimension(fieldName: String, aliasName: Option[String], `type`: Option[String] = Option("Default"), outputType: Option[String] = None, extractionFn: Option[List[ExtractFn]] = None)
-@scala.beans.BeanInfo
 case class ExtractFn(`type`: String, fn: String, retainMissingValue: Option[Boolean] = Option(false), replaceMissingValueWith: Option[String] = None)
-@scala.beans.BeanInfo
 case class Aggregation(name: Option[String], `type`: String, fieldName: String, fnAggregate: Option[String] = None, fnCombine: Option[String] = None, fnReset: Option[String] = None, lgK: Option[Int] = Option(12), tgtHllType: Option[String] = Option("HLL_4"), round: Option[Boolean] = None, filterAggType: Option[String] = None, filterFieldName: Option[String] = None, filterValue: Option[AnyRef] = None)
-@scala.beans.BeanInfo
 case class PostAggregation(`type`: String, name: String, fields: PostAggregationFields, fn: String, ordering: Option[String] = None)
 // only right field can have type as FieldAccess or Constant. Only if it Constant, need to specify "rightFieldType"
-@scala.beans.BeanInfo
 case class PostAggregationFields(leftField: String, rightField: AnyRef, rightFieldType: String = "FieldAccess")
-@scala.beans.BeanInfo
 case class DruidFilter(`type`: String, dimension: String, value: Option[AnyRef], values: Option[List[AnyRef]] = None)
-@scala.beans.BeanInfo
 case class DruidHavingFilter(`type`: String, aggregation: String, value: AnyRef)
 
 // LP API Response Model
@@ -189,52 +157,36 @@ object OtherStage extends Stage {
 }
 
 // telemetry v3 case classes
-@scala.beans.BeanInfo
-case class Actor(id: String, `type`: String)
-@scala.beans.BeanInfo
-case class V3PData(id: String, ver: Option[String] = None, pid: Option[String] = None, model: Option[String] = None)
-@scala.beans.BeanInfo
-case class Question(id: String, maxscore: Int, exlength: Int, params: Array[Map[String, AnyRef]], uri: String, desc: String, title: String, mmc: Array[String], mc: Array[String], `type`: String)
-@scala.beans.BeanInfo
-case class V3CData(id: String, `type`: String)
-@scala.beans.BeanInfo
-case class RollUp(l1: String, l2: String, l3: String, l4: String)
-@scala.beans.BeanInfo
-case class V3Context(channel: String, pdata: Option[V3PData], env: String, sid: Option[String], did: Option[String], cdata: Option[List[V3CData]], rollup: Option[RollUp])
-@scala.beans.BeanInfo
-case class Visit(objid: String, objtype: String, objver: Option[String], section: Option[String], index: Option[Int])
-@scala.beans.BeanInfo
-case class V3Object(id: String, `type`: String, ver: Option[String], rollup: Option[RollUp], subtype: Option[String] = None, parent: Option[CommonObject] = None)
-@scala.beans.BeanInfo
-case class CommonObject(id: String, `type`: String, ver: Option[String] = None)
-@scala.beans.BeanInfo
-case class ShareItems(id: String, `type`: String, ver: String, params: List[Map[String, AnyRef]], origin: CommonObject, to: CommonObject)
+case class Actor(@BeanProperty id: String, @BeanProperty `type`: String)
+case class V3PData(@BeanProperty id: String, @BeanProperty ver: Option[String] = None, @BeanProperty pid: Option[String] = None, @BeanProperty model: Option[String] = None)
+case class Question(@BeanProperty id: String, @BeanProperty maxscore: Int, @BeanProperty exlength: Int, @BeanProperty params: Array[Map[String, AnyRef]], @BeanProperty uri: String, @BeanProperty desc: String, @BeanProperty title: String, @BeanProperty mmc: Array[String], @BeanProperty mc: Array[String], @BeanProperty `type`: String)
+case class V3CData(@BeanProperty id: String, @BeanProperty `type`: String)
+case class RollUp(@BeanProperty l1: String, @BeanProperty l2: String, @BeanProperty l3: String, @BeanProperty l4: String)
+case class V3Context(@BeanProperty channel: String, @BeanProperty pdata: Option[V3PData], @BeanProperty env: String, @BeanProperty sid: Option[String], @BeanProperty did: Option[String], @BeanProperty cdata: Option[List[V3CData]], @BeanProperty rollup: Option[RollUp])
+case class Visit(@BeanProperty objid: String, @BeanProperty objtype: String, @BeanProperty objver: Option[String], @BeanProperty section: Option[String], @BeanProperty index: Option[Int])
+case class V3Object(@BeanProperty id: String, @BeanProperty `type`: String, @BeanProperty ver: Option[String], @BeanProperty rollup: Option[RollUp], @BeanProperty subtype: Option[String] = None, @BeanProperty parent: Option[CommonObject] = None)
+case class CommonObject(@BeanProperty id: String, @BeanProperty `type`: String, @BeanProperty ver: Option[String] = None)
+case class ShareItems(@BeanProperty id: String, @BeanProperty `type`: String, @BeanProperty ver: String, @BeanProperty params: List[Map[String, AnyRef]], @BeanProperty origin: CommonObject, @BeanProperty to: CommonObject)
 
-@scala.beans.BeanInfo
-class V3EData(val datatype: String, val `type`: String, val dspec: Map[String, AnyRef], val uaspec: Map[String, String], val loc: String, val mode: String, val duration: Long, val pageid: String,
-              val subtype: String, val uri: String, val visits: List[Visit], val id: String, val target: Map[String, AnyRef],
-              val plugin: Map[String, AnyRef], val extra: AnyRef, val item: Question, val pass: String, val score: Int, val resvalues: Array[Map[String, AnyRef]],
-              val values: AnyRef, val rating: Double, val comments: String, val dir: String, val items: List[ShareItems], val props : List[String], 
-              val state: String, val prevstate: String, val err: AnyRef, val errtype: String, val stacktrace: String, val `object`: Map[String, AnyRef],
-              val level: String, val message: String, val params: List[Map[String, AnyRef]], val summary: List[Map[String, AnyRef]], val index: Int, val `class`: String, val status: String, val query: String, val data: Option[AnyRef], val sort: Option[AnyRef], val correlationid: Option[String], val topn: List[AnyRef], val filters: Option[AnyRef] = None, val size: Int = 0) extends Serializable {}
+class V3EData(@BeanProperty val datatype: String, @BeanProperty val `type`: String, @BeanProperty val dspec: Map[String, AnyRef], @BeanProperty val uaspec: Map[String, String], @BeanProperty val loc: String, @BeanProperty val mode: String, @BeanProperty val duration: Long, @BeanProperty val pageid: String,
+              @BeanProperty val subtype: String, @BeanProperty val uri: String, @BeanProperty val visits: List[Visit], @BeanProperty val id: String, @BeanProperty val target: Map[String, AnyRef],
+              @BeanProperty val plugin: Map[String, AnyRef], @BeanProperty val extra: AnyRef, @BeanProperty val item: Question, @BeanProperty val pass: String, @BeanProperty val score: Int, @BeanProperty val resvalues: Array[Map[String, AnyRef]],
+              @BeanProperty val values: AnyRef, @BeanProperty val rating: Double, @BeanProperty val comments: String, @BeanProperty val dir: String, @BeanProperty val items: List[ShareItems], @BeanProperty val props : List[String],
+              @BeanProperty val state: String, @BeanProperty val prevstate: String, @BeanProperty val err: AnyRef, @BeanProperty val errtype: String, @BeanProperty val stacktrace: String, @BeanProperty val `object`: Map[String, AnyRef],
+              @BeanProperty val level: String, @BeanProperty val message: String, @BeanProperty val params: List[Map[String, AnyRef]], @BeanProperty val summary: List[Map[String, AnyRef]], @BeanProperty val index: Int, val `class`: String, @BeanProperty val status: String, @BeanProperty val query: String, @BeanProperty val data: Option[AnyRef], @BeanProperty val sort: Option[AnyRef], @BeanProperty val correlationid: Option[String], @BeanProperty val topn: List[AnyRef], @BeanProperty val filters: Option[AnyRef] = None, @BeanProperty val size: Int = 0) extends Serializable {}
 
-@scala.beans.BeanInfo
-class V3Event(val eid: String, val ets: Long, val `@timestamp`: String, val ver: String, val mid: String, val actor: Actor, val context: V3Context, val `object`: Option[V3Object], val edata: V3EData, val tags: List[AnyRef] = null, val flags : V3FlagContent = null) extends AlgoInput with Input {}
+class V3Event(@BeanProperty val eid: String, @BeanProperty val ets: Long, val `@timestamp`: String, @BeanProperty val ver: String, @BeanProperty val mid: String, @BeanProperty val actor: Actor, @BeanProperty val context: V3Context, @BeanProperty val `object`: Option[V3Object], @BeanProperty val edata: V3EData, @BeanProperty val tags: List[AnyRef] = null, @BeanProperty val flags : V3FlagContent = null) extends AlgoInput with Input {}
 
-@scala.beans.BeanInfo
-case class V3DerivedEvent(eid: String, ets: Long, `@timestamp`: String, ver: String, mid: String, actor: Actor, context: V3Context, `object`: Option[V3Object], edata: AnyRef, tags: List[AnyRef] = null) extends AlgoOutput with Output
+case class V3DerivedEvent(@BeanProperty eid: String, @BeanProperty ets: Long, `@timestamp`: String, @BeanProperty ver: String, @BeanProperty mid: String, @BeanProperty actor: Actor, @BeanProperty context: V3Context, @BeanProperty `object`: Option[V3Object], @BeanProperty edata: AnyRef, @BeanProperty tags: List[AnyRef] = null) extends AlgoOutput with Output
 
-@scala.beans.BeanInfo
-case class V3MetricEdata(metric: String, value: AnyRef, range: Option[AnyRef] = None)
+case class V3MetricEdata(@BeanProperty metric: String, @BeanProperty value: AnyRef, @BeanProperty range: Option[AnyRef] = None)
 
-@scala.beans.BeanInfo
-case class V3FlagContent(derived_location_retrieved: Boolean, device_data_retrieved: Boolean,
-                   user_data_retrieved: Boolean, dialcode_data_retrieved: Boolean,
-                   content_data_retrieved: Boolean, collection_data_retrieved: Boolean)
+case class V3FlagContent(@BeanProperty derived_location_retrieved: Boolean, @BeanProperty device_data_retrieved: Boolean,
+                   @BeanProperty user_data_retrieved: Boolean, @BeanProperty dialcode_data_retrieved: Boolean,
+                   @BeanProperty content_data_retrieved: Boolean, @BeanProperty collection_data_retrieved: Boolean)
 
 // Experiment Models
-@scala.beans.BeanInfo
-case class DeviceProfileModel(device_id: Option[String], state: Option[String], city: Option[String], first_access: Option[Timestamp])
+case class DeviceProfileModel(@BeanProperty device_id: Option[String], @BeanProperty state: Option[String], @BeanProperty city: Option[String], @BeanProperty first_access: Option[Timestamp])
 
 case class GraphUpdateEvent(ets: Long, nodeUniqueId: String, transactionData: Map[String, Map[String, Map[String, Any]]], objectType: String, operationType: String = "UPDATE", nodeType: String = "DATA_NODE", graphId: String = "domain", nodeGraphId: Int = 0) extends AlgoOutput with Output
 
@@ -268,14 +220,16 @@ case class MergeConfig(`type`: Option[String], id: String, frequency: String, ba
 
 case class MergeFiles(files: List[Map[String, String]], dims: List[String])
 
-@scala.beans.BeanInfo
 case class DruidOutput(t: Map[String, Any]) extends Map[String,Any]  with Input with AlgoInput with AlgoOutput with Output {
   private val internalMap = t
-  override def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = new DruidOutput(internalMap + kv)
 
-  override def get(key: String): Option[Any] =internalMap.get(key)
+  override def get(key: String): Option[Any] = internalMap.get(key)
 
   override def iterator: Iterator[(String, Any)] = internalMap.iterator
 
-  override def -(key: String): Map[String, Any] = new DruidOutput(internalMap - key)
+  override def updated[V1 >: Any](key: String, value: V1): Map[String, V1] =
+    new DruidOutput(internalMap.updated(key, value.asInstanceOf[Any]))
+
+  override def removed(key: String): Map[String, Any] =
+    new DruidOutput(internalMap - key)
 }

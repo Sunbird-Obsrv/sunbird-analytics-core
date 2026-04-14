@@ -1,7 +1,7 @@
 package org.ekstep.analytics.framework
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 import org.ekstep.analytics.framework.util.CommonUtil
 import org.ekstep.analytics.framework.util.JSONUtils
@@ -26,7 +26,7 @@ object TestModel4 extends IBatchModelTemplate[Event, Dummy, Dummy, Dummy] with S
     override def name: String = "TestModel4";
 }
 
-class TestJobDriver2 extends FlatSpec with Matchers with BeforeAndAfterAll {
+class TestJobDriver2 extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   
   it should "run the batch job driver on model implementing BatchModelTemplate" in {
 

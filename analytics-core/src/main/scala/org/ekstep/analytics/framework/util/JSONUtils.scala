@@ -17,7 +17,6 @@ object JSONUtils {
     @transient val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
     mapper.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
     mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
     mapper.configure(Feature.WRITE_BIGDECIMAL_AS_PLAIN, true)

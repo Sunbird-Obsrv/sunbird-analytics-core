@@ -10,30 +10,26 @@ import org.ekstep.analytics.framework.AlgoOutput
 import org.ekstep.analytics.framework.Output
 import org.ekstep.analytics.framework.conf.AppConf
 import org.ekstep.analytics.framework.ETags
+import scala.beans.BeanProperty
 
 class CaseClasses extends Serializable {}
 
 /* Computed Event Without Optional Fields - Start */
 
-@scala.beans.BeanInfo
-class DerivedEvent(val eid: String, val ets: Long, val syncts: Long, val ver: String, val mid: String, val uid: String, val content_id: String,
-                   val context: Context, val dimensions: Dimensions, val edata: MEEdata, val etags: Option[ETags] = Option(ETags(None, None, None))) extends Input with AlgoInput;
+class DerivedEvent(@BeanProperty val eid: String, @BeanProperty val ets: Long, @BeanProperty val syncts: Long, @BeanProperty val ver: String, @BeanProperty val mid: String, @BeanProperty val uid: String, @BeanProperty val content_id: String,
+                   @BeanProperty val context: Context, @BeanProperty val dimensions: Dimensions, @BeanProperty val edata: MEEdata, @BeanProperty val etags: Option[ETags] = Option(ETags(None, None, None))) extends Input with AlgoInput;
 
-@scala.beans.BeanInfo
-class Dimensions(val uid: String, val did: String, val gdata: GData, val domain: String, val loc: String, val group_user: Boolean, val anonymous_user: Boolean, val app_id: Option[String] = Option(AppConf.getConfig("default.app.id")), val client: Option[Map[String, AnyRef]] = None, val textbook_id: Option[String] = None, val channel_id: Option[String] = Option(AppConf.getConfig("default.channel.id"))) extends Serializable;
+class Dimensions(@BeanProperty val uid: String, @BeanProperty val did: String, @BeanProperty val gdata: GData, @BeanProperty val domain: String, @BeanProperty val loc: String, @BeanProperty val group_user: Boolean, @BeanProperty val anonymous_user: Boolean, @BeanProperty val app_id: Option[String] = Option(AppConf.getConfig("default.app.id")), @BeanProperty val client: Option[Map[String, AnyRef]] = None, @BeanProperty val textbook_id: Option[String] = None, @BeanProperty val channel_id: Option[String] = Option(AppConf.getConfig("default.channel.id"))) extends Serializable;
 
-@scala.beans.BeanInfo
-class Context(val pdata: PData, val dspec: Map[String, String], val granularity: String, val date_range: DtRange) extends Serializable;
+class Context(@BeanProperty val pdata: PData, @BeanProperty val dspec: Map[String, String], @BeanProperty val granularity: String, @BeanProperty val date_range: DtRange) extends Serializable;
 
-@scala.beans.BeanInfo
-class Eks(val id: String, val ver: String, val levels: Array[Map[String, Any]], val noOfAttempts: Int, val timeSpent: Double,
-          val interruptTime: Double, val timeDiff: Double, val start_time: Long, val end_time: Long, val currentLevel: Map[String, String],
-          val noOfLevelTransitions: Int, val interactEventsPerMin: Double, val completionStatus: Boolean, val screenSummary: Array[AnyRef],
-          val noOfInteractEvents: Int, val eventsSummary: Array[AnyRef], val syncDate: Long, val contentType: AnyRef, val mimeType: AnyRef,
-          val did: String, val tags: AnyRef, val telemetryVer: String, val itemResponses: Array[AnyRef])
+class Eks(@BeanProperty val id: String, @BeanProperty val ver: String, @BeanProperty val levels: Array[Map[String, Any]], @BeanProperty val noOfAttempts: Int, @BeanProperty val timeSpent: Double,
+          @BeanProperty val interruptTime: Double, @BeanProperty val timeDiff: Double, @BeanProperty val start_time: Long, @BeanProperty val end_time: Long, @BeanProperty val currentLevel: Map[String, String],
+          @BeanProperty val noOfLevelTransitions: Int, @BeanProperty val interactEventsPerMin: Double, @BeanProperty val completionStatus: Boolean, @BeanProperty val screenSummary: Array[AnyRef],
+          @BeanProperty val noOfInteractEvents: Int, @BeanProperty val eventsSummary: Array[AnyRef], @BeanProperty val syncDate: Long, @BeanProperty val contentType: AnyRef, @BeanProperty val mimeType: AnyRef,
+          @BeanProperty val did: String, @BeanProperty val tags: AnyRef, @BeanProperty val telemetryVer: String, @BeanProperty val itemResponses: Array[AnyRef])
 
-@scala.beans.BeanInfo
-class MEEdata(val eks: Eks) extends Serializable;
+class MEEdata(@BeanProperty val eks: Eks) extends Serializable;
 /* Computed Event Without Optional Fields - End */
 
 /* Cassandra Models */

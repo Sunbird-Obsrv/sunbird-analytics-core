@@ -151,7 +151,7 @@ trait Application
   private lazy val argumentNames    = (new BytecodeReadingParanamer lookupParameterNames mainMethod map (_.replaceAll("\\$.+", ""))).toList
   private lazy val mainArgs         = map2(argumentNames, parameterTypes)(MainArg(_, _))
   private lazy val reqArgs          = mainArgs filter (x => !x.isOptional)
-  private def posArgCount           = mainArgs filter (_.isPositional) size
+  private def posArgCount           = (mainArgs filter (_.isPositional)).size
 
   def getAnyValBoxedClass(x: JClass[_]): JClass[_] =
     if (x == classOf[Byte]) classOf[jl.Byte]

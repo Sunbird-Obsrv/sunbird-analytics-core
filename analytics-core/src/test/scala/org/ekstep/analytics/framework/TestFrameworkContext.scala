@@ -2,12 +2,12 @@ package org.ekstep.analytics.framework
 
 import java.text.SimpleDateFormat
 
-import org.scalatest._
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework.util.CommonUtil
 import org.apache.spark.SparkContext
-import org.json4s.DefaultFormats
-import org.json4s.jackson.JsonMethods
 import com.fasterxml.jackson.core.JsonParseException
 import org.ekstep.analytics.framework.exception.DataFilterException
 import org.apache.spark.SparkException

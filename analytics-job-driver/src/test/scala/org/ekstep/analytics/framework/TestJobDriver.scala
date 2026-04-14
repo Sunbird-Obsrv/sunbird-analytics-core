@@ -1,6 +1,8 @@
 package org.ekstep.analytics.framework
 
-import org.scalatest._
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.ekstep.analytics.framework.conf.AppConf
 import java.io.ByteArrayOutputStream
@@ -32,7 +34,7 @@ object TestModel3 extends IBatchModel[MeasuredEvent, String] with Serializable {
     override def name: String = "TestModel3";
 }
 
-class TestJobDriver extends FlatSpec with Matchers with BeforeAndAfterAll {
+class TestJobDriver extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
 
     implicit val sc: Option[SparkContext] = None;
     implicit var fc: Option[FrameworkContext] = _;
@@ -61,8 +63,9 @@ class TestJobDriver extends FlatSpec with Matchers with BeforeAndAfterAll {
         noException should be thrownBy {
             val baos = new ByteArrayOutputStream
             val ps = new PrintStream(baos)
-            Console.setOut(ps);
-            JobDriver.run[Event, String]("batch", JSONUtils.serialize(jobConfig), new TestModel);
+            Console.withOut(ps) {
+              JobDriver.run[Event, String]("batch", JSONUtils.serialize(jobConfig), new TestModel)
+            }
             baos.toString should include("(Total Events Size,1699)");
             baos.close()
         }

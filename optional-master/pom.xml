@@ -14,7 +14,7 @@
     <properties>
         <java.src.version>1.6</java.src.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scoverage.plugin.version>1.1.1</scoverage.plugin.version>
+        <scoverage.plugin.version>2.1.1</scoverage.plugin.version>
     </properties>
     <profiles>
         <profile>
@@ -37,11 +37,17 @@
         </profile>
         <profile>
             <id>Scala-2.12.10</id>
+            <properties>
+                <scala.version>2.12.10</scala.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>Scala-2.13.14</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <scala.version>2.12.10</scala.version>
+                <scala.version>2.13.14</scala.version>
             </properties>
         </profile>
     </profiles>
@@ -76,7 +82,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>4.9.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -87,7 +93,6 @@
                             <args>
                                 <arg>-dependencyfile</arg>
                                 <arg>${project.build.directory}/.scala_dependencies</arg>
-                                <arg>-nobootcp</arg>
                             </args>
                         </configuration>
                     </execution>
@@ -110,7 +115,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>4.9.2</version>
             </plugin>
         </plugins>
     </reporting>

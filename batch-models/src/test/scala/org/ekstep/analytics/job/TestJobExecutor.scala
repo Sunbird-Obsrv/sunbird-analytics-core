@@ -12,11 +12,11 @@ class TestJobExecutor extends BaseSpec {
         implicit val fc = new FrameworkContext();
         
         a[JsonMappingException] should be thrownBy {
-            JobExecutor.main("org.ekstep.analytics.job.summarizer.WorkFlowSummarizer", "");
+            JobExecutor.main(Array("--model", "org.ekstep.analytics.job.summarizer.WorkFlowSummarizer", "--config", ""));
         }
 
         the[JobNotFoundException] thrownBy {
-            JobExecutor.main("abc", null);
+            JobExecutor.main(Array("--model", "abc", "--config", ""));
         } should have message "Unknown job type found"
     }
 
@@ -25,11 +25,11 @@ class TestJobExecutor extends BaseSpec {
         implicit val fc = new FrameworkContext();
 
         a[JsonMappingException] should be thrownBy {
-            JobExecutorV2.main("org.ekstep.analytics.job.summarizer.WorkFlowSummarizer", "");
+            JobExecutorV2.main("org.ekstep.analytics.job.summarizer.WorkFlowSummarizer", "")(fc);
         }
 
         the[JobNotFoundException] thrownBy {
-            JobExecutorV2.main("abc", null);
+            JobExecutorV2.main("abc", "")(fc);
         } should have message "Unknown job type found"
     }
 

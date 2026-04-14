@@ -11,12 +11,17 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
-		<scala.maj.version>2.12</scala.maj.version>
-		<scala.version>2.12.10</scala.version>
-		<spark.maj.version>3.2</spark.maj.version>
-		<spark.version>3.2.1</spark.version>
-		<jackson.version>2.12.7</jackson.version>
+		<scoverage.plugin.version>2.1.1</scoverage.plugin.version>
+		<scala.maj.version>2.13</scala.maj.version>
+		<scala.version>2.13.14</scala.version>
+		<spark.maj.version>3.5</spark.maj.version>
+		<spark.version>3.5.8</spark.version>
+		<hadoop.version>3.3.4</hadoop.version>
+		<!-- CVE-2025-52999 (HIGH), CVE-2025-49128 (MED), GHSA-72hv-8253-57qq (MED):
+		     Aligned with Spark 3.5.8 bundled Jackson 2.15.4 at runtime — the declared
+		     version here governs compile-time resolution only; shaded JARs already exclude
+		     com/fasterxml/jackson/**. Residual risk remains for the Spark-bundled version. -->
+		<jackson.version>2.15.4</jackson.version>
 		<paranamer.version>2.8</paranamer.version>
 	</properties>
 
@@ -42,11 +47,11 @@
 				<artifactId>ivy</artifactId>
 				<version>2.5.2</version>
 			</dependency>
-			<!-- CVE-2023-44981 (CRIT), CVE-2024-23944 (MED) -->
+			<!-- CVE-2023-44981 (CRIT), CVE-2024-23944 (MED), CVE-2026-24281 (HIGH), CVE-2026-24308 (HIGH) -->
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>
 				<artifactId>zookeeper</artifactId>
-				<version>3.8.4</version>
+				<version>3.8.6</version>
 			</dependency>
 			<!-- CVE-2024-47561 (CRIT), CVE-2023-39410 (HIGH) -->
 			<dependency>
@@ -66,13 +71,7 @@
 				<artifactId>nimbus-jose-jwt</artifactId>
 				<version>9.37.4</version>
 			</dependency>
-			<!-- CVE-2024-36114 (HIGH), CVE-2025-67721 (HIGH) -->
-			<dependency>
-				<groupId>io.airlift</groupId>
-				<artifactId>aircompressor</artifactId>
-				<version>2.0.3</version>
-			</dependency>
-			<!-- CVE-2025-66566 (HIGH) — org.lz4:lz4-java is a POM redirect to this artifact -->
+			<!-- CVE-2025-66566 (HIGH) — at.yawk.lz4 groupId; safe at 1.10.4 (>= 1.10.1 threshold) -->
 			<dependency>
 				<groupId>at.yawk.lz4</groupId>
 				<artifactId>lz4-java</artifactId>
@@ -118,7 +117,7 @@
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcprov-jdk18on</artifactId>
-				<version>1.78</version>
+				<version>1.80</version>
 			</dependency>
 			<!-- CVE-2021-37533 (MED) -->
 			<dependency>
@@ -137,6 +136,42 @@
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-lang3</artifactId>
 				<version>3.18.0</version>
+			</dependency>
+			<!-- CVE-2022-42889 (CRIT): safe at 1.10.0 — centrally managed so all modules are covered -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-text</artifactId>
+				<version>1.10.0</version>
+			</dependency>
+			<!-- CVE-2025-66566 (HIGH), CVE-2025-12183 (HIGH): org.lz4:lz4-java safe at 1.10.1.
+			     Kafka and other transitive paths pull this groupId; at.yawk.lz4:lz4-java is
+			     pinned separately below. Both entries are required as Maven treats them as
+			     distinct coordinates. -->
+			<dependency>
+				<groupId>org.lz4</groupId>
+				<artifactId>lz4-java</artifactId>
+				<version>1.8.1</version>
+			</dependency>
+			<!-- CVE-2024-12798 (MED), CVE-2024-12801 (LOW), CVE-2025-11226 (MED), CVE-2026-1225 (LOW):
+			     Logback safe at 1.5.25 (highest patch in the 1.5.x series, covering all alerts).
+			     Logback is a transitive dep pulled in by various test and runtime libraries. -->
+			<dependency>
+				<groupId>ch.qos.logback</groupId>
+				<artifactId>logback-core</artifactId>
+				<version>1.5.25</version>
+			</dependency>
+			<dependency>
+				<groupId>ch.qos.logback</groupId>
+				<artifactId>logback-classic</artifactId>
+				<version>1.5.25</version>
+			</dependency>
+			<!-- CVE-2023-33201 (MED), CVE-2024-29857 (MED), CVE-2024-30171 (MED):
+			     bcprov-jdk15on is the legacy artifact name (renamed to bcprov-jdk18on at v1.71).
+			     Some transitive paths still reference the old name; pin both to 1.78. -->
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk15on</artifactId>
+				<version>1.70</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

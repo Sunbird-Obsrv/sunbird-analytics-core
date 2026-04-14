@@ -5,9 +5,11 @@ import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework.{Event, JobContext}
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils, JobLogger}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest._
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class SparkFlatSpec(val file: String = "src/test/resources/sample_telemetry.log") extends FlatSpec with BeforeAndAfterAll {
+class SparkFlatSpec(val file: String = "src/test/resources/sample_telemetry.log") extends AnyFlatSpec with BeforeAndAfterAll {
 
     var events: RDD[Event] = null;
     implicit var sc: SparkContext = null;

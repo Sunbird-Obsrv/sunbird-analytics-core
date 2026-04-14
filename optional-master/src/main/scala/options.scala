@@ -25,8 +25,8 @@ object Options
    */
   def parse(argInfos: HashSet[ArgInfo], args: String*): Options = {
     import mutable._;
-    val optionsStack = new ArrayStack[String];
-    val options = new OpenHashMap[String, String];
+    val optionsStack = new Stack[String];
+    val options = new mutable.HashMap[String, String];
     val arguments = new ArrayBuffer[String];
     
     def addSwitch(c: Char) =
@@ -63,7 +63,7 @@ object Options
           else addOption(name)
         
         case LongOption(name) => addOption(name);
-        case OptionTerminator => optionsStack.drain(arguments += _);
+        case OptionTerminator => while (optionsStack.nonEmpty) arguments += optionsStack.pop();
         case x => arguments += x; 
       }  
     }

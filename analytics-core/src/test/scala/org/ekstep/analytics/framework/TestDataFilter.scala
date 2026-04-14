@@ -2,12 +2,11 @@ package org.ekstep.analytics.framework
 
 import java.text.SimpleDateFormat
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.apache.spark.rdd.RDD
 import org.ekstep.analytics.framework.util.CommonUtil
 import org.apache.spark.SparkContext
-import org.json4s.DefaultFormats
-import org.json4s.jackson.JsonMethods
 import com.fasterxml.jackson.core.JsonParseException
 import org.ekstep.analytics.framework.exception.DataFilterException
 import org.apache.spark.SparkException
@@ -17,11 +16,10 @@ import scala.collection.mutable.Buffer
 import java.util.Date
 
 import org.joda.time.DateTime
+import scala.beans.BeanProperty
 
-@scala.beans.BeanInfo
-case class Test(id: String, value: Option[String], optValue: Option[String]);
-@scala.beans.BeanInfo
-case class TestLessThan(id: String, intCol: Int, longCol: Long, doubleCol: Double, dateCol: Date)
+case class Test(@BeanProperty id: String, @BeanProperty value: Option[String], @BeanProperty optValue: Option[String]);
+case class TestLessThan(@BeanProperty id: String, @BeanProperty intCol: Int, @BeanProperty longCol: Long, @BeanProperty doubleCol: Double, @BeanProperty dateCol: Date)
 
 /**
  * @author Santhosh
@@ -289,12 +287,11 @@ class TestDataFilter extends SparkSpec {
     
     it should "cover all uncovered branches" in {
       DataFilter.matches[MeasuredEvent](MeasuredEvent(null, 0l, 123l, null, null, null, null, None, None, null, null, null), Filter("eventts", "RANGE", Option(Map("start" -> 0L, "end" -> 124l)))) should be (true)
-      
-      case class Event1(val eid: String, val ts: String, val ets: Long, val `@timestamp`: String)
+
+      case class Event1(@BeanProperty val eid: String, @BeanProperty val ts: String, @BeanProperty val ets: Long, val `@timestamp`: String)
       DataFilter.matches[Event1](Event1(null, "", 123l, "2016-01-02T00:59:22.924Z"), Filter("eventts", "EQ", Option(1451696362924l.asInstanceOf[AnyRef]))) should be (true)
-      
-      @scala.beans.BeanInfo
-      case class Event2(eid: String, tags: List[String])
+
+      case class Event2(@BeanProperty eid: String, @BeanProperty tags: List[String])
       DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("tags", "IN", Option(List("tag2")))) should be (true)
       DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("tags", "NIN", Option(List("tag2")))) should be (false)
       DataFilter.matches[Event2](Event2("Test", List("tag1", "tag2", "tag3")), Filter("eid", "NE", Option("Test"))) should be (false)

@@ -4,11 +4,11 @@ import org.ekstep.analytics.model.BaseSpec
 import org.ekstep.analytics.job.summarizer._
 import org.ekstep.analytics.framework.IJob
 import org.ekstep.analytics.framework.exception.JobNotFoundException
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 
-class TestJobFactory extends FlatSpec with Matchers with BeforeAndAfterAll {
+class TestJobFactory extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
 
     "JobFactory" should "return a Model class for a model code" in {
         val job = JobFactory.getJob("wfs")

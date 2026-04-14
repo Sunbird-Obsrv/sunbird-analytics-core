@@ -3,7 +3,7 @@ package org.ekstep.analytics.framework
 import org.ekstep.analytics.framework.exception.DataFetcherException
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.sunbird.cloud.storage.IStorageService
 import org.ekstep.analytics.framework.fetcher.S3DataFetcher
 
@@ -59,8 +59,8 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
         val mockStorageService = mock[IStorageService]
         mockFc.inputEventsCount = sc.longAccumulator("Count");
         (mockFc.getStorageService(_:String):IStorageService).expects("aws").returns(mockStorageService);
-        (mockStorageService.searchObjects(_: String, _: String, _: String, _: String, _: Integer, _: String)).expects("dev-data-store", "abc/", "2012-01-01", "2012-02-01", null.asInstanceOf[Integer], "yyyy-MM-dd").returns(null);
-        (mockStorageService.getPaths _).expects("dev-data-store", null).returns(java.util.Arrays.asList("src/test/resources/sample_telemetry_2.log"))
+        (mockStorageService.searchObjects(_: String, _: String, _: String, _: String, _: Integer, _: String)).expects("dev-data-store", "abc/", "2012-01-01", "2012-02-01", *, "yyyy-MM-dd").returns(null);
+        (mockStorageService.getPaths _).expects("dev-data-store", *).returns(java.util.Arrays.asList("src/test/resources/sample_telemetry_2.log"))
         val queries = Option(Array(
             Query(Option("dev-data-store"), Option("abc/"), Option("2012-01-01"), Option("2012-02-01"))
         ));
@@ -93,7 +93,7 @@ class TestDataFetcher extends SparkSpec with Matchers with MockFactory {
     it should "cover the missing branches in S3DataFetcher" in {
       implicit val fc = new FrameworkContext();
       var query = JSONUtils.deserialize[Query]("""{"bucket":"test-container","prefix":"test/","folder":"true","endDate":"2020-01-10"}""")
-      S3DataFetcher.getObjectKeys(Array(query)).head should be ("s3n://test-container/test/2020-01-10")
+      S3DataFetcher.getObjectKeys(Array(query)).head should be ("s3a://test-container/test/2020-01-10")
 
       query = JSONUtils.deserialize[Query]("""{"bucket":"test-container","prefix":"test/","folder":"true","endDate":"2020-01-10","excludePrefix":"test"}""")
       S3DataFetcher.getObjectKeys(Array(query)).size should be (0)

@@ -11,7 +11,7 @@
 		<version>2.0</version>
 	</parent>
 	<properties>
-		<scoverage.plugin.version>1.1.1</scoverage.plugin.version>
+		<scoverage.plugin.version>2.1.1</scoverage.plugin.version>
 	</properties>
 	
 	<repositories>
@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.12.7.1</version>
+			<version>${jackson.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -144,7 +144,7 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>3.4.0</version>
+			<version>${hadoop.version}</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -220,19 +220,19 @@
 		<dependency>
 			<groupId>org.scalactic</groupId>
 			<artifactId>scalactic_${scala.maj.version}</artifactId>
-			<version>3.0.5</version>
+			<version>3.2.19</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.maj.version}</artifactId>
-			<version>3.0.5</version>
+			<version>3.2.19</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.scalamock/scalamock -->
 		<dependency>
 			<groupId>org.scalamock</groupId>
 			<artifactId>scalamock_${scala.maj.version}</artifactId>
-			<version>4.1.0</version>
+			<version>5.2.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -376,6 +376,14 @@
 			<artifactId>lz4-java</artifactId>
 			<version>1.10.4</version>
 		</dependency>
+		<!-- CVE-2025-66566 (HIGH), CVE-2025-12183 (HIGH): force org.lz4 groupId to safe version.
+		     Kafka and Spark pull org.lz4:lz4-java transitively; the parent dependencyManagement
+		     pins it to 1.8.1 but an explicit entry here ensures mediation wins. -->
+		<dependency>
+			<groupId>org.lz4</groupId>
+			<artifactId>lz4-java</artifactId>
+			<version>1.8.1</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
@@ -385,7 +393,7 @@
 				<!-- see http://davidb.github.com/scala-maven-plugin -->
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.2</version>
+				<version>4.9.2</version>
 				<executions>
 					<execution>
 						<goals>
@@ -396,7 +404,6 @@
 							<args>
 								<arg>-dependencyfile</arg>
 								<arg>${project.build.directory}/.scala_dependencies</arg>
-								<arg>-nobootcp</arg>
 							</args>
 						</configuration>
 					</execution>
@@ -438,7 +445,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.3</version>
+				<version>3.6.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
