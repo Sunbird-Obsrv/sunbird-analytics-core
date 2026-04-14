@@ -21,7 +21,7 @@
 		     Aligned with Spark 3.5.8 bundled Jackson 2.15.4 at runtime — the declared
 		     version here governs compile-time resolution only; shaded JARs already exclude
 		     com/fasterxml/jackson/**. Residual risk remains for the Spark-bundled version. -->
-		<jackson.version>2.15.4</jackson.version>
+		<jackson.version>2.21</jackson.version>
 		<paranamer.version>2.8</paranamer.version>
 	</properties>
 
