@@ -65,7 +65,7 @@ object CommonUtil {
     }
     // $COVERAGE-ON$
 
-    val sc = new SparkContext(conf)
+    val sc = SparkContext.getOrCreate(conf)
     val key = AppConf.getConfig("storage.key.config")
     val secret = AppConf.getConfig("storage.secret.config")
     setSparkCSPConfigurations(sc, AppConf.getConfig("cloud_storage_type"), Option(key), Option(secret))

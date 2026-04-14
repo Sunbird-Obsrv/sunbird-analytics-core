@@ -24,7 +24,7 @@ object JobLogger {
     }
 
     private def logger(name: String): Logger = {
-        LogManager.getLogger(name+".logger");
+        LogManager.getLogger(name);
     }
 
     private def info(msg: String, data: Option[AnyRef] = None, name: String = "org.ekstep.analytics", pdata_id: String = "AnalyticsDataPipeline", pdata_pid: String = JobContext.jobName)(implicit className: String) {

@@ -5,7 +5,7 @@ import java.io.{File, IOException}
 import org.ekstep.analytics.framework.exception.DispatcherException
 import org.ekstep.analytics.framework.util.{CommonUtil, JSONUtils}
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.sunbird.cloud.storage.IStorageService
 import org.ekstep.analytics.framework.dispatcher.S3Dispatcher
 import org.ekstep.analytics.framework.dispatcher.ConsoleDispatcher

@@ -10,7 +10,7 @@ import org.joda.time.LocalDate
 import java.util.Date
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.ekstep.analytics.framework.FrameworkContext
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * @author Santhosh

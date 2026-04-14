@@ -2,9 +2,11 @@ package org.ekstep.analytics.util
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest._
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class BaseSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+class BaseSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
 
   def getSparkContext(): SparkContext = {
     getSparkSession().sparkContext;

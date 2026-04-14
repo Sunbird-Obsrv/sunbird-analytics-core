@@ -3,9 +3,10 @@ package org.ekstep.analytics.job
 import org.ekstep.analytics.framework.JobConfig
 import org.ekstep.analytics.framework.util.JSONUtils
 import org.ekstep.analytics.framework.util.CommonUtil
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class TestEventsReplayJob extends FlatSpec with Matchers {
+class TestEventsReplayJob extends AnyFlatSpec with Matchers {
 
   val config = """{"search":{"type":"local","queries":[{"file":"src/test/resources/telemetry-replay/data.json"}]},"model":"org.ekstep.analytics.job.EventsReplayJob","modelParams":{},"output":[{"to":"console","params":{"printEvent":false}}],"parallelization":8,"deviceMapping":true}"""
 

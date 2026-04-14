@@ -4,7 +4,7 @@ import java.util
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.common.TopicPartition
 import org.slf4j.Logger
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 /**
  * LoggingRebalanceListener will log partition re-balancing events for selected topic.
@@ -16,7 +16,7 @@ class LoggingRebalanceListener(topic: String, log: Logger) extends ConsumerRebal
     private var currentAssignment = Set.empty[TopicPartition]
 
     override def onPartitionsAssigned(partitions: util.Collection[TopicPartition]): Unit = {
-        val newAssignment = partitions.toSet
+        val newAssignment = partitions.asScala.toSet
         val addedPartitions = newAssignment -- currentAssignment
         val removedPartitions = currentAssignment -- newAssignment
         currentAssignment = newAssignment

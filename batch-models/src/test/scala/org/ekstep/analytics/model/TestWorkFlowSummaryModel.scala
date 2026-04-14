@@ -4,7 +4,7 @@ import org.ekstep.analytics.framework._
 import org.ekstep.analytics.framework.util.JSONUtils
 
 import scala.collection.mutable.Buffer
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 case class WorkflowDataRead(did: Option[String], sid: String, uid: String, pdata: PData, channel: String, content_id: Option[String], session_type: String, syncts: Long, dt_range: DtRange, mode: Option[String], item_responses: Option[Buffer[ItemResponse]],
                             start_time: Long, end_time: Long, time_spent: Double, time_diff: Double, interact_events_count: Long, interact_events_per_min: Double, telemetry_version: String,
@@ -13,7 +13,7 @@ case class WorkflowDataRead(did: Option[String], sid: String, uid: String, pdata
 
 class TestWorkFlowSummaryModel extends SparkFlatSpec with Matchers {
 
-    implicit val fc = new FrameworkContext();
+    implicit val fc: FrameworkContext = new FrameworkContext();
 
     it should "generate 6 workflow summary with 1 default app summary" in {
 
