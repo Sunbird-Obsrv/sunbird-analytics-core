@@ -69,7 +69,7 @@
 			<dependency>
 				<groupId>com.nimbusds</groupId>
 				<artifactId>nimbus-jose-jwt</artifactId>
-				<version>9.37.4</version>
+				<version>10.9</version>
 			</dependency>
 			<!-- CVE-2025-66566 (HIGH) — at.yawk.lz4 groupId; safe at 1.10.4 (>= 1.10.1 threshold) -->
 			<dependency>
@@ -117,7 +117,7 @@
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcprov-jdk18on</artifactId>
-				<version>1.80</version>
+				<version>1.84</version>
 			</dependency>
 			<!-- CVE-2021-37533 (MED) -->
 			<dependency>
