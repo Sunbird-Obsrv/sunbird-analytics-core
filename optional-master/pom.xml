@@ -14,7 +14,7 @@
     <properties>
         <java.src.version>1.6</java.src.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scoverage.plugin.version>2.1.1</scoverage.plugin.version>
+        <scoverage.plugin.version>2.1.5</scoverage.plugin.version>
     </properties>
     <profiles>
         <profile>
