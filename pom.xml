@@ -11,7 +11,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scoverage.plugin.version>2.1.1</scoverage.plugin.version>
+		<scoverage.plugin.version>2.1.5</scoverage.plugin.version>
 		<scala.maj.version>2.13</scala.maj.version>
 		<scala.version>2.13.14</scala.version>
 		<spark.maj.version>3.5</spark.maj.version>

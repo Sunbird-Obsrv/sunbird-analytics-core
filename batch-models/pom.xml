@@ -11,7 +11,7 @@
 		<version>2.0</version>
 	</parent>
 	<properties>
-		<scoverage.plugin.version>2.1.1</scoverage.plugin.version>
+		<scoverage.plugin.version>2.1.5</scoverage.plugin.version>
 	</properties>
 	
 	<repositories>

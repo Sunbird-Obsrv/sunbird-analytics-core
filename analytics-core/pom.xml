@@ -15,7 +15,7 @@
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-		<scoverage.plugin.version>2.1.1</scoverage.plugin.version>
+		<scoverage.plugin.version>2.1.5</scoverage.plugin.version>
 		<!-- <CLOUD_STORE_GROUP_ID>org.sunbird</CLOUD_STORE_GROUP_ID>
 		<CLOUD_STORE_ARTIFACT_ID>cloud-store-sdk_2.12</CLOUD_STORE_ARTIFACT_ID>
 		<CLOUD_STORE_VERSION>1.4.6</CLOUD_STORE_VERSION> -->
