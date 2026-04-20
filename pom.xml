@@ -158,12 +158,12 @@
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-core</artifactId>
-				<version>1.5.25</version>
+				<version>1.5.32</version>
 			</dependency>
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-classic</artifactId>
-				<version>1.5.25</version>
+				<version>1.5.32</version>
 			</dependency>
 			<!-- CVE-2023-33201 (MED), CVE-2024-29857 (MED), CVE-2024-30171 (MED):
 			     bcprov-jdk15on is the legacy artifact name (renamed to bcprov-jdk18on at v1.71).
