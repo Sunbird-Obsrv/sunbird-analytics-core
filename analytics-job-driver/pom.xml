@@ -130,6 +130,13 @@
 			<artifactId>lz4-java</artifactId>
 			<version>1.8.1</version>
 		</dependency>
+		<!-- CVE-2025-66566 (HIGH): at.yawk.lz4 groupId (distinct Maven coordinates from org.lz4).
+		     Patched at >= 1.10.1; pinned at 1.10.4 to align with analytics-core and batch-models. -->
+		<dependency>
+			<groupId>at.yawk.lz4</groupId>
+			<artifactId>lz4-java</artifactId>
+			<version>1.10.4</version>
+		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.maj.version}</artifactId>

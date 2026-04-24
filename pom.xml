@@ -16,12 +16,14 @@
 		<scala.version>2.13.14</scala.version>
 		<spark.maj.version>3.5</spark.maj.version>
 		<spark.version>3.5.8</spark.version>
-		<hadoop.version>3.3.4</hadoop.version>
-		<!-- CVE-2025-52999 (HIGH), CVE-2025-49128 (MED), GHSA-72hv-8253-57qq (MED):
-		     Aligned with Spark 3.5.8 bundled Jackson 2.15.4 at runtime — the declared
-		     version here governs compile-time resolution only; shaded JARs already exclude
-		     com/fasterxml/jackson/**. Residual risk remains for the Spark-bundled version. -->
-		<jackson.version>2.15.4</jackson.version>
+		<!-- CVE-2024-23454 (LOW, CVSS 3.3): hadoop-common patched at 3.4.0; using 3.4.3 (latest).
+		     All hadoop deps are provided scope — runtime cluster must supply >= 3.4.0 for actual fix. -->
+		<hadoop.version>3.4.3</hadoop.version>
+		<!-- jackson-core GHSA (MED): patched version 2.18.6 not yet on Maven Central; using 2.19.0
+		     (latest stable, > 2.18.5 vulnerable range). Compile-time only — shaded JARs exclude
+		     com/fasterxml/jackson/**. Spark 3.5.8 bundles Jackson 2.15.4 at runtime (still vulnerable;
+		     requires Spark upgrade to fully remediate). -->
+		<jackson.version>2.19.0</jackson.version>
 		<paranamer.version>2.8</paranamer.version>
 	</properties>
 
@@ -172,6 +174,46 @@
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcprov-jdk15on</artifactId>
 				<version>1.70</version>
+			</dependency>
+			<!-- CVE-2026-35554 (HIGH, CVSS 8.7): kafka-clients vulnerable >= 2.8.0, < 3.9.2 -->
+			<dependency>
+				<groupId>org.apache.kafka</groupId>
+				<artifactId>kafka-clients</artifactId>
+				<version>3.9.2</version>
+			</dependency>
+			<!-- CVE-2023-1370 (HIGH, CVSS 7.5): json-smart vulnerable < 2.4.9 -->
+			<dependency>
+				<groupId>net.minidev</groupId>
+				<artifactId>json-smart</artifactId>
+				<version>2.4.9</version>
+			</dependency>
+			<!-- CVE-2026-34477/34478/34480 (MED), CVE-2026-34479 (MED): log4j-core/api/1.2-api vulnerable < 2.25.4 -->
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-core</artifactId>
+				<version>2.25.4</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-api</artifactId>
+				<version>2.25.4</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-1.2-api</artifactId>
+				<version>2.25.4</version>
+			</dependency>
+			<!-- CVE-2021-34429 (MED, CVSS 5.3): jetty-webapp vulnerable >= 9.4.37, < 9.4.43; pin 9.4.57 satisfies -->
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-webapp</artifactId>
+				<version>9.4.57.v20241219</version>
+			</dependency>
+			<!-- LOW: jetty-xml vulnerable <= 9.4.51; pin 9.4.57 satisfies patched >= 9.4.52 -->
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-xml</artifactId>
+				<version>9.4.57.v20241219</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
