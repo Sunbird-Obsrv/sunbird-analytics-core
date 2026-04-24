@@ -160,15 +160,16 @@
 			<scope>test</scope>
 		</dependency>
 		<!-- -->
+		<!-- CVE-2026-34477/34478/34480/34479 (MED): log4j-core/api patched at 2.25.4 -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.25.3</version>
+			<version>2.25.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.25.3</version>
+			<version>2.25.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
@@ -274,10 +275,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- CVE-2026-35554 (HIGH, CVSS 8.7): kafka-clients vulnerable >= 2.8.0, < 3.9.2 -->
 		<dependency>
 		    <groupId>org.apache.kafka</groupId>
 		    <artifactId>kafka_${scala.maj.version}</artifactId>
-		    <version>3.9.1</version>
+		    <version>3.9.2</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.fasterxml.jackson.core</groupId>

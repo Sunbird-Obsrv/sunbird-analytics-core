@@ -105,6 +105,9 @@ class TestDatasetUtil extends BaseSpec with Matchers with MockFactory {
           case _: IOException => println("S3 Exception occurred")
           case _: Exception => println("Exception occurred")
           case illegalArgumentException: IllegalArgumentException => println("CSP Configurations are not found")
+          // Hadoop 3.4.x throws NoClassDefFoundError (an Error) for missing filesystem classes
+          // (e.g. NativeAzureFileSystem absent from classpath), whereas 3.3.x wrapped in RuntimeException
+          case _: Error => println("Storage filesystem class not found")
           case _ =>
             fail("Unexpected exception type thrown")
         }
